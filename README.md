@@ -1,3 +1,3 @@
 # Banco de dados | Impulso Gov
 
-Banco de dados públicos da ImpulsoGov
+Definições do banco de dados públicos da ImpulsoGov.

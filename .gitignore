@@ -1,0 +1,5 @@
+data-sources.json
+.data-sources.json.bak
+credentials-config.json
+.credentials-config.json.bak
+Scripts/Script-*.sql
