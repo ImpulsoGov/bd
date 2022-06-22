@@ -3,3 +3,4 @@ data-sources.json
 credentials-config.json
 .credentials-config.json.bak
 Scripts/Script-*.sql
+.project
