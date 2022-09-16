@@ -15,8 +15,11 @@
  *   - `IMPULSOBD_SENHA_ETL`
  *   - `IMPULSOBD_SENHA_SM_INTEGRACAO`
  *   - `IMPULSOBD_SENHA_IP_INTEGRACAO`
+ *   - `IMPULSOBD_SENHA_IP_APLICACOES`
  *   - `IMPULSOBD_SENHA_AGP_INTEGRACAO`
+ *   - `IMPULSOBD_SENHA_AGP_APLICACOES`
  *   - `IMPULSOBD_SENHA_TS_INTEGRACAO`
+ *   - `IMPULSOBD_SENHA_TUTORIAL`
  * 
  * Essas variáveis devem ser fornecidas por meio de uma chamada prévia do
  * cliente psql, com o comando `\set`, no formato `\set VARIAVEL 'valor'`.
@@ -30,7 +33,7 @@
 
 -- Define os níveis de permissão básicos disponíveis
 
-CREATE ROLE 
+CREATE ROLE
     base
 WITH
     NOSUPERUSER
@@ -40,6 +43,20 @@ WITH
     NOBYPASSRLS
 ;
 GRANT base TO postgres WITH ADMIN OPTION;
+
+CREATE ROLE
+    tutorial
+WITH
+    NOSUPERUSER
+    NOINHERIT
+    LOGIN
+    NOREPLICATION
+    NOBYPASSRLS
+    ENCRYPTED PASSWORD :IMPULSOBD_SENHA_TUTORIAL
+CONNECTION LIMIT 10
+;
+GRANT tutorial TO postgres;
+GRANT CONNECT ON DATABASE postgres TO tutorial;
 
 CREATE USER etl
 WITH
@@ -196,6 +213,27 @@ WITH
 GRANT impulso_previne_admin TO postgres WITH ADMIN OPTION;
 
 CREATE ROLE 
+    impulso_previne_aplicacoes
+WITH
+    NOSUPERUSER
+    NOCREATEDB
+    NOCREATEROLE
+    INHERIT
+    LOGIN
+    NOREPLICATION
+    NOBYPASSRLS
+    ENCRYPTED PASSWORD :IMPULSOBD_SENHA_IP_APLICACOES
+    IN ROLE base
+;
+GRANT impulso_previne_aplicacoes TO postgres;
+GRANT USAGE
+ON SCHEMA impulso_previne
+TO impulso_previne_aplicacoes;
+GRANT SELECT
+ON ALL TABLES
+IN SCHEMA impulso_previne TO impulso_previne_aplicacoes;
+
+CREATE ROLE 
     impulso_previne_integracao
 WITH
     NOSUPERUSER
@@ -256,6 +294,27 @@ WITH
     IN ROLE projuto_integracao
 ;
 GRANT agp_integracao TO postgres;
+
+CREATE ROLE 
+    agp_aplicacoes
+WITH
+    NOSUPERUSER
+    NOCREATEDB
+    NOCREATEROLE
+    INHERIT
+    LOGIN
+    NOREPLICATION
+    NOBYPASSRLS
+    ENCRYPTED PASSWORD :IMPULSOBD_SENHA_AGP_APLICACOES
+    IN ROLE base
+;
+GRANT agp_aplicacoes TO postgres;
+GRANT USAGE
+ON SCHEMA agp
+TO agp_aplicacoes;
+GRANT SELECT
+ON ALL TABLES
+IN SCHEMA agp, dados_publicos, listas_de_codigos TO agp_aplicacoes;
 
 
 -- Territórios Saudáveis
