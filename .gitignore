@@ -3,4 +3,5 @@ data-sources.json
 credentials-config.json
 .credentials-config.json.bak
 Scripts/Script-*.sql
-.project
+.dbeaver/project-settings.json
+.dbeaver/*project-metadata.json*
