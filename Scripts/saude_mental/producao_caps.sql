@@ -36,8 +36,8 @@ DROP MATERIALIZED VIEW IF EXISTS
 CASCADE;
 CREATE MATERIALIZED VIEW 
     saude_mental._procedimentos_por_ocupacao_por_mes
-AS 
-SELECT 
+AS
+SELECT
     unidade_geografica_id,
     unidade_geografica_id_sus,
     realizacao_periodo_data_inicio AS competencia,
@@ -381,20 +381,13 @@ CREATE MATERIALIZED VIEW
     saude_mental.procedimentos_por_hora_resumo_ultimo_mes
 AS
 SELECT
-	DISTINCT ON (
-		unidade_geografica_id,
-		unidade_geografica_id_sus,
-		estabelecimento,
-		ocupacao
-	)
-	*
+    procedimentos_por_hora_resumo.*,
+	listas_de_codigos.nome_mes(competencia) AS nome_mes
 FROM saude_mental.procedimentos_por_hora_resumo
-ORDER BY
-	unidade_geografica_id,
-	unidade_geografica_id_sus,
-	estabelecimento,
-	ocupacao,
-	competencia DESC
+INNER JOIN
+    saude_mental."_procedimentos_ultima_competencia_disponivel"
+    ultima_competencia
+USING (unidade_geografica_id, periodo_id)
 WITH NO DATA;
 CREATE UNIQUE INDEX IF NOT EXISTS
     procedimentos_por_hora_resumo_ultimo_mes_un
@@ -405,7 +398,6 @@ ON saude_mental.procedimentos_por_hora_resumo_ultimo_mes (
     ocupacao,
     competencia DESC
 );
-
 
 CREATE INDEX IF NOT EXISTS
     procedimentos_ambulatoriais_competencia_x_caps_x_procedimento_idx
