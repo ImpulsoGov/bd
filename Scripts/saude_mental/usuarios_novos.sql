@@ -85,7 +85,6 @@ ON saude_mental._usuarios_novos (
 );
 
 
-
 DROP MATERIALIZED VIEW IF EXISTS
     saude_mental.usuarios_novos
 CASCADE;
@@ -315,7 +314,7 @@ SELECT
     usuarios_ativos.periodo_id,
     usuarios_ativos.competencia,
     usuarios_ativos.nome_mes,
-    usuarios_ativos.estabelecimento_linha_perfil,
+    resumo_usuarios_novos.estabelecimento_linha_perfil,
     usuarios_ativos.estabelecimento,
     coalesce(usuarios_novos, 0) AS usuarios_novos,
     coalesce(usuarios_novos_anterior, 0) AS usuarios_novos_anterior,
