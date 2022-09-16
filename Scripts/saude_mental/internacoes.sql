@@ -115,13 +115,17 @@ atendimentos_referencias_saude_mental AS (
     	unidade_geografica_id_sus,
     	periodo_id,
     	realizacao_periodo_data_inicio,
-    	usuario_cns_criptografado,
-    	usuario_data_nascimento,
+    	-- TODO: atualizar nomes das colunas
+    	usuario_id_cns_criptografado AS usuario_cns_criptografado,
+    	usuario_nascimento_data AS usuario_data_nascimento,
     	usuario_sexo_id_sigtap,
     	usuario_residencia_municipio_id_sus,
         procedimento_id_sigtap,
         quantidade_apresentada
-    FROM saude_mental._procedimentos_referencias_ambulatoriais
+    -- AVISO DE MIGRAÇÃO: a tabela `saude_mental.referencias_atendimentos`
+    -- citada a seguir é gerada com o data builder tool (dbt). Ver:
+    -- https://github.com/ImpulsoGov/saude-mental-indicadores
+    FROM saude_mental.referencias_atendimentos
     WHERE quantidade_apresentada > 0
 ),
 atendimentos_caps_bpa_i AS (
@@ -197,7 +201,7 @@ ON saude_mental._atendimentos_raps (
 );
 CREATE INDEX IF NOT EXISTS
     sihsus_aih_reduzida_disseminacao_ug_x_competencia_idx
-ON dados_publicos.sihsus_aih_reduzida_disseminacao (
+ON dados_publicos._sihsus_aih_reduzida_disseminacao (
     unidade_geografica_id,
     unidade_geografica_id_sus,
     periodo_data_inicio

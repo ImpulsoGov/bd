@@ -59,7 +59,6 @@ ON dados_publicos.siasus_bpa_i_disseminacao (
     profissional_ocupacao_id_cbo
 );
 
-
 DROP MATERIALIZED VIEW IF EXISTS 
     saude_mental._procedimentos_referencias_ambulatoriais 
 CASCADE;
@@ -101,7 +100,7 @@ ON saude_mental._procedimentos_referencias_ambulatoriais (
 );
 
 
--- Legado; preferir a view referencias_perfil_usuarios
+-- Legado; preferir a view referencias_usuarios_perfil
 DROP MATERIALIZED VIEW IF EXISTS 
     saude_mental.usuarios_referencias_por_faixa_etaria_ultimo_mes
 CASCADE;
@@ -149,10 +148,10 @@ ON saude_mental.usuarios_referencias_por_faixa_etaria_ultimo_mes (
 
 
 DROP MATERIALIZED VIEW IF EXISTS
-    saude_mental.referencias_perfil_usuarios
+    saude_mental.referencias_usuarios_perfil
 CASCADE;
 CREATE MATERIALIZED VIEW
-    saude_mental.referencias_perfil_usuarios
+    saude_mental.referencias_usuarios_perfil
 AS
 SELECT
     unidade_geografica_id,
