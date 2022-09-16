@@ -49,28 +49,33 @@ LEFT JOIN
 ON
     ug_definicao.id = uf.id
 WHERE
-    operacao.ativa
--- Agendar apenas se já tiver passado o tempo mínimo para divulgação dos dados
-AND now()::date >= (periodo.data_fim + operacao.atraso_divulgacao)
-AND (
-    -- Se não houver captura registrada no histórico, agendar!
-        historico.quantidade_registros IS NULL
-    -- Agendar também capturas adicionais para atualizações retroativas...
-    OR  (
-        -- ...se estiver configurado para aceitar atualização retroativa...
-            operacao.atualizar_retroativo
-        -- ...e estiver no intervalo em que essas atualizações são aceitas...
-        AND now()::date <= (
-            periodo.data_fim + operacao.atualizar_retroativo_desistir_apos
-        )::date
-        -- ...e o intervalo desde a última captura for maior do que o mínimo
-        -- especificado
-        AND now()::date >= (
-            historico.atualizado_em
-            + operacao.atualizar_retroativo_desistir_apos
-        )::date
+        operacao.ativa 
+    AND ug_por_projuto.ativa
+    AND (now()::date >= (periodo.data_fim + operacao.atraso_divulgacao))
+    AND (
+            -- Atualizar se não tiver registros de capturas já existentes
+            historico.quantidade_registros IS NULL
+        OR (
+            -- Se a operação admitir atualização retroativa, também pode ser
+            -- necessário agendar capturar mesmo que já haja histórico de
+            -- registros para aquela tabela...
+                operacao.atualizar_retroativo
+            AND (
+                -- ...desde que ainda não tenha chegado a data na qual
+                -- desistimos de fazer atualizações retroativas...
+                    (now()::date <= (
+                        periodo.data_fim
+                        + operacao.atualizar_retroativo_desistir_apos
+                    )::date)
+                -- ...e que o intervalo para a última atualização seja igual ou
+                -- maior do que o intervalo de atualização retroativa
+                AND (now()::date >= (
+                    historico.atualizado_em::date
+                    + operacao.atualizar_retroativo_frequencia
+                ))
+            )
+        )
     )
-)
 ORDER BY
     operacao.tabela_destino,
     operacao.id,
