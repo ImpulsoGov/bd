@@ -49,7 +49,7 @@ WITH procedimentos_caps AS (
         estabelecimento_tipo_id_sigtap = '70'  -- CAPS
         -- ignorar acolhimentos iniciais
         AND procedimento_id_sigtap NOT IN (
-            '0301080232'  -- ACOLHIMENTO INICIAL POR CAPS
+            '0301080232',  -- ACOLHIMENTO INICIAL POR CAPS
             '0301040079'  -- ESCUTA INICIAL/ORIENTAÇÃO (ACOLHIM DEMANDA ESPONT)
         ) 
     UNION

@@ -30,7 +30,7 @@ SELECT
     coalesce(
        sum(procedimento.quantidade_apresentada) FILTER (
            WHERE procedimento_id_sigtap IN (
-            '0301080232'  -- ACOLHIMENTO INICIAL POR CAPS
+            '0301080232',  -- ACOLHIMENTO INICIAL POR CAPS
             '0301040079'  -- ESCUTA INICIAL/ORIENTAÇÃO (ACOLHIM DEMANDA ESPONT)
         ) 
        ),
@@ -106,7 +106,7 @@ ativos_bpa_i AS (
         sum(quantidade_apresentada) AS procedimentos_registrados_bpa_i,
         sum(quantidade_apresentada) FILTER (
             WHERE procedimento_id_sigtap IN (
-                '0301080232'  -- ACOLHIMENTO INICIAL POR CAPS
+                '0301080232',  -- ACOLHIMENTO INICIAL POR CAPS
                 '0301040079'  -- ESCUTA INICIAL/ORIENTAÇÃO (AC DEMANDA ESPONT)
             )
         ) AS acolhimentos_iniciais_em_caps
