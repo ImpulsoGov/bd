@@ -247,7 +247,7 @@ SELECT
     periodo.id AS periodo_id,
     usuario_abandonou.inatividade_periodo_data_inicio AS periodo_data_inicio,
     coalesce(
-        estabelecimento.nome_mes,
+        estabelecimento.nome_curto,
         estabelecimento.nome
     ) AS estabelecimento,
     sexo.nome AS usuario_sexo,
@@ -284,6 +284,7 @@ GROUP BY
     usuario_abandonou.unidade_geografica_id_sus,
     periodo.id,
     usuario_abandonou.inatividade_periodo_data_inicio,
+    estabelecimento.nome_curto,
     estabelecimento.nome,
     sexo.nome,
     usuario_abandonou.usuario_faixa_etaria,
