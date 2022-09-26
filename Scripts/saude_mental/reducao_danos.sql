@@ -46,7 +46,6 @@ ON saude_mental._reducao_danos_acoes_por_estabelecimento_por_mes (
 );
 
 
-
 /* Obter nomes dos estabelecimentos e categorias profissionais,  *
  * comparar entre competências consecutivas e totalizar por CAPS *
  * e por categoria profissional                                  */
@@ -56,12 +55,13 @@ CASCADE;
 CREATE MATERIALIZED VIEW
 	saude_mental.reducao_danos_acoes_por_estabelecimento_por_mes
 AS
-WITH 
+WITH
 acoes_por_cbo AS (
     SELECT
         unidade_geografica_id,
         unidade_geografica_id_sus,
         periodo_id,
+        periodo_data_inicio,
         '0000000' AS estabelecimento_id_cnes,
         profissional_ocupacao_id_cbo,
         sum(quantidade_registrada) AS quantidade_registrada
@@ -70,6 +70,7 @@ acoes_por_cbo AS (
         unidade_geografica_id,
         unidade_geografica_id_sus,
         periodo_id,
+        periodo_data_inicio,
         profissional_ocupacao_id_cbo
 ),
 acoes_por_estabelecimento AS (
@@ -77,6 +78,7 @@ acoes_por_estabelecimento AS (
         unidade_geografica_id,
         unidade_geografica_id_sus,
         periodo_id,
+        periodo_data_inicio,
         estabelecimento_id_cnes,
         '000000' AS profissional_ocupacao_id_cbo,
         sum(quantidade_registrada) AS quantidade_registrada
@@ -85,6 +87,7 @@ acoes_por_estabelecimento AS (
         unidade_geografica_id,
         unidade_geografica_id_sus,
         periodo_id,
+        periodo_data_inicio,
         estabelecimento_id_cnes
 ),
 acoes_geral AS (
@@ -92,6 +95,7 @@ acoes_geral AS (
         unidade_geografica_id,
         unidade_geografica_id_sus,
         periodo_id,
+        periodo_data_inicio,
         '0000000' AS estabelecimento_id_cnes,
         '000000' AS profissional_ocupacao_id_cbo,
         sum(quantidade_registrada) AS quantidade_registrada
@@ -99,13 +103,15 @@ acoes_geral AS (
     GROUP BY 
         unidade_geografica_id,
         unidade_geografica_id_sus,
-        periodo_id
+        periodo_id,
+        periodo_data_inicio
 ),
 acoes_com_totais AS (
     SELECT
         unidade_geografica_id,
         unidade_geografica_id_sus,
         periodo_id,
+        periodo_data_inicio,
         estabelecimento_id_cnes,
         profissional_ocupacao_id_cbo,
         quantidade_registrada
@@ -116,72 +122,89 @@ acoes_com_totais AS (
     SELECT * FROM acoes_por_estabelecimento
     UNION
     SELECT * FROM acoes_geral
+),
+competencia_anterior AS (
+    SELECT
+        unidade_geografica_id,
+        unidade_geografica_id_sus,
+        sucessao.periodo_id,
+        sucessao.periodo_data_inicio,
+        estabelecimento_id_cnes,
+        profissional_ocupacao_id_cbo,
+        quantidade_registrada
+    FROM acoes_com_totais
+    LEFT JOIN listas_de_codigos.periodos_sucessao sucessao
+    ON 
+        acoes_com_totais.periodo_id = sucessao.ultimo_periodo_id
+    AND sucessao.periodo_tipo::text = 'Mensal'::text
+),
+comparacao_competencia_anterior AS (
+    SELECT
+        unidade_geografica_id,
+        unidade_geografica_id_sus,
+        periodo_id,
+        periodo_data_inicio,
+        estabelecimento_id_cnes,
+        profissional_ocupacao_id_cbo,
+        coalesce(
+           competencia_atual.quantidade_registrada,
+           0
+       )::bigint AS quantidade_registrada,
+        coalesce(
+           competencia_anterior.quantidade_registrada,
+           0::bigint
+       ) AS quantidade_registrada_anterior,
+       (
+            coalesce(competencia_atual.quantidade_registrada, 0)
+            - coalesce(competencia_anterior.quantidade_registrada, 0)
+        ) AS dif_quantidade_registrada_anterior
+    FROM acoes_com_totais competencia_atual
+    FULL JOIN competencia_anterior 
+    USING (
+        unidade_geografica_id,
+        unidade_geografica_id_sus,
+        periodo_id,
+        periodo_data_inicio,
+        estabelecimento_id_cnes,
+        profissional_ocupacao_id_cbo
+    )
+),
+final AS (
+    SELECT
+        comparacao_competencia_anterior.unidade_geografica_id,
+        comparacao_competencia_anterior.unidade_geografica_id_sus,
+        comparacao_competencia_anterior.periodo_id,
+        comparacao_competencia_anterior.periodo_data_inicio AS competencia,
+        listas_de_codigos.nome_mes(
+            comparacao_competencia_anterior.periodo_data_inicio
+        ) AS nome_mes,
+        coalesce(
+            estabelecimento.nome_curto,
+            estabelecimento.nome,
+            'Todos'
+        ) AS estabelecimento,
+        coalesce(ocupacao.descricao_cbo2002, 'Todas') AS ocupacao,
+        quantidade_registrada,
+        quantidade_registrada_anterior,
+        dif_quantidade_registrada_anterior
+    FROM comparacao_competencia_anterior
+    LEFT JOIN listas_de_codigos.estabelecimentos estabelecimento
+    ON
+        comparacao_competencia_anterior.estabelecimento_id_cnes
+        = estabelecimento.id_scnes
+    LEFT JOIN listas_de_codigos.ocupacoes ocupacao
+    ON profissional_ocupacao_id_cbo = ocupacao.id_cbo2002
+    LEFT JOIN
+       saude_mental._procedimentos_ultima_competencia_disponivel
+       ultima_competencia
+    USING (unidade_geografica_id)
+    WHERE
+       comparacao_competencia_anterior.periodo_data_inicio 
+       <= ultima_competencia.periodo_data_inicio
 )
 SELECT
-	coalesce(
-        competencia_atual.unidade_geografica_id,
-        competencia_anterior.unidade_geografica_id
-    ) AS unidade_geografica_id,
-	coalesce(
-        competencia_atual.unidade_geografica_id_sus,
-        competencia_anterior.unidade_geografica_id_sus
-    ) AS unidade_geografica_id_sus,
-    sucessao.periodo_id,
-    sucessao.periodo_data_inicio AS competencia,
-    listas_de_codigos.nome_mes(sucessao.periodo_data_inicio) AS nome_mes,
-    coalesce(
-        estabelecimento.nome_curto,
-        estabelecimento.nome,
-        'Todos'
-    ) AS estabelecimento,
-    coalesce(ocupacao.ocupacao_descricao, 'Todas') AS ocupacao,
-    coalesce(
-       competencia_atual.quantidade_registrada,
-       0
-   )::bigint AS quantidade_registrada,
-    coalesce(
-       competencia_anterior.quantidade_registrada,
-       0::bigint
-   ) AS quantidade_registrada_anterior,
-   (
-        coalesce(competencia_atual.quantidade_registrada, 0)
-        - coalesce(competencia_anterior.quantidade_registrada, 0)
-    ) AS dif_quantidade_registrada_anterior
-FROM acoes_com_totais competencia_atual
-LEFT JOIN listas_de_codigos.periodos_sucessao sucessao
-ON 
-    competencia_atual.periodo_id = sucessao.periodo_id
-AND sucessao.periodo_tipo::text = 'Mensal'::text
-FULL JOIN acoes_com_totais competencia_anterior 
-ON 
-    sucessao.ultimo_periodo_id = competencia_anterior.periodo_id 
-AND competencia_atual.unidade_geografica_id 
-    = competencia_anterior.unidade_geografica_id
-AND competencia_atual.estabelecimento_id_cnes 
-    = competencia_anterior.estabelecimento_id_cnes
-AND competencia_atual.profissional_ocupacao_id_cbo
-    = competencia_anterior.profissional_ocupacao_id_cbo
-LEFT JOIN listas_de_codigos.estabelecimentos estabelecimento
-ON coalesce(
-		competencia_atual.estabelecimento_id_cnes,
-		competencia_anterior.estabelecimento_id_cnes
-	) = estabelecimento.id_scnes
--- TODO: trocar por tabela de ocupações em listas de códigos
-LEFT JOIN saude_mental.ocupacoes ocupacao
-ON coalesce(
-		competencia_atual.profissional_ocupacao_id_cbo,
-		competencia_anterior.profissional_ocupacao_id_cbo
-	) = ocupacao.ocupacao_id
-LEFT JOIN 
-   saude_mental._procedimentos_ultima_competencia_disponivel
-   ultima_competencia
-ON coalesce(
-	competencia_atual.unidade_geografica_id,
-	competencia_anterior.unidade_geografica_id
-) = ultima_competencia.unidade_geografica_id
-WHERE 
-   sucessao.periodo_data_inicio 
-   <= ultima_competencia.periodo_data_inicio
+    *
+FROM final
 WITH NO DATA;
 CREATE UNIQUE INDEX IF NOT EXISTS 
 	reducao_danos_acoes_por_estabelecimento_por_mes_un
