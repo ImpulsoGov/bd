@@ -5,3 +5,4 @@ credentials-config.json
 Scripts/Script-*.sql
 .dbeaver/project-settings.json
 .dbeaver/*project-metadata.json*
+.DS_Store
