@@ -11,8 +11,8 @@ Extração, tratamento e caregamento de dados públicos direta ou indiretamente 
 *******
 ## :mag_right: Índice
 - [Scripts para criação de objetos de banco de dados da ImpulsoGov](#scripts-para-criação-de-objetos-de-banco-de-dados-da-impulsogov)
-  - [:mag_right: Índice](#mag_right-índice)
-  - [:milky_way: Estrutura do repositório](#milky_way-estrutura-do-repositório)
+  - [:mag\_right: Índice](#mag_right-índice)
+  - [:milky\_way: Estrutura do repositório](#milky_way-estrutura-do-repositório)
   - [:registered: Licença](#registered-licença)
 *******
   
@@ -28,6 +28,14 @@ bd
 ├─ .settings
 ├─ Scripts
 ├─ marcadores
+```
+
+Conteúdo dos diretórios
+
+```plain
+.settings - Metadados projeto Dbeaver
+Scripts - Diretórios com os arquivos .sql com as consultas objetos utilizados
+marcadores - Links para os principais objetos
 ```
 
 *******
