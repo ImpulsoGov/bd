@@ -30,8 +30,6 @@ bd
 ├─ marcadores
 ```
 
-Conteúdo dos diretórios
-
 ```plain
 .settings - Metadados projeto Dbeaver
 Scripts - Diretórios com os arquivos .sql com as consultas objetos utilizados
