@@ -1,4 +1,4 @@
-CREATE MATERIALIZED VIEW gestantes_busca_ativa AS
+CREATE MATERIALIZED VIEW gestantes_busca_ativa_sem_dpp AS
 SELECT v3.estabelecimento_cnes,
     upper(v3.estabelecimento_nome) AS estabelecimento_nome,
     v3.equipe_ine,
@@ -443,4 +443,4 @@ SELECT v3.estabelecimento_cnes,
       - Primeira linha para cada gestante (registro mais recente)
       - Cuja data provável de parto maior ou igual que a data atual
     */
-  WHERE v3.r = 1;
+  WHERE v3.r = 1 and v3.gestante_primeira_dpp is NULL;
