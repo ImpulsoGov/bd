@@ -1,4 +1,4 @@
-CREATE MATERIALIZED VIEW gestantes_busca_ativa_sem_dpp AS
+CREATE MATERIALIZED VIEW busca_ativa_gestantes_sem_dpp AS
 SELECT v3.estabelecimento_cnes,
     upper(v3.estabelecimento_nome) AS estabelecimento_nome,
     v3.equipe_ine,
