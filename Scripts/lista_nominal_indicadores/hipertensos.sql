@@ -11,7 +11,7 @@ FROM(
             SELECT tempo.dt_registro FROM tb_fat_proced_atend_proced fichaproced
             INNER JOIN tb_dim_procedimento proced ON fichaproced.co_dim_procedimento = proced.co_seq_dim_procedimento
             INNER JOIN tb_dim_tempo tempo ON fichaproced.co_dim_tempo = tempo.co_seq_dim_tempo
-            INNER JOIN tb_dim_cbo cbo ON fichaproced.co_dim_cbo = cbo.co_seq_dim_cbo AND cbo.nu_cbo like any (array['2251%','2252%','2253%','2231%'])
+            INNER JOIN tb_dim_cbo cbo ON fichaproced.co_dim_cbo = cbo.co_seq_dim_cbo AND cbo.nu_cbo like any (array['2251%','2252%','2253%','2231%','2235%','3222%'])
             WHERE co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec
             AND proced.co_proced IN ('0301100039','ABPG033')
             ORDER BY fichaproced.co_dim_tempo DESC LIMIT 1
@@ -27,7 +27,7 @@ FROM(
         (
             SELECT count(*) FROM tb_fat_atendimento_individual atendimento
             INNER JOIN tb_fat_atd_ind_problemas problemas ON atendimento.co_seq_fat_atd_ind = problemas.co_fat_atd_ind
-            INNER JOIN tb_dim_cbo cbo ON problemas.co_dim_cbo_1 = cbo.co_seq_dim_cbo AND cbo.nu_cbo like any (array['2251%','2252%','2253%','2231%'])
+            INNER JOIN tb_dim_cbo cbo ON problemas.co_dim_cbo_1 = cbo.co_seq_dim_cbo AND cbo.nu_cbo like any (array['2251%','2252%','2253%','2231%','2235%'])
             LEFT JOIN tb_dim_ciap ciap ON problemas.co_dim_ciap = ciap.co_seq_dim_ciap AND ciap.nu_ciap IN ('K86','K87')
             LEFT JOIN tb_dim_cid cid ON problemas.co_dim_cid = cid.co_seq_dim_cid 
             AND cid.nu_cid IN ('I10','I11','I110','I119','I12','I120','I129','I13','I130','I131','I132','I139',
