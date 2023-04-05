@@ -232,6 +232,7 @@ SELECT
 	LEFT JOIN registros_aborto ra 
 		ON ra.chave_gestante = vd.chave_gestante
 )
+-- SELECT * FROM classificacao_gestante
 , atendimento_odonto AS (
 	SELECT 
 		cg.chave_gestante,
@@ -345,7 +346,7 @@ UNION ALL
 		apn.gestante_idade_gestacional,
 		apn.gestante_idade_gestacional_atendimento,
 		FIRST_VALUE(apn.data_atendimento) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento) AS data_primeiro_atendimento,
-		LAST_VALUE(apn.data_atendimento) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento) AS data_ultimo_atendimento,
+		FIRST_VALUE(apn.data_atendimento) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento desc) AS data_ultimo_atendimento,
 		(array_agg(apn.gestante_dum) FILTER (WHERE apn.gestante_dum IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento))[1] AS data_primeira_DUM_valida,
 		(array_agg(apn.data_atendimento) FILTER (WHERE apn.gestante_dum IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento))[1] AS data_atendimento_com_primeira_DUM_valida,
 		(array_agg(apn.gestante_idade_gestacional_atendimento) FILTER (WHERE apn.gestante_dum IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento))[1] AS idade_gestacional_atendimento_com_primeira_DUM_valida,
@@ -368,7 +369,11 @@ UNION ALL
 		cg.maior_data_registro_aborto,
 		cg.menor_data_registro_aborto,
 		cg.diff_dias_primeio_ultimo_aborto,
-		cg.data_fim_primeira_gestacao
+		cg.data_fim_primeira_gestacao,
+		cg.tipo_encerramento_primeira_gestacao,
+		cg.data_fim_segunda_gestacao,
+		cg.tipo_gestante_DUM,
+		cg.tipo_registro_parto_aborto
 	FROM atendimentos_pre_natal apn
 	JOIN classificacao_gestante cg 
 		ON cg.chave_gestante = apn.chave_gestante
@@ -392,8 +397,8 @@ UNION ALL
 		apn.gestante_dpp::date,
 		apn.gestante_idade_gestacional,
 		apn.gestante_idade_gestacional_atendimento,
-		FIRST_VALUE(apn.data_atendimento) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento) AS data_primeiro_atendimento,
-		LAST_VALUE(apn.data_atendimento) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento) AS data_ultimo_atendimento,
+		FIRST_VALUE(apn.data_atendimento) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento desc) AS data_primeiro_atendimento,
+		FIRST_VALUE(apn.data_atendimento) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento desc) AS data_ultimo_atendimento,
 		(array_agg(apn.gestante_dum) FILTER (WHERE apn.gestante_dum IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento))[1] AS data_primeira_DUM_valida,
 		(array_agg(apn.data_atendimento) FILTER (WHERE apn.gestante_dum IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento))[1] AS data_atendimento_com_primeira_DUM_valida,
 		(array_agg(apn.gestante_idade_gestacional_atendimento) FILTER (WHERE apn.gestante_dum IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento))[1] AS idade_gestacional_atendimento_com_primeira_DUM_valida,
@@ -416,12 +421,17 @@ UNION ALL
 		cg.maior_data_registro_aborto,
 		cg.menor_data_registro_aborto,
 		cg.diff_dias_primeio_ultimo_aborto,
-		cg.data_fim_primeira_gestacao
+		cg.data_fim_primeira_gestacao,
+		cg.tipo_encerramento_primeira_gestacao,
+		cg.data_fim_segunda_gestacao,
+		cg.tipo_gestante_DUM,
+		cg.tipo_registro_parto_aborto
 	FROM atendimentos_pre_natal apn
 	JOIN classificacao_gestante cg 
 		ON cg.chave_gestante = apn.chave_gestante
 	WHERE apn.data_atendimento >= cg.data_fim_primeira_gestacao
 )
+--SELECT * FROM base_atendimentos_por_gestacao
 , base_final_gestacoes AS (
 	SELECT 
 		bag.chave_gestacao,
@@ -436,6 +446,10 @@ UNION ALL
 		bag.idade_gestacional_atendimento_com_primeira_DUM_valida AS idade_gestacional_primeiro_atendimento,
 		bag.data_fim_primeira_gestacao,
 		bag.data_ultimo_atendimento AS consulta_prenatal_ultima_data,
+		bag.tipo_encerramento_primeira_gestacao,
+		bag.data_fim_segunda_gestacao,
+		bag.tipo_gestante_DUM,
+		bag.tipo_registro_parto_aborto,
 		COUNT(DISTINCT bag.co_seq_fat_atd_ind) AS consulta_prenatal_total,
 		-- O SISAB só contabiliza consultas de pré-natal a partir da consulta com a primeira DUM válida
 		COUNT(DISTINCT CASE WHEN bag.data_atendimento >= data_atendimento_com_primeira_DUM_valida THEN bag.co_seq_fat_atd_ind END) AS consultas_pre_natal_apos_DUM_valida,
@@ -483,6 +497,6 @@ UNION ALL
 		ON bag.chave_gestante = ehiv.chave_gestante
 	LEFT JOIN  exame_sifilis esif 
 		ON bag.chave_gestante = esif.chave_gestante
-	GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+	GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
 )
 SELECT * FROM base_final_gestacoes
