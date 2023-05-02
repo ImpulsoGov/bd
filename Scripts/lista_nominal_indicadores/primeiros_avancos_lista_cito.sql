@@ -29,7 +29,92 @@ SELECT tfcp.nu_cns AS paciente_documento_cns,
    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cbo cbo ON tfpap.co_dim_cbo = cbo.co_seq_dim_cbo
    WHERE (procedimentos.co_proced::text = ANY (ARRAY['0201020033'::CHARACTER varying::text,'ABPG010'::CHARACTER varying::text]))
      AND (cbo.nu_cbo::text ~~ ANY (ARRAY['%2235%'::text, '%2251%'::text, '%2252%'::text, '%2253%'::text, '%2231%'::text]))
-     AND tfcp.st_faleceu <> 1 )
+     AND tfcp.st_faleceu <> 1
+     ), 
+cadastro_individual_recente AS (
+-- Dados do cadastro individual (dados para vinculação de equipe e ACS da mulher)
+	WITH base AS (
+		SELECT 
+			mu.chave_mulher,
+			tdt.dt_registro AS data_cadastro_individual,
+			tfci.nu_micro_area AS micro_area_cad_individual,
+			uns.nu_cnes AS cnes_estabelecimento_cad_individual,
+			uns.no_unidade_saude AS estabelecimento_cad_individual,
+			eq.nu_ine AS ine_equipe_cad_individual,
+			eq.no_equipe AS equipe_cad_individual,
+			acs.no_profissional AS acs_cad_individual,
+			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_individual
+		FROM esus_3169356_tresmarias_mg_20230314.tb_fat_cad_individual tfci
+		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcpec
+			ON tfcpec.co_seq_fat_cidadao_pec = tfci.co_fat_cidadao_pec
+		JOIN selecao_mulheres_denominador mu 
+			ON mu.chave_mulher = tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+			ON tdt.co_seq_dim_tempo = tfci.co_dim_tempo
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+			ON eq.co_seq_dim_equipe = tfci.co_dim_equipe
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional acs
+			ON acs.co_seq_dim_profissional = tfci.co_dim_profissional
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns
+			ON uns.co_seq_dim_unidade_saude = tfci.co_dim_unidade_saude  
+		)
+	SELECT * FROM base WHERE ultimo_cadastro_individual IS true
+	order by chave_mulher
+), 
+visita_domiciliar_recente AS (
+-- Dados das visitas domiciliares realizadas pelos ACS (dados para vinculação de ACS da mulher)
+	WITH base AS (
+		SELECT 
+			mu.chave_mulher,
+		    tfcpec.co_seq_fat_cidadao_pec,
+			tdt.dt_registro AS data_visita_acs,
+			acs.no_profissional AS acs_visita_domiciliar,
+			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tdt.dt_registro DESC) = 1 AS ultima_visita_domiciliar
+		FROM esus_3169356_tresmarias_mg_20230314.tb_fat_visita_domiciliar visitadomiciliar
+		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcpec
+			ON tfcpec.co_seq_fat_cidadao_pec = visitadomiciliar.co_fat_cidadao_pec 
+		JOIN selecao_mulheres_denominador mu
+			ON mu.chave_mulher = tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional acs
+			ON acs.co_seq_dim_profissional = visitadomiciliar.co_dim_profissional
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+			ON tdt.co_seq_dim_tempo = visitadomiciliar.co_dim_tempo
+		)
+	SELECT * FROM base WHERE ultima_visita_domiciliar IS TRUE 
+), 
+cadastro_domiciliar_recente AS (
+-- Dados do cadastro da família e do domicílio da mulher (dados para vinculação de ACS da mulher)
+	WITH base AS (
+		SELECT 
+			mu.chave_mulher,
+			tdt.dt_registro AS data_cadastro_dom_familia,
+			caddomiciliarfamilia.nu_micro_area AS micro_area_domicilio,
+			uns.nu_cnes AS cnes_estabelecimento_cad_dom_familia,
+			uns.no_unidade_saude AS estabelecimento_cad_dom_familia,
+			eq.nu_ine AS ine_equipe_cad_dom_familia,
+			eq.no_equipe AS equipe_cad_dom_familia,
+			acs.no_profissional AS acs_cad_dom_familia,
+			NULLIF(concat(cadomiciliar.no_logradouro, ', ', cadomiciliar.nu_num_logradouro), ', '::text) AS gestante_endereco,
+			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tdt.dt_registro DESC) = 1  AS ultimo_cadastro_domiciliar_familia
+		FROM esus_3169356_tresmarias_mg_20230314.tb_fat_cad_dom_familia caddomiciliarfamilia
+		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cad_domiciliar cadomiciliar 
+			ON cadomiciliar.co_seq_fat_cad_domiciliar = caddomiciliarfamilia.co_fat_cad_domiciliar
+		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcpec
+			ON tfcpec.co_seq_fat_cidadao_pec = caddomiciliarfamilia.co_fat_cidadao_pec 
+		JOIN selecao_mulheres_denominador mu
+			ON mu.chave_mulher = tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+			ON tdt.co_seq_dim_tempo = caddomiciliarfamilia.co_dim_tempo
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+			ON eq.co_seq_dim_equipe = caddomiciliarfamilia.co_dim_equipe
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional acs
+			ON acs.co_seq_dim_profissional = caddomiciliarfamilia.co_dim_profissional
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns
+			ON uns.co_seq_dim_unidade_saude = caddomiciliarfamilia.co_dim_unidade_saude  		
+		)
+	SELECT * FROM base WHERE ultimo_cadastro_domiciliar_familia IS true
+),
+relatorio_preliminar as (
 SELECT tb1.chave_mulher,
        tb1.paciente_nome,
        tb1.paciente_documento_cns,
@@ -57,3 +142,4 @@ GROUP BY tb1.chave_mulher,
          tb1.data_de_nascimento,
          tb2.data_ultimo_exame
 ORDER BY tb1.chave_mulher asc
+) select * from relatorio_preliminar
