@@ -1,27 +1,56 @@
 WITH 
 selecao_mulheres_denominador AS (
   -- Seleciona todas as mulheres do município com faixa etária entre 25 e 64 anos
+with tb as (
 SELECT tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento AS chave_mulher,
        tfcp.no_cidadao AS paciente_nome,
        tempocidadaopec.dt_registro AS data_de_nascimento,
        tfcp.nu_cpf_cidadao AS paciente_documento_cpf,
        tfcp.nu_cns AS paciente_documento_cns,
        tfcp.nu_telefone_celular AS paciente_telefone,
-       (CURRENT_DATE - tempocidadaopec.dt_registro)/365 AS paciente_idade_atual
+       date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tempocidadaopec.dt_registro::timestamp with time zone))::integer AS paciente_idade_atual,
+       CASE
+            WHEN date_part('month'::text, CURRENT_DATE) >= 1::double precision AND date_part('month'::text, CURRENT_DATE) <= 4::double precision THEN concat(date_part('year'::text, CURRENT_DATE ::date), '-01-01')
+            WHEN date_part('month'::text, CURRENT_DATE) >= 5::double precision AND date_part('month'::text, CURRENT_DATE) <= 8::double precision THEN concat(date_part('year'::text, CURRENT_DATE ::date), '-05-01')
+            WHEN date_part('month'::text, CURRENT_DATE) >= 9::double precision AND date_part('month'::text, CURRENT_DATE) <= 12::double precision THEN concat(date_part('year'::text, CURRENT_DATE ::date), '-09-01')
+            ELSE NULL::text
+        end as data_inicio_quadrimestre,
+        CASE
+            WHEN date_part('month'::text, CURRENT_DATE) >= 1::double precision AND date_part('month'::text, CURRENT_DATE) <= 4::double precision THEN concat(date_part('year'::text, CURRENT_DATE ::date), '-04-30')
+            WHEN date_part('month'::text, CURRENT_DATE) >= 5::double precision AND date_part('month'::text, CURRENT_DATE) <= 8::double precision THEN concat(date_part('year'::text, CURRENT_DATE ::date), '-08-31')
+            WHEN date_part('month'::text, CURRENT_DATE) >= 9::double precision AND date_part('month'::text, CURRENT_DATE) <= 12::double precision THEN concat(date_part('year'::text, CURRENT_DATE ::date), '-12-31')
+            ELSE NULL::text
+        end as data_fim_quadrimestre
    FROM esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp
    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tempocidadaopec ON tfcp.co_dim_tempo_nascimento = tempocidadaopec.co_seq_dim_tempo
    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfcp.co_dim_sexo
    WHERE tds.ds_sexo = 'Feminino'
-     AND (CURRENT_DATE - tempocidadaopec.dt_registro)/365 BETWEEN 25 AND 64
-     AND tfcp.st_faleceu <> 1
+     AND tfcp.st_faleceu <> 1)
+     select 
+     tb.chave_mulher,
+     tb.paciente_nome,
+     tb.data_de_nascimento,
+     tb.paciente_documento_cpf,
+     tb.paciente_documento_cns,
+     tb.paciente_telefone,
+     tb.paciente_idade_atual,
+     date_part('year'::text, age(tb.data_inicio_quadrimestre::timestamp with time zone, tb.data_de_nascimento::timestamp with time zone))::integer AS idade_inicio_quadrimestre,
+     date_part('year'::text, age(tb.data_fim_quadrimestre::timestamp with time zone, tb.data_de_nascimento::timestamp with time zone))::integer AS idade_fim_quadrimestre from tb
+     where date_part('year'::text, age(tb.data_inicio_quadrimestre::timestamp with time zone, tb.data_de_nascimento::timestamp with time zone))::integer between 25 and 64
+     or date_part('year'::text, age(tb.data_fim_quadrimestre::timestamp with time zone, tb.data_de_nascimento::timestamp with time zone))::integer between 25 and 64
      ),
-realizacao_exames AS (
 -- Seleciona todas mulheres que tiveram exame citopatológico realizado por enfermeiros ou médicos (com famílias de SIGTAP consideradas para o procedimento)
-SELECT tfcp.nu_cns AS paciente_documento_cns,
+-- Pegar pelo codigo do procedimento -> maior codigo
+realizacao_exames as (
+with tb as (
+SELECT 
+	   tfcp.nu_cns AS paciente_documento_cns,
        tfcp.nu_cpf_cidadao AS paciente_documento_cpf,
        tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento AS chave_mulher,
        tempoprocedimento.dt_registro AS data_realizacao_exame,
-       max(tempoprocedimento.dt_registro) OVER (PARTITION BY tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento) AS data_ultimo_exame
+       --max(tempoprocedimento.dt_registro) OVER (PARTITION BY tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento) AS data_ultimo_exame,
+       tfpap.co_seq_fat_proced_atend_proced as id_registro,
+       max(tfpap.co_seq_fat_proced_atend_proced) OVER (PARTITION BY tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento) AS codigo_ultimo_exame
    FROM esus_3169356_tresmarias_mg_20230314.tb_fat_proced_atend_proced tfpap
    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tempoprocedimento ON tfpap.co_dim_tempo = tempoprocedimento.co_seq_dim_tempo
    JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp ON tfpap.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec
@@ -30,6 +59,17 @@ SELECT tfcp.nu_cns AS paciente_documento_cns,
    WHERE (procedimentos.co_proced::text = ANY (ARRAY['0201020033'::CHARACTER varying::text,'ABPG010'::CHARACTER varying::text]))
      AND (cbo.nu_cbo::text ~~ ANY (ARRAY['%2235%'::text, '%2251%'::text, '%2252%'::text, '%2253%'::text, '%2231%'::text]))
      AND tfcp.st_faleceu <> 1
+     ), selecao_ultimo_exame as (
+     select 
+     tb.paciente_documento_cns,
+     tb.paciente_documento_cpf,
+     tb.chave_mulher,
+     tb.data_realizacao_exame as data_ultimo_exame,
+     tb.id_registro,
+     --tb.codigo_ultimo_exame,
+     row_number() OVER (PARTITION BY tb.chave_mulher ORDER BY tb.id_registro desc) = 1 AS ultimo_exame_realizado
+	from tb)
+	select * from selecao_ultimo_exame where ultimo_exame_realizado is true
      ), 
 cadastro_individual_recente AS (
 -- Dados do cadastro individual (dados para vinculação de equipe e ACS da mulher)
@@ -120,6 +160,8 @@ SELECT tb1.chave_mulher,
        tb1.paciente_documento_cns,
        tb1.paciente_documento_cpf,
        tb1.paciente_idade_atual,
+       tb1.idade_inicio_quadrimestre,
+       tb1.idade_fim_quadrimestre,
        tb1.data_de_nascimento,
        tb2.data_ultimo_exame,
        CASE
@@ -129,7 +171,8 @@ SELECT tb1.chave_mulher,
        CASE
            WHEN date_part('month'::text, tb2.data_ultimo_exame) >= 1::double precision AND date_part('month'::text, tb2.data_ultimo_exame) <= 4::double precision THEN concat(date_part('year'::text, tb2.data_ultimo_exame), '.Q1')
            WHEN date_part('month'::text, tb2.data_ultimo_exame) >= 5::double precision AND date_part('month'::text, tb2.data_ultimo_exame) <= 8::double precision THEN concat(date_part('year'::text, tb2.data_ultimo_exame), '.Q2')
-           ELSE 'exame_nunca_realizado'
+           WHEN date_part('month'::text, tb2.data_ultimo_exame) >= 9::double precision AND date_part('month'::text, tb2.data_ultimo_exame) <= 12::double precision THEN concat(date_part('year'::text, tb2.data_ultimo_exame), '.Q3')
+		   else 'exame nunca realizado'
        END AS quadrimestre_realizou_ultimo_exame
 FROM selecao_mulheres_denominador tb1
 LEFT JOIN realizacao_exames tb2 ON tb1.chave_mulher = tb2.chave_mulher
@@ -139,7 +182,9 @@ GROUP BY tb1.chave_mulher,
          tb1.paciente_documento_cns,
          tb1.paciente_documento_cpf,
          tb1.paciente_idade_atual,
+         tb1.idade_inicio_quadrimestre,
+       	 tb1.idade_fim_quadrimestre,
          tb1.data_de_nascimento,
          tb2.data_ultimo_exame
 ORDER BY tb1.chave_mulher asc
-) select * from relatorio_preliminar
+) select * from relatorio_preliminar order by paciente_idade_atual asc
