@@ -2,11 +2,14 @@ WITH
 selecao_mulheres_denominador AS (
   -- Seleciona todas as mulheres do município com faixa etária entre 25 e 64 anos
 with tb as (
-SELECT tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento AS chave_mulher,
+SELECT 
+	   tfcp.co_seq_fat_cidadao_pec as id_cidadao_pec,
+	   tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento AS chave_mulher,
        tfcp.no_cidadao AS paciente_nome,
        tempocidadaopec.dt_registro AS data_de_nascimento,
        tfcp.nu_cpf_cidadao AS paciente_documento_cpf,
        tfcp.nu_cns AS paciente_documento_cns,
+       tds.ds_sexo as paciente_sexo,
        tfcp.nu_telefone_celular AS paciente_telefone,
        date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tempocidadaopec.dt_registro::timestamp with time zone))::integer AS paciente_idade_atual,
        CASE
@@ -30,12 +33,13 @@ SELECT tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento AS chave_mulher,
      tb.chave_mulher,
      tb.paciente_nome,
      tb.data_de_nascimento,
-     tb.paciente_documento_cpf,
-     tb.paciente_documento_cns,
-     tb.paciente_telefone,
+     (array_agg(tb.paciente_documento_cpf) FILTER (WHERE tb.paciente_documento_cpf IS NOT NULL) OVER (PARTITION BY tb.chave_mulher ORDER BY tb.id_cidadao_pec DESC))[1] AS paciente_documento_cpf,
+     (array_agg(tb.paciente_documento_cns) FILTER (WHERE tb.paciente_documento_cns IS NOT NULL) OVER (PARTITION BY tb.chave_mulher ORDER BY tb.id_cidadao_pec DESC))[1] AS paciente_documento_cns,
+     (array_agg(tb.paciente_telefone) FILTER (WHERE tb.paciente_telefone IS NOT NULL) OVER (PARTITION BY tb.chave_mulher ORDER BY tb.id_cidadao_pec DESC))[1] AS paciente_telefone,
      tb.paciente_idade_atual,
      date_part('year'::text, age(tb.data_inicio_quadrimestre::timestamp with time zone, tb.data_de_nascimento::timestamp with time zone))::integer AS idade_inicio_quadrimestre,
-     date_part('year'::text, age(tb.data_fim_quadrimestre::timestamp with time zone, tb.data_de_nascimento::timestamp with time zone))::integer AS idade_fim_quadrimestre from tb
+     date_part('year'::text, age(tb.data_fim_quadrimestre::timestamp with time zone, tb.data_de_nascimento::timestamp with time zone))::integer AS idade_fim_quadrimestre 
+     from tb
      where date_part('year'::text, age(tb.data_inicio_quadrimestre::timestamp with time zone, tb.data_de_nascimento::timestamp with time zone))::integer between 25 and 64
      or date_part('year'::text, age(tb.data_fim_quadrimestre::timestamp with time zone, tb.data_de_nascimento::timestamp with time zone))::integer between 25 and 64
      ),
@@ -173,7 +177,14 @@ SELECT tb1.chave_mulher,
            WHEN date_part('month'::text, tb2.data_ultimo_exame) >= 5::double precision AND date_part('month'::text, tb2.data_ultimo_exame) <= 8::double precision THEN concat(date_part('year'::text, tb2.data_ultimo_exame), '.Q2')
            WHEN date_part('month'::text, tb2.data_ultimo_exame) >= 9::double precision AND date_part('month'::text, tb2.data_ultimo_exame) <= 12::double precision THEN concat(date_part('year'::text, tb2.data_ultimo_exame), '.Q3')
 		   else 'exame nunca realizado'
-       END AS quadrimestre_realizou_ultimo_exame
+       END AS quadrimestre_realizou_ultimo_exame,
+       (tb2.data_ultimo_exame + 1095) as data_limite_proximo_exame,
+       (tb2.data_ultimo_exame + 1095) - current_date as dias_para_proximo_exame,
+       case 
+       	when (tb2.data_ultimo_exame + 1095) - current_date <= 0 then 'exame_vencido'
+       	when (tb2.data_ultimo_exame + 1095) - current_date > 0 then 'exame_em_dia'
+       	else 'exame_nunca_realizado'
+       end as status_exame_mulher
 FROM selecao_mulheres_denominador tb1
 LEFT JOIN realizacao_exames tb2 ON tb1.chave_mulher = tb2.chave_mulher
 AND tb1.paciente_documento_cns = tb2.paciente_documento_cns
