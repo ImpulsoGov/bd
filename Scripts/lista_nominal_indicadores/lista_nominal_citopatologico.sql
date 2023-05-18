@@ -26,8 +26,10 @@ selecao_mulheres_denominador as (
 	     dc.chave_mulher,
 	     dc.paciente_nome,
 	     dc.data_de_nascimento,
-	     (array_agg(dc.paciente_documento_cpf) FILTER (WHERE dc.paciente_documento_cpf IS NOT NULL) OVER (PARTITION BY dc.chave_mulher ORDER BY dc.id_cidadao_pec DESC))[1] AS paciente_documento_cpf,
-	     (array_agg(dc.paciente_documento_cns) FILTER (WHERE dc.paciente_documento_cns IS NOT NULL) OVER (PARTITION BY dc.chave_mulher ORDER BY dc.id_cidadao_pec DESC))[1] AS paciente_documento_cns,
+	     (array_agg(dc.paciente_documento_cpf) FILTER (WHERE dc.paciente_documento_cpf IS NOT null) OVER (PARTITION BY dc.chave_mulher ORDER BY dc.id_cidadao_pec DESC))[1] AS paciente_documento_cpf,
+		 --(array_agg(dc.paciente_documento_cpf) FILTER (WHERE dc.paciente_documento_cpf IS NOT NULL OR dc.paciente_documento_cpf IS NULL) OVER (PARTITION BY dc.chave_mulher ORDER BY dc.id_cidadao_pec DESC))[1] AS paciente_documento_cpf,
+	     (array_agg(dc.paciente_documento_cns) FILTER (WHERE dc.paciente_documento_cns IS NOT null) OVER (PARTITION BY dc.chave_mulher ORDER BY dc.id_cidadao_pec DESC))[1] AS paciente_documento_cns,
+		 --(array_agg(dc.paciente_documento_cns) FILTER (WHERE dc.paciente_documento_cns IS NOT NULL OR dc.paciente_documento_cns IS NULL) OVER (PARTITION BY dc.chave_mulher ORDER BY dc.id_cidadao_pec DESC))[1] AS paciente_documento_cns,
 	     dc.paciente_idade_atual,
 	     date_part('year', age(dc.data_fim_quadrimestre::timestamp with time zone, dc.data_de_nascimento::timestamp with time zone))::integer AS idade_fim_quadrimestre 
 	 FROM dados_cidadao_pec dc
@@ -35,8 +37,6 @@ selecao_mulheres_denominador as (
 ),
 historico_exames_citopatologico as (
 SELECT 
-	   tfcp.nu_cns AS paciente_documento_cns,
-       tfcp.nu_cpf_cidadao AS paciente_documento_cpf,
        replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento,' ','') AS chave_mulher,
        tempoprocedimento.dt_registro AS data_realizacao_exame,
        tfpap.co_seq_fat_proced_atend_proced as id_registro,
@@ -77,7 +77,6 @@ selecao_ultimo_exame AS (
 	) select * from base where ultimo_exame_realizado is true 
 ),
 cadastro_individual_recente AS (
--- Dados do cadastro individual (dados para vinculação de equipe e ACS da mulher)
 	WITH base AS (
 		SELECT 
 			mu.chave_mulher,
@@ -106,7 +105,6 @@ cadastro_individual_recente AS (
 	SELECT * FROM base WHERE ultimo_cadastro_individual IS true
 ), 
 visita_domiciliar_recente AS (
--- Dados das visitas domiciliares realizadas pelos ACS (dados para vinculação de ACS da mulher)
 	WITH base AS (
 		SELECT 
 			mu.chave_mulher,
@@ -127,9 +125,8 @@ visita_domiciliar_recente AS (
 	SELECT * FROM base WHERE ultima_visita_domiciliar IS TRUE 
 ), 
 cadastro_domiciliar_recente AS (
--- Dados do cadastro da família e do domicílio da mulher (dados para vinculação de ACS da mulher)
 	WITH base AS (
-		SELECT 
+		SELECT
 			mu.chave_mulher,
 			tdt.dt_registro AS data_cadastro_dom_familia,
 			caddomiciliarfamilia.nu_micro_area AS micro_area_domicilio,
@@ -139,132 +136,132 @@ cadastro_domiciliar_recente AS (
 			eq.no_equipe AS equipe_cad_dom_familia,
 			acs.no_profissional AS acs_cad_dom_familia,
 			NULLIF(concat(cadomiciliar.no_logradouro, ', ', cadomiciliar.nu_num_logradouro), ', '::text) AS gestante_endereco,
-			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tdt.dt_registro DESC) = 1  AS ultimo_cadastro_domiciliar_familia
+			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_domiciliar_familia
 		FROM esus_3169356_tresmarias_mg_20230314.tb_fat_cad_dom_familia caddomiciliarfamilia
-		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cad_domiciliar cadomiciliar 
+		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cad_domiciliar cadomiciliar
 			ON cadomiciliar.co_seq_fat_cad_domiciliar = caddomiciliarfamilia.co_fat_cad_domiciliar
 		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcpec
-			ON tfcpec.co_seq_fat_cidadao_pec = caddomiciliarfamilia.co_fat_cidadao_pec 
+			ON tfcpec.co_seq_fat_cidadao_pec = caddomiciliarfamilia.co_fat_cidadao_pec
 		JOIN selecao_mulheres_denominador mu
-			ON mu.chave_mulher = replace(tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento,' ','')
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+			ON mu.chave_mulher = replace(tfcpec.no_cidadao::text || tfcpec.co_dim_tempo_nascimento, ' ', '')
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt
 			ON tdt.co_seq_dim_tempo = caddomiciliarfamilia.co_dim_tempo
 		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
 			ON eq.co_seq_dim_equipe = caddomiciliarfamilia.co_dim_equipe
 		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = caddomiciliarfamilia.co_dim_profissional
 		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns
-			ON uns.co_seq_dim_unidade_saude = caddomiciliarfamilia.co_dim_unidade_saude  		
-		)
+			ON uns.co_seq_dim_unidade_saude = caddomiciliarfamilia.co_dim_unidade_saude
+	)
 	SELECT * FROM base WHERE ultimo_cadastro_domiciliar_familia IS true
+),
+infos_mulheres_atendimento_individual_recente AS (
+	SELECT
+		b.chave_mulher,
+		cir.data_cadastro_individual AS data_ultimo_cadastro_individual,
+		cir.micro_area_cad_individual,
+		cir.cnes_estabelecimento_cad_individual,
+		cir.estabelecimento_cad_individual,
+		cir.ine_equipe_cad_individual,
+		cir.equipe_cad_individual,
+		cir.acs_cad_individual,
+		vdr.data_visita_acs AS data_ultima_visita_acs,
+		vdr.acs_visita_domiciliar,
+		cdr.data_cadastro_dom_familia AS data_ultimo_cadastro_dom_familia,
+		cdr.micro_area_domicilio,
+		cdr.cnes_estabelecimento_cad_dom_familia,
+		cdr.estabelecimento_cad_dom_familia,
+		cdr.ine_equipe_cad_dom_familia,
+		cdr.equipe_cad_dom_familia,
+		cdr.acs_cad_dom_familia
+	FROM selecao_mulheres_denominador b
+	LEFT JOIN cadastro_individual_recente cir
+		ON cir.chave_mulher = b.chave_mulher
+	LEFT JOIN visita_domiciliar_recente vdr
+		ON vdr.chave_mulher = b.chave_mulher
+	LEFT JOIN cadastro_domiciliar_recente cdr
+		ON cdr.chave_mulher = b.chave_mulher
+	GROUP BY
+		b.chave_mulher,
+		cir.data_cadastro_individual,
+		cir.micro_area_cad_individual,
+		cir.cnes_estabelecimento_cad_individual,
+		cir.estabelecimento_cad_individual,
+		cir.ine_equipe_cad_individual,
+		cir.equipe_cad_individual,
+		cir.acs_cad_individual,
+		vdr.data_visita_acs,
+		vdr.acs_visita_domiciliar,
+		cdr.data_cadastro_dom_familia,
+		cdr.micro_area_domicilio,
+		cdr.cnes_estabelecimento_cad_dom_familia,
+		cdr.estabelecimento_cad_dom_familia,
+		cdr.ine_equipe_cad_dom_familia,
+		cdr.equipe_cad_dom_familia,
+		cdr.acs_cad_dom_familia
 ), 
-infos_mulheres_atendimento_individual_recente as (
-		 SELECT b.chave_mulher,
-				b.paciente_nome,
-				--b.data_de_nascimento,
-				--b.paciente_documento_cpf,
-				--b.paciente_documento_cns,
-				--b.paciente_telefone,
-				cir.data_cadastro_individual AS data_ultimo_cadastro_individual,
-				cir.micro_area_cad_individual,
-				cir.cnes_estabelecimento_cad_individual,
-				cir.estabelecimento_cad_individual,
-				cir.ine_equipe_cad_individual,
-				cir.equipe_cad_individual,
-				cir.acs_cad_individual,
-				vdr.data_visita_acs AS data_ultima_visita_acs,
-				vdr.acs_visita_domiciliar,
-				cdr.data_cadastro_dom_familia AS data_ultimo_cadastro_dom_familia,
-				cdr.micro_area_domicilio,
-				cdr.cnes_estabelecimento_cad_dom_familia,
-				cdr.estabelecimento_cad_dom_familia,
-				cdr.ine_equipe_cad_dom_familia,
-				cdr.equipe_cad_dom_familia,
-				cdr.acs_cad_dom_familia	
-					FROM selecao_mulheres_denominador b 
-					LEFT JOIN cadastro_individual_recente cir 
-						ON cir.chave_mulher = b.chave_mulher
-					LEFT JOIN visita_domiciliar_recente vdr 
-						ON vdr.chave_mulher = b.chave_mulher
-					LEFT JOIN cadastro_domiciliar_recente cdr 
-						ON cdr.chave_mulher = b.chave_mulher
-					group by b.paciente_nome,
-				--b.data_de_nascimento,
-				--b.paciente_documento_cpf,
-				--b.paciente_documento_cns,
-				--b.paciente_telefone,
-				b.chave_mulher,
-				cir.data_cadastro_individual,
-				cir.micro_area_cad_individual,
-				cir.cnes_estabelecimento_cad_individual,
-				cir.estabelecimento_cad_individual,
-				cir.ine_equipe_cad_individual,
-				cir.equipe_cad_individual,
-				cir.acs_cad_individual,
-				vdr.data_visita_acs,
-				vdr.acs_visita_domiciliar,
-				cdr.data_cadastro_dom_familia,
-				cdr.micro_area_domicilio,
-				cdr.cnes_estabelecimento_cad_dom_familia,
-				cdr.estabelecimento_cad_dom_familia,
-				cdr.ine_equipe_cad_dom_familia,
-				cdr.equipe_cad_dom_familia,
-				cdr.acs_cad_dom_familia
-), relatorio_preliminar as (
-		with base_preliminar as (
-		SELECT 
+indicador_regras_de_negocio as (
+		WITH base AS (
+	SELECT
+		CASE
+			WHEN date_part('month', current_date) >= 1::double precision AND date_part('month', current_date) <= 4::double precision THEN concat(date_part('year', current_date), '.Q1')
+			WHEN date_part('month', current_date) >= 5::double precision AND date_part('month', current_date) <= 8::double precision THEN concat(date_part('year', current_date), '.Q2')
+			WHEN date_part('month', current_date) >= 9::double precision AND date_part('month', current_date) <= 12::double precision THEN concat(date_part('year', current_date), '.Q3')
+			ELSE NULL::text
+		END AS quadrimestre_atual,
+		replace(tb1.chave_mulher, ' ', '') AS chave_mulher,
+		tb1.paciente_nome,
+		tb1.paciente_documento_cpf,
+		tb1.paciente_idade_atual,
+		tb1.idade_fim_quadrimestre,
+		tb1.data_de_nascimento,
+		tb2.data_ultimo_exame,
+		tb2.contagem_exames,
+		CASE
+			WHEN (CURRENT_DATE - tb2.data_ultimo_exame) <= 1095 THEN TRUE
+			ELSE FALSE
+		END AS realizou_exame_ultimos_36_meses,
+		(tb2.data_ultimo_exame + 1095) AS ultimo_exame_mais_36_meses,
+		CASE
+			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) < 0 THEN 'exame_vencido'
+			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) BETWEEN 0 AND 30 THEN 'exame_proximo_a_vencer'
+			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) > 0 THEN 'exame_em_dia'
+			ELSE 'exame_nunca_realizado'
+		END AS status_exame,
+		CASE
+			WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q1')
+			WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q2')
+			WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 9::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 12::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q3')
+			ELSE 'exame_nunca_realizado'
+		END AS quadrimestre_a_realizar_proximo_exame,
+		CASE
+			WHEN tb2.data_ultimo_exame IS NULL THEN (
 				CASE
-		            WHEN date_part('month'::text, current_date) >= 1::double precision AND date_part('month'::text, current_date) <= 4::double precision THEN concat(date_part('year'::text, current_date), '.Q1')
-		            WHEN date_part('month'::text, current_date) >= 5::double precision AND date_part('month'::text, current_date) <= 8::double precision THEN concat(date_part('year'::text, current_date), '.Q2')
-		            WHEN date_part('month'::text, current_date) >= 9::double precision AND date_part('month'::text, current_date) <= 12::double precision THEN concat(date_part('year'::text, current_date), '.Q3')
-		            ELSE NULL::text
-		        END AS quadrimestre_atual,
-			   replace (tb1.chave_mulher, ' ','') as chave_mulher,
-		       tb1.paciente_nome,
-		       --tb1.paciente_documento_cns,
-		       tb1.paciente_documento_cpf,
-		       tb1.paciente_idade_atual,
-		       tb1.idade_fim_quadrimestre,
-		       tb1.data_de_nascimento,
-		       tb2.data_ultimo_exame,
-		       tb2.contagem_exames,
-		       CASE
-		           WHEN (CURRENT_DATE - tb2.data_ultimo_exame) <= 1095 THEN TRUE
-		           ELSE FALSE
-		       END AS realizou_exame_ultimos_36_meses,
-		       CASE
-		           WHEN date_part('month'::text, tb2.data_ultimo_exame) >= 1::double precision AND date_part('month'::text, tb2.data_ultimo_exame) <= 4::double precision THEN concat(date_part('year'::text, tb2.data_ultimo_exame), '.Q1')
-		           WHEN date_part('month'::text, tb2.data_ultimo_exame) >= 5::double precision AND date_part('month'::text, tb2.data_ultimo_exame) <= 8::double precision THEN concat(date_part('year'::text, tb2.data_ultimo_exame), '.Q2')
-		           WHEN date_part('month'::text, tb2.data_ultimo_exame) >= 9::double precision AND date_part('month'::text, tb2.data_ultimo_exame) <= 12::double precision THEN concat(date_part('year'::text, tb2.data_ultimo_exame), '.Q3')
-				   else 'exame nunca realizado'
-		       END AS quadrimestre_realizou_ultimo_exame,
-		       (tb2.data_ultimo_exame + 1095) as ultimo_exame_mais_36_meses,
-		       CASE
-		           WHEN date_part('month'::text, (tb2.data_ultimo_exame + 1095)) >= 1::double precision AND date_part('month'::text, (tb2.data_ultimo_exame + 1095)) <= 4::double precision THEN concat(date_part('year'::text, (tb2.data_ultimo_exame + 1095)), '.Q1')
-		           WHEN date_part('month'::text, (tb2.data_ultimo_exame + 1095)) >= 5::double precision AND date_part('month'::text, (tb2.data_ultimo_exame + 1095)) <= 8::double precision THEN concat(date_part('year'::text, (tb2.data_ultimo_exame + 1095)), '.Q2')
-		           WHEN date_part('month'::text, (tb2.data_ultimo_exame + 1095)) >= 9::double precision AND date_part('month'::text, (tb2.data_ultimo_exame + 1095)) <= 12::double precision THEN concat(date_part('year'::text, (tb2.data_ultimo_exame + 1095)), '.Q3')
-				   else 'exame nunca realizado'
-		       END AS quadrimestre_a_realizar_proximo_exame,
-		       CASE
-		           WHEN date_part('month'::text, (tb2.data_ultimo_exame + 1095)) >= 1::double precision AND date_part('month'::text, (tb2.data_ultimo_exame + 1095)) <= 4::double precision THEN concat(date_part('year'::text, (tb2.data_ultimo_exame + 1095)), '-04-30')
-		           WHEN date_part('month'::text, (tb2.data_ultimo_exame + 1095)) >= 5::double precision AND date_part('month'::text, (tb2.data_ultimo_exame + 1095)) <= 8::double precision THEN concat(date_part('year'::text, (tb2.data_ultimo_exame + 1095)), '-08-31')
-		           WHEN date_part('month'::text, (tb2.data_ultimo_exame + 1095)) >= 9::double precision AND date_part('month'::text, (tb2.data_ultimo_exame + 1095)) <= 12::double precision THEN concat(date_part('year'::text, (tb2.data_ultimo_exame + 1095)), '-12-31')
-				   --else 'exame nunca realizado'
-		       END AS data_limite_a_realizar_proximo_exame,
-		       (tb2.data_ultimo_exame + 1095) - current_date as dias_para_proximo_exame,
-		       tb2.cnes_estabelecimento_exame,
-			   tb2.nome_estabelecimento_exame,
-			     tb2.ine_equipe_exame,
-			     tb2.nome_equipe_exame,
-			     tb2.cns_profissional_exame,
-			     tb2.nome_profissional_exame
+					WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat(date_part('year', CURRENT_DATE::date), '-04-30')::date
+					WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE::date), '-08-31')::date
+					WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN concat(date_part('year', CURRENT_DATE::date), '-12-31')::date
+				END
+			)
+			ELSE (tb2.data_ultimo_exame + INTERVAL '1095 days')::date
+		END AS data_limite_a_realizar_proximo_exame,
+		CASE
+			WHEN tb1.paciente_idade_atual BETWEEN 60 AND 64 THEN 'sim_60_64'
+			WHEN tb1.paciente_idade_atual BETWEEN 50 AND 59 THEN 'sim_50_59'
+			WHEN tb1.paciente_idade_atual BETWEEN 40 AND 49 THEN 'sim_40_49'
+			ELSE 'nao'
+		END AS faixa_etarea_prioritaria,
+		tb2.cnes_estabelecimento_exame,
+		tb2.nome_estabelecimento_exame,
+		tb2.ine_equipe_exame,
+		tb2.nome_equipe_exame,
+		tb2.cns_profissional_exame,
+		tb2.nome_profissional_exame
 		FROM selecao_mulheres_denominador tb1
 		LEFT JOIN selecao_ultimo_exame tb2 ON tb1.chave_mulher = tb2.chave_mulher
-		GROUP by 
+		GROUP BY 
 				 quadrimestre_atual,
 				 tb1.chave_mulher,
 		         tb1.paciente_nome,
-		         --tb1.paciente_documento_cns,
 		         tb1.paciente_documento_cpf,
 		         tb1.paciente_idade_atual,
 		       	 tb1.idade_fim_quadrimestre,
@@ -277,36 +274,30 @@ infos_mulheres_atendimento_individual_recente as (
 			     tb2.nome_equipe_exame,
 			     tb2.cns_profissional_exame,
 			     tb2.nome_profissional_exame
-		) select 
-				bp.quadrimestre_atual,
-				bp.chave_mulher, 
-				bp.paciente_nome,
-				--bp.paciente_documento_cns,
-				bp.paciente_documento_cpf,
-				bp.paciente_idade_atual,
-				bp.idade_fim_quadrimestre,
-				bp.data_de_nascimento,
-				bp.data_ultimo_exame,
-				bp.contagem_exames,
-				bp.realizou_exame_ultimos_36_meses,
-				bp.ultimo_exame_mais_36_meses,
-				bp.quadrimestre_a_realizar_proximo_exame,
-				bp.data_limite_a_realizar_proximo_exame,
-				bp.dias_para_proximo_exame,
-				(bp.data_limite_a_realizar_proximo_exame::date - current_date) as dias_para_data_limite_fim_quadrimestre,
-				case 
-		       		when (bp.data_limite_a_realizar_proximo_exame::date - current_date) <= 0 then 'exame_vencido'
-		       		when (bp.data_limite_a_realizar_proximo_exame::date - current_date) > 0 then 'exame_em_dia'
-		       		else 'exame_nunca_realizado'
-		       end as status_exame_mulher,
-		       	 bp.cnes_estabelecimento_exame,
-			   	 bp.nome_estabelecimento_exame,
-			     bp.ine_equipe_exame,
-			     bp.nome_equipe_exame,
-			     bp.cns_profissional_exame,
-			     bp.nome_profissional_exame
-		 		from base_preliminar bp ) 
-		 select * from relatorio_preliminar
-
+		) SELECT 
+				b.quadrimestre_atual,
+				b.chave_mulher, 
+				b.paciente_nome,
+				b.paciente_documento_cpf,
+				b.data_de_nascimento,
+				b.paciente_idade_atual,
+				b.idade_fim_quadrimestre,
+				b.data_ultimo_exame,
+				b.contagem_exames,
+				b.realizou_exame_ultimos_36_meses,
+				b.ultimo_exame_mais_36_meses,
+				b.quadrimestre_a_realizar_proximo_exame,
+				b.data_limite_a_realizar_proximo_exame,
+				(b.data_limite_a_realizar_proximo_exame::date - current_date) as dias_para_data_limite_proximo_exame,
+				b.status_exame,
+				b.faixa_etarea_prioritaria,
+		       	COALESCE(b.cnes_estabelecimento_exame,'-') as cnes_estabelecimento_exame,
+			   	UPPER(COALESCE(b.nome_estabelecimento_exame, 'Não informado')) AS nome_estabelecimento,
+				COALESCE(b.ine_equipe_exame,'-') as ine_equipe_exame,
+			    UPPER(COALESCE(b.nome_equipe_exame, 'Não informado')) AS nome_equipe_exame,
+			    COALESCE(b.cns_profissional_exame, '-') as cns_profissional_exame,
+			    UPPER(COALESCE(b.nome_profissional_exame, 'Não informado')) as nome_profissional_exame
+		 		FROM base b) 
+		 select * from indicador_regras_de_negocio 
  
  
