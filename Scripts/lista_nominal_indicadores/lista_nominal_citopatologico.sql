@@ -4,10 +4,11 @@ WITH dados_cidadao_pec AS (
         replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') AS chave_mulher,
         replace(tfcp.no_cidadao, '  ', ' ') AS paciente_nome,
         tempocidadaopec.dt_registro AS data_de_nascimento,
-        tfcp.nu_cpf_cidadao AS paciente_documento_cpf,
-        tfcp.nu_cns AS paciente_documento_cns,
+        (array_agg(tfcp.nu_cpf_cidadao) FILTER (WHERE tfcp.nu_cpf_cidadao IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_documento_cpf,
+	    (array_agg(tfcp.nu_cns) FILTER (WHERE tfcp.nu_cns IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_documento_cns,
+	    (array_agg(tfcp.nu_telefone_celular) FILTER (WHERE tfcp.nu_telefone_celular IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_telefone,
         tds.ds_sexo AS paciente_sexo,
-        tfcp.nu_telefone_celular AS paciente_telefone,
+       -- tfcp.nu_telefone_celular AS paciente_telefone,
         date_part('year', age(CURRENT_DATE::timestamp with time zone, tempocidadaopec.dt_registro::timestamp with time zone))::integer AS paciente_idade_atual,
         CASE
             WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat(date_part('year', CURRENT_DATE ::date), '-04-30')
@@ -26,14 +27,18 @@ selecao_mulheres_denominador as (
 	     dc.chave_mulher,
 	     dc.paciente_nome,
 	     dc.data_de_nascimento,
-	     (array_agg(dc.paciente_documento_cpf) FILTER (WHERE dc.paciente_documento_cpf IS NOT null) OVER (PARTITION BY dc.chave_mulher ORDER BY dc.id_cidadao_pec DESC))[1] AS paciente_documento_cpf,
-		 --(array_agg(dc.paciente_documento_cpf) FILTER (WHERE dc.paciente_documento_cpf IS NOT NULL OR dc.paciente_documento_cpf IS NULL) OVER (PARTITION BY dc.chave_mulher ORDER BY dc.id_cidadao_pec DESC))[1] AS paciente_documento_cpf,
-	     (array_agg(dc.paciente_documento_cns) FILTER (WHERE dc.paciente_documento_cns IS NOT null) OVER (PARTITION BY dc.chave_mulher ORDER BY dc.id_cidadao_pec DESC))[1] AS paciente_documento_cns,
-		 --(array_agg(dc.paciente_documento_cns) FILTER (WHERE dc.paciente_documento_cns IS NOT NULL OR dc.paciente_documento_cns IS NULL) OVER (PARTITION BY dc.chave_mulher ORDER BY dc.id_cidadao_pec DESC))[1] AS paciente_documento_cns,
+	     dc.paciente_documento_cpf,
 	     dc.paciente_idade_atual,
 	     date_part('year', age(dc.data_fim_quadrimestre::timestamp with time zone, dc.data_de_nascimento::timestamp with time zone))::integer AS idade_fim_quadrimestre 
 	 FROM dados_cidadao_pec dc
 	 WHERE date_part('year', age(dc.data_fim_quadrimestre::timestamp with time zone, dc.data_de_nascimento::timestamp with time zone))::integer BETWEEN 25 AND 64
+	 group by 
+	 	 dc.chave_mulher,
+	     dc.paciente_nome,
+	     dc.data_de_nascimento,
+	     dc.paciente_documento_cpf,
+	     dc.paciente_idade_atual,
+	     dc.data_fim_quadrimestre
 ),
 historico_exames_citopatologico as (
 SELECT 
@@ -299,5 +304,4 @@ indicador_regras_de_negocio as (
 			    UPPER(COALESCE(b.nome_profissional_exame, 'Não informado')) as nome_profissional_exame
 		 		FROM base b) 
 		 select * from indicador_regras_de_negocio 
- 
  
