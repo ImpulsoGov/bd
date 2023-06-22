@@ -63,9 +63,11 @@ SELECT
    join esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude tdus on tfpap.co_dim_unidade_saude = tdus.co_seq_dim_unidade_saude
    join esus_3169356_tresmarias_mg_20230314.tb_dim_equipe tde on tfpap.co_dim_equipe = tde.co_seq_dim_equipe
    join esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdp on tfpap.co_dim_profissional = tdp.co_seq_dim_profissional
+   JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfpap.co_dim_sexo
    WHERE (procedimentos.co_proced::text = ANY (ARRAY['0201020033'::CHARACTER varying::text,'ABPG010'::CHARACTER varying::text]))
      AND (cbo.nu_cbo::text ~~ ANY (ARRAY['%2235%'::text, '%2251%'::text, '%2252%'::text, '%2253%'::text, '%2231%'::text]))
      AND tfcp.st_faleceu <> 1
+     and tds.ds_sexo = 'Feminino'
 ), 
 selecao_ultimo_exame AS (
 	with base as (
@@ -112,6 +114,39 @@ cadastro_individual_recente AS (
 		)
 	SELECT * FROM base WHERE ultimo_cadastro_individual IS true
 ), 
+atendimento_mais_recente AS (
+-- Filtro de atendimento individual mais recente
+with base as (	
+SELECT 
+			tfai.co_seq_fat_atd_ind::TEXT AS id_registro,
+			tdt.dt_registro AS data_registro,
+			mu.chave_mulher,
+			tfcp.nu_telefone_celular AS paciente_telefone,
+			tdprof.nu_cns AS profissional_cns_atendimento_recente,
+			tdprof.no_profissional AS profissional_atendimento_recente,
+			uns.nu_cnes AS estabelecimento_cnes_atendimento_recente,
+			uns.no_unidade_saude AS estabelecimento_atendimento_recente,
+			eq.nu_ine AS ine_equipe_atendimento_recente,
+			eq.no_equipe AS equipe_atendimento_recente,
+			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tfai.co_seq_fat_atd_ind DESC) = 1 AS ultimo_atendimento_individual
+	    FROM esus_3169356_tresmarias_mg_20230314.tb_fat_atendimento_individual tfai
+	    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+	    	ON tfai.co_dim_tempo = tdt.co_seq_dim_tempo
+	    LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdprof
+			ON tdprof.co_seq_dim_profissional = tfai.co_dim_profissional_1
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+			ON eq.co_seq_dim_equipe = tfai.co_dim_equipe_1
+		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns 
+			ON uns.co_seq_dim_unidade_saude = tfai.co_dim_unidade_saude_1
+	    JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp 
+	    	ON tfcp.co_seq_fat_cidadao_pec = tfai.co_fat_cidadao_pec
+	    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tempocidadaopec 
+	    	ON tempocidadaopec.co_seq_dim_tempo = tfcp.co_dim_tempo_nascimento
+	  	JOIN selecao_mulheres_denominador mu 
+			ON mu.chave_mulher = replace(tfcp.no_cidadao::text||tfcp.co_dim_tempo_nascimento,' ','')
+		) 	
+		SELECT * FROM base WHERE ultimo_atendimento_individual IS true
+),
 visita_domiciliar_recente AS (
 	WITH base AS (
 		SELECT 
@@ -166,22 +201,30 @@ cadastro_domiciliar_recente AS (
 infos_mulheres_atendimento_individual_recente AS (
 	SELECT
 		b.chave_mulher,
-		cir.data_cadastro_individual AS data_ultimo_cadastro_individual,
-		COALESCE(cir.micro_area_cad_individual::text, '-'::text) as micro_area_cad_individual,
-		COALESCE(cir.cnes_estabelecimento_cad_individual::text, '-'::text) as cnes_estabelecimento_cad_individual,
-		COALESCE(cir.estabelecimento_cad_individual::text, 'Não informado'::text) as estabelecimento_cad_individual ,
-		COALESCE(cir.ine_equipe_cad_individual::text, '-'::text) as ine_equipe_cad_individual,
-		COALESCE(cir.equipe_cad_individual::text, 'SEM EQUIPE'::text) as equipe_cad_individual,
-		COALESCE(cir.acs_cad_individual::text, 'Não informado'::text) as acs_cad_individual,
-		vdr.data_visita_acs AS data_ultima_visita_acs,
-		COALESCE(vdr.acs_visita_domiciliar::text, 'Não informado'::text) as acs_visita_domiciliar,
-		cdr.data_cadastro_dom_familia AS data_ultimo_cadastro_dom_familia,
-		COALESCE(cdr.micro_area_domicilio::text, '-'::text) as micro_area_domicilio,
-		COALESCE(cdr.cnes_estabelecimento_cad_dom_familia::text, '-'::text) as cnes_estabelecimento_cad_dom_familia,
-		COALESCE(cdr.estabelecimento_cad_dom_familia::text, 'Não informado'::text) as estabelecimento_cad_dom_familia ,
-		COALESCE(cdr.ine_equipe_cad_dom_familia::text, '-'::text) as ine_equipe_cad_dom_familia,
-		COALESCE(cdr.equipe_cad_dom_familia::text, 'SEM EQUIPE'::text) as equipe_cad_dom_familia,
-		COALESCE(cdr.acs_cad_dom_familia::text, 'Não informado'::text) as acs_cad_dom_familia
+		cir.data_cadastro_individual,
+		cir.micro_area_cad_individual,
+		cir.cnes_estabelecimento_cad_individual,
+		cir.estabelecimento_cad_individual,
+		cir.ine_equipe_cad_individual,
+		cir.equipe_cad_individual,
+		cir.acs_cad_individual,
+		ar.profissional_cns_atendimento_recente,
+		ar.profissional_atendimento_recente,
+		ar.estabelecimento_cnes_atendimento_recente,
+		ar.estabelecimento_atendimento_recente,
+		ar.ine_equipe_atendimento_recente,
+		ar.equipe_atendimento_recente,
+		ar.data_registro as data_atendimento_recente,
+		vdr.data_visita_acs,
+		vdr.acs_visita_domiciliar,
+		cdr.data_cadastro_dom_familia,
+		cdr.micro_area_domicilio,
+		cdr.cnes_estabelecimento_cad_dom_familia,
+		cdr.estabelecimento_cad_dom_familia,
+		cdr.ine_equipe_cad_dom_familia,
+		cdr.equipe_cad_dom_familia,
+		cdr.acs_cad_dom_familia,
+		cdr.paciente_endereco
 	FROM selecao_mulheres_denominador b
 	LEFT JOIN cadastro_individual_recente cir
 		ON cir.chave_mulher = b.chave_mulher
@@ -189,6 +232,8 @@ infos_mulheres_atendimento_individual_recente AS (
 		ON vdr.chave_mulher = b.chave_mulher
 	LEFT JOIN cadastro_domiciliar_recente cdr
 		ON cdr.chave_mulher = b.chave_mulher
+	left join atendimento_mais_recente ar
+		on ar.chave_mulher = b.chave_mulher
 	GROUP BY
 		b.chave_mulher,
 		cir.data_cadastro_individual,
@@ -198,6 +243,13 @@ infos_mulheres_atendimento_individual_recente AS (
 		cir.ine_equipe_cad_individual,
 		cir.equipe_cad_individual,
 		cir.acs_cad_individual,
+		ar.profissional_cns_atendimento_recente,
+		ar.profissional_atendimento_recente,
+		ar.estabelecimento_cnes_atendimento_recente,
+		ar.estabelecimento_atendimento_recente,
+		ar.ine_equipe_atendimento_recente,
+		ar.equipe_atendimento_recente,
+		ar.data_registro,
 		vdr.data_visita_acs,
 		vdr.acs_visita_domiciliar,
 		cdr.data_cadastro_dom_familia,
@@ -206,10 +258,10 @@ infos_mulheres_atendimento_individual_recente AS (
 		cdr.estabelecimento_cad_dom_familia,
 		cdr.ine_equipe_cad_dom_familia,
 		cdr.equipe_cad_dom_familia,
-		cdr.acs_cad_dom_familia
+		cdr.acs_cad_dom_familia,
+		cdr.paciente_endereco
 ), 
 indicador_regras_de_negocio as (
-		WITH base AS (
 	SELECT
 		CASE
 			WHEN date_part('month', current_date) >= 1::double precision AND date_part('month', current_date) <= 4::double precision THEN concat(date_part('year', current_date), '.Q1')
@@ -225,18 +277,11 @@ indicador_regras_de_negocio as (
 		tb1.idade_fim_quadrimestre,
 		tb1.data_de_nascimento,
 		tb2.data_ultimo_exame,
-		tb2.contagem_exames,
 		CASE
 			WHEN (CURRENT_DATE - tb2.data_ultimo_exame) <= 1095 THEN TRUE
 			ELSE FALSE
 		END AS realizou_exame_ultimos_36_meses,
 		(tb2.data_ultimo_exame + 1095) AS ultimo_exame_mais_36_meses,
-		CASE
-			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) < 0 THEN 'exame_vencido'
-			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) BETWEEN 0 AND 30 THEN 'exame_proximo_a_vencer'
-			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) > 0 THEN 'exame_em_dia'
-			ELSE 'exame_nunca_realizado'
-		END AS status_exame,
 		CASE
 			WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q1')
 			WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q2')
@@ -244,7 +289,7 @@ indicador_regras_de_negocio as (
 			ELSE 'exame_nunca_realizado'
 		END AS quadrimestre_a_realizar_proximo_exame,
 		CASE
-			WHEN tb2.data_ultimo_exame IS NULL THEN (
+			WHEN tb2.data_ultimo_exame IS NULL or (tb2.data_ultimo_exame + INTERVAL '1095 days') < current_date THEN (
 				CASE
 					WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat(date_part('year', CURRENT_DATE::date), '-04-30')::date
 					WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE::date), '-08-31')::date
@@ -254,17 +299,27 @@ indicador_regras_de_negocio as (
 			ELSE (tb2.data_ultimo_exame + INTERVAL '1095 days')::date
 		END AS data_limite_a_realizar_proximo_exame,
 		CASE
-			WHEN tb1.paciente_idade_atual BETWEEN 60 AND 64 THEN 'sim_60_64'
-			WHEN tb1.paciente_idade_atual BETWEEN 50 AND 59 THEN 'sim_50_59'
-			WHEN tb1.paciente_idade_atual BETWEEN 40 AND 49 THEN 'sim_40_49'
-			ELSE 'nao'
-		END AS faixa_etarea_prioritaria,
-		coalesce(tb2.cnes_estabelecimento_exame,'-') as cnes_estabelecimento_exame,
-		coalesce(tb2.nome_estabelecimento_exame,'-') as nome_estabelecimento_exame,
-		coalesce(tb2.ine_equipe_exame,'-') as ine_equipe_exame,
-		coalesce(tb2.nome_equipe_exame,'-') as nome_equipe_exame,
-		coalesce(tb2.cns_profissional_exame,'-') as cns_profissional_exame,
-		coalesce(tb2.nome_profissional_exame,'-') as nome_profissional_exame
+			WHEN (CASE
+						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q1')
+						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q2')
+						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 9::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 12::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q3')
+				  END ) = ( CASE
+								WHEN date_part('month', current_date) >= 1::double precision AND date_part('month', current_date) <= 4::double precision THEN concat(date_part('year', current_date), '.Q1')
+								WHEN date_part('month', current_date) >= 5::double precision AND date_part('month', current_date) <= 8::double precision THEN concat(date_part('year', current_date), '.Q2')
+								WHEN date_part('month', current_date) >= 9::double precision AND date_part('month', current_date) <= 12::double precision THEN concat(date_part('year', current_date), '.Q3')
+							end 
+			) THEN 'exame_vence_no_quadrimestre_atual'
+			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) < 0 THEN 'exame_vencido'
+			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) > 0 THEN 'exame_em_dia'
+			when tb2.data_ultimo_exame is null then 'exame_nunca_realizado'
+			else 'status'
+		END as status_exame,
+		tb2.cnes_estabelecimento_exame,
+		tb2.nome_estabelecimento_exame,
+		tb2.ine_equipe_exame,
+		tb2.nome_equipe_exame,
+		tb2.cns_profissional_exame,
+		tb2.nome_profissional_exame
 		FROM selecao_mulheres_denominador tb1
 		LEFT JOIN selecao_ultimo_exame tb2 ON tb1.chave_mulher = tb2.chave_mulher
 		GROUP BY 
@@ -277,38 +332,54 @@ indicador_regras_de_negocio as (
 		       	 tb1.idade_fim_quadrimestre,
 		         tb1.data_de_nascimento,
 		         tb2.data_ultimo_exame,
-		         tb2.contagem_exames,
 		         tb2.cnes_estabelecimento_exame,
 			   	 tb2.nome_estabelecimento_exame,
 			     tb2.ine_equipe_exame,
 			     tb2.nome_equipe_exame,
 			     tb2.cns_profissional_exame,
 			     tb2.nome_profissional_exame
-		) SELECT 
-				b.quadrimestre_atual,
-				b.chave_mulher, 
-				b.paciente_nome,
-				b.paciente_documento_cpf,
-				b.paciente_documento_cns,
-				b.data_de_nascimento,
-				b.paciente_idade_atual,
-				b.idade_fim_quadrimestre,
-				b.data_ultimo_exame,
-				b.contagem_exames,
-				b.realizou_exame_ultimos_36_meses,
-				b.ultimo_exame_mais_36_meses,
-				b.quadrimestre_a_realizar_proximo_exame,
-				b.data_limite_a_realizar_proximo_exame,
-				(b.data_limite_a_realizar_proximo_exame::date - current_date) as dias_para_data_limite_proximo_exame,
-				b.status_exame,
-				b.faixa_etarea_prioritaria,
-				b.cnes_estabelecimento_exame,
-				b.nome_estabelecimento_exame,
-				b.ine_equipe_exame,
-				b.nome_equipe_exame,
-				b.cns_profissional_exame,
-				b.nome_profissional_exame
-		 		FROM base b) 
-		 select * from indicador_regras_de_negocio a
-		 left join infos_mulheres_atendimento_individual_recente b on a.chave_mulher = b.chave_mulher
+		),
+lista_citopatologico as (	
+		 select 
+		 irn.quadrimestre_atual,
+		 irn.chave_mulher, 
+		 irn.paciente_nome,
+		 irn.paciente_documento_cns as cidadao_cns,
+		 irn.paciente_documento_cpf as cidadao_cpf,
+		 irn.paciente_idade_atual,
+		 irn.data_de_nascimento as dt_nascimento,
+		 irn.data_ultimo_exame as dt_ultimo_exame,
+		 irn.realizou_exame_ultimos_36_meses,
+		 irn.ultimo_exame_mais_36_meses as data_projetada_proximo_exame,
+		 irn.status_exame,
+		 irn.data_limite_a_realizar_proximo_exame,
+		 irn.cnes_estabelecimento_exame,
+		 irn.nome_estabelecimento_exame,
+		 irn.ine_equipe_exame,
+		 irn. nome_equipe_exame,
+		 irn.nome_profissional_exame,
+		 atr.data_cadastro_individual as dt_ultimo_cadastro,
+		 atr.estabelecimento_cad_individual as estabelecimento_nome_cadastro,
+		 atr.cnes_estabelecimento_cad_individual as estabelecimento_cnes_cadastro,
+		 atr.ine_equipe_cad_individual as equipe_ine_cadastro,
+		 atr.equipe_cad_individual as equipe_nome_cadastro,
+		 atr.acs_cad_individual as acs_nome_cadastro,
+		 atr.data_atendimento_recente as dt_ultimo_atendimento,
+		 atr.estabelecimento_cnes_atendimento_recente as estabelecimento_cnes_ultimo_atendimento,
+		 atr.estabelecimento_atendimento_recente as estabelecimento_nome_ultimo_atendimento,
+		 atr.ine_equipe_atendimento_recente as equipe_ine_ultimo_atendimento,
+		 atr.equipe_atendimento_recente as equipe_nome_ultimo_atendimento,
+		 atr.profissional_atendimento_recente as acs_nome_ultimo_atendimento,
+		 atr.acs_visita_domiciliar as acs_nome_visita
+		 from indicador_regras_de_negocio irn
+		 left join infos_mulheres_atendimento_individual_recente atr on irn.chave_mulher = atr.chave_mulher
+)select *
+from lista_citopatologico
+-- retirar equipes de Palmeiras / nao e municipio parceiro
+WHERE equipe_ine_cadastro NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
+	AND equipe_ine_ultimo_atendimento NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
+		 
+ 
+
+
  
