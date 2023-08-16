@@ -16,9 +16,9 @@ WITH dados_cidadao_pec AS (
             WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN concat(date_part('year', CURRENT_DATE ::date), '-12-31')
             ELSE NULL
         END AS data_fim_quadrimestre
-    FROM esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp
-    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tempocidadaopec ON tfcp.co_dim_tempo_nascimento = tempocidadaopec.co_seq_dim_tempo
-    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfcp.co_dim_sexo
+    FROM tb_fat_cidadao_pec tfcp
+    JOIN tb_dim_tempo tempocidadaopec ON tfcp.co_dim_tempo_nascimento = tempocidadaopec.co_seq_dim_tempo
+    JOIN tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfcp.co_dim_sexo
     WHERE tds.ds_sexo = 'Feminino'
 ),
 selecao_mulheres_denominador as (
@@ -32,7 +32,7 @@ selecao_mulheres_denominador as (
 	     date_part('year', age(dcp.data_fim_quadrimestre::timestamp with time zone, dcp.data_de_nascimento::timestamp with time zone))::integer AS idade_fim_quadrimestre 
 	 FROM dados_cidadao_pec dcp
 	 WHERE date_part('year', age(dcp.data_fim_quadrimestre::timestamp with time zone, dcp.data_de_nascimento::timestamp with time zone))::integer BETWEEN 25 AND 64
-	 	   and dcp.se_faleceu <> 1
+	 	  and coalesce(dcp.se_faleceu,0) != 1
 	 group by 
 	 	 dcp.chave_mulher,
 	     dcp.paciente_nome,
@@ -55,15 +55,15 @@ SELECT
      	COALESCE(tde.no_equipe::text, 'SEM EQUIPE'::text) as nome_equipe_exame,
      	COALESCE(tdp.nu_cns::text, '-'::text) as cns_profissional_exame,
     	COALESCE(tdp.no_profissional::text, 'Não informado'::text) as nome_profissional_exame
-   FROM esus_3169356_tresmarias_mg_20230314.tb_fat_proced_atend_proced tfpap
-   JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tempoprocedimento ON tfpap.co_dim_tempo = tempoprocedimento.co_seq_dim_tempo
-   JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp ON tfpap.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec
-   JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_procedimento procedimentos ON tfpap.co_dim_procedimento = procedimentos.co_seq_dim_procedimento
-   JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cbo cbo ON tfpap.co_dim_cbo = cbo.co_seq_dim_cbo
-   join esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude tdus on tfpap.co_dim_unidade_saude = tdus.co_seq_dim_unidade_saude
-   join esus_3169356_tresmarias_mg_20230314.tb_dim_equipe tde on tfpap.co_dim_equipe = tde.co_seq_dim_equipe
-   join esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdp on tfpap.co_dim_profissional = tdp.co_seq_dim_profissional
-   JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfpap.co_dim_sexo
+   FROM tb_fat_proced_atend_proced tfpap
+   JOIN tb_dim_tempo tempoprocedimento ON tfpap.co_dim_tempo = tempoprocedimento.co_seq_dim_tempo
+   JOIN tb_fat_cidadao_pec tfcp ON tfpap.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec
+   JOIN tb_dim_procedimento procedimentos ON tfpap.co_dim_procedimento = procedimentos.co_seq_dim_procedimento
+   JOIN tb_dim_cbo cbo ON tfpap.co_dim_cbo = cbo.co_seq_dim_cbo
+   join tb_dim_unidade_saude tdus on tfpap.co_dim_unidade_saude = tdus.co_seq_dim_unidade_saude
+   join tb_dim_equipe tde on tfpap.co_dim_equipe = tde.co_seq_dim_equipe
+   join tb_dim_profissional tdp on tfpap.co_dim_profissional = tdp.co_seq_dim_profissional
+   JOIN tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfpap.co_dim_sexo
    WHERE (procedimentos.co_proced::text = ANY (ARRAY['0201020033'::CHARACTER varying::text,'ABPG010'::CHARACTER varying::text]))
      AND (cbo.nu_cbo::text ~~ ANY (ARRAY['%2235%'::text, '%2251%'::text, '%2252%'::text, '%2253%'::text, '%2231%'::text]))
      AND tfcp.st_faleceu <> 1
@@ -98,18 +98,18 @@ cadastro_individual_recente AS (
 			eq.no_equipe AS equipe_cad_individual,
 			acs.no_profissional AS acs_cad_individual,
 			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_individual
-		FROM esus_3169356_tresmarias_mg_20230314.tb_fat_cad_individual tfci
-		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcpec
+		FROM tb_fat_cad_individual tfci
+		JOIN tb_fat_cidadao_pec tfcpec
 			ON tfcpec.co_seq_fat_cidadao_pec = tfci.co_fat_cidadao_pec
 		JOIN selecao_mulheres_denominador mu 
 			ON mu.chave_mulher = replace(tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento,' ','')
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+		LEFT JOIN tb_dim_tempo tdt 
 			ON tdt.co_seq_dim_tempo = tfci.co_dim_tempo
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+		LEFT JOIN tb_dim_equipe eq
 			ON eq.co_seq_dim_equipe = tfci.co_dim_equipe
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional acs
+		LEFT JOIN tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = tfci.co_dim_profissional
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns
+		LEFT JOIN tb_dim_unidade_saude uns
 			ON uns.co_seq_dim_unidade_saude = tfci.co_dim_unidade_saude  
 		)
 	SELECT * FROM base WHERE ultimo_cadastro_individual IS true
@@ -129,18 +129,18 @@ SELECT
 			eq.nu_ine AS ine_equipe_atendimento_recente,
 			eq.no_equipe AS equipe_atendimento_recente,
 			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tfai.co_seq_fat_atd_ind DESC) = 1 AS ultimo_atendimento_individual
-	    FROM esus_3169356_tresmarias_mg_20230314.tb_fat_atendimento_individual tfai
-	    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+	    FROM tb_fat_atendimento_individual tfai
+	    JOIN tb_dim_tempo tdt 
 	    	ON tfai.co_dim_tempo = tdt.co_seq_dim_tempo
-	    LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdprof
+	    LEFT JOIN tb_dim_profissional tdprof
 			ON tdprof.co_seq_dim_profissional = tfai.co_dim_profissional_1
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+		LEFT JOIN tb_dim_equipe eq
 			ON eq.co_seq_dim_equipe = tfai.co_dim_equipe_1
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns 
+		LEFT JOIN tb_dim_unidade_saude uns 
 			ON uns.co_seq_dim_unidade_saude = tfai.co_dim_unidade_saude_1
-	    JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp 
+	    JOIN tb_fat_cidadao_pec tfcp 
 	    	ON tfcp.co_seq_fat_cidadao_pec = tfai.co_fat_cidadao_pec
-	    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tempocidadaopec 
+	    JOIN tb_dim_tempo tempocidadaopec 
 	    	ON tempocidadaopec.co_seq_dim_tempo = tfcp.co_dim_tempo_nascimento
 	  	JOIN selecao_mulheres_denominador mu 
 			ON mu.chave_mulher = replace(tfcp.no_cidadao::text||tfcp.co_dim_tempo_nascimento,' ','')
@@ -155,14 +155,14 @@ visita_domiciliar_recente AS (
 			tdt.dt_registro AS data_visita_acs,
 			acs.no_profissional AS acs_visita_domiciliar,
 			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tdt.dt_registro DESC) = 1 AS ultima_visita_domiciliar
-		FROM esus_3169356_tresmarias_mg_20230314.tb_fat_visita_domiciliar visitadomiciliar
-		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcpec
+		FROM tb_fat_visita_domiciliar visitadomiciliar
+		JOIN tb_fat_cidadao_pec tfcpec
 			ON tfcpec.co_seq_fat_cidadao_pec = visitadomiciliar.co_fat_cidadao_pec 
 		JOIN selecao_mulheres_denominador mu
 			ON mu.chave_mulher = replace(tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento,' ','')
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional acs
+		LEFT JOIN tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = visitadomiciliar.co_dim_profissional
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+		LEFT JOIN tb_dim_tempo tdt 
 			ON tdt.co_seq_dim_tempo = visitadomiciliar.co_dim_tempo
 		)
 	SELECT * FROM base WHERE ultima_visita_domiciliar IS TRUE 
@@ -180,20 +180,20 @@ cadastro_domiciliar_recente AS (
 			acs.no_profissional AS acs_cad_dom_familia,
 			NULLIF(concat(cadomiciliar.no_logradouro, ', ', cadomiciliar.nu_num_logradouro), ', '::text) AS paciente_endereco,
 			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_domiciliar_familia
-		FROM esus_3169356_tresmarias_mg_20230314.tb_fat_cad_dom_familia caddomiciliarfamilia
-		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cad_domiciliar cadomiciliar
+		FROM tb_fat_cad_dom_familia caddomiciliarfamilia
+		JOIN tb_fat_cad_domiciliar cadomiciliar
 			ON cadomiciliar.co_seq_fat_cad_domiciliar = caddomiciliarfamilia.co_fat_cad_domiciliar
-		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcpec
+		JOIN tb_fat_cidadao_pec tfcpec
 			ON tfcpec.co_seq_fat_cidadao_pec = caddomiciliarfamilia.co_fat_cidadao_pec
 		JOIN selecao_mulheres_denominador mu
 			ON mu.chave_mulher = replace(tfcpec.no_cidadao::text || tfcpec.co_dim_tempo_nascimento, ' ', '')
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt
+		LEFT JOIN tb_dim_tempo tdt
 			ON tdt.co_seq_dim_tempo = caddomiciliarfamilia.co_dim_tempo
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+		LEFT JOIN tb_dim_equipe eq
 			ON eq.co_seq_dim_equipe = caddomiciliarfamilia.co_dim_equipe
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional acs
+		LEFT JOIN tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = caddomiciliarfamilia.co_dim_profissional
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns
+		LEFT JOIN tb_dim_unidade_saude uns
 			ON uns.co_seq_dim_unidade_saude = caddomiciliarfamilia.co_dim_unidade_saude
 	)
 	SELECT * FROM base WHERE ultimo_cadastro_domiciliar_familia IS true
@@ -277,8 +277,9 @@ indicador_regras_de_negocio as (
 		tb1.idade_fim_quadrimestre,
 		tb1.data_de_nascimento,
 		tb2.data_ultimo_exame,
+		date_part('year', age(tb2.data_ultimo_exame ::timestamp with time zone, tb1.data_de_nascimento::timestamp with time zone))::integer as idade_realizou_ultimo_exame,
 		CASE
-			WHEN (CURRENT_DATE - tb2.data_ultimo_exame) <= 1095 THEN TRUE
+			WHEN (CURRENT_DATE - tb2.data_ultimo_exame) <= 1095 and (date_part('year', age(tb2.data_ultimo_exame ::timestamp with time zone, tb1.data_de_nascimento::timestamp with time zone)))::integer between 25 and 64 THEN TRUE
 			ELSE FALSE
 		END AS realizou_exame_ultimos_36_meses,
 		(tb2.data_ultimo_exame + 1095) AS ultimo_exame_mais_36_meses,
@@ -289,7 +290,19 @@ indicador_regras_de_negocio as (
 			ELSE 'exame_nunca_realizado'
 		END AS quadrimestre_a_realizar_proximo_exame,
 		CASE
-			WHEN tb2.data_ultimo_exame IS NULL or (tb2.data_ultimo_exame + INTERVAL '1095 days') < current_date THEN (
+			WHEN tb2.data_ultimo_exame IS NULL 
+			or (tb2.data_ultimo_exame + INTERVAL '1095 days') < current_date 
+			or ((CASE
+						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q1')
+						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q2')
+						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 9::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 12::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q3')
+				  END ) = ( CASE
+								WHEN date_part('month', current_date) >= 1::double precision AND date_part('month', current_date) <= 4::double precision THEN concat(date_part('year', current_date), '.Q1')
+								WHEN date_part('month', current_date) >= 5::double precision AND date_part('month', current_date) <= 8::double precision THEN concat(date_part('year', current_date), '.Q2')
+								WHEN date_part('month', current_date) >= 9::double precision AND date_part('month', current_date) <= 12::double precision THEN concat(date_part('year', current_date), '.Q3')
+							end 
+			) 
+			) THEN (
 				CASE
 					WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat(date_part('year', CURRENT_DATE::date), '-04-30')::date
 					WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE::date), '-08-31')::date
@@ -299,6 +312,7 @@ indicador_regras_de_negocio as (
 			ELSE (tb2.data_ultimo_exame + INTERVAL '1095 days')::date
 		END AS data_limite_a_realizar_proximo_exame,
 		CASE
+			when date_part('year', age(tb2.data_ultimo_exame ::timestamp with time zone, tb1.data_de_nascimento::timestamp with time zone)) < 25 and ((tb2.data_ultimo_exame + 1095)::date - current_date) > 0 then 'exame_realizado_antes_dos_25'
 			WHEN (CASE
 						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q1')
 						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q2')
@@ -308,7 +322,7 @@ indicador_regras_de_negocio as (
 								WHEN date_part('month', current_date) >= 5::double precision AND date_part('month', current_date) <= 8::double precision THEN concat(date_part('year', current_date), '.Q2')
 								WHEN date_part('month', current_date) >= 9::double precision AND date_part('month', current_date) <= 12::double precision THEN concat(date_part('year', current_date), '.Q3')
 							end 
-			) THEN 'exame_vence_no_quadrimestre_atual'
+			) THEN 'exame_vence_no_quadrimestre_atual'			
 			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) < 0 THEN 'exame_vencido'
 			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) > 0 THEN 'exame_em_dia'
 			when tb2.data_ultimo_exame is null then 'exame_nunca_realizado'
@@ -356,7 +370,7 @@ lista_citopatologico as (
 		 irn.cnes_estabelecimento_exame,
 		 irn.nome_estabelecimento_exame,
 		 irn.ine_equipe_exame,
-		 irn. nome_equipe_exame,
+		 irn.nome_equipe_exame,
 		 irn.nome_profissional_exame,
 		 atr.data_cadastro_individual as dt_ultimo_cadastro,
 		 atr.estabelecimento_cad_individual as estabelecimento_nome_cadastro,
@@ -370,16 +384,13 @@ lista_citopatologico as (
 		 atr.ine_equipe_atendimento_recente as equipe_ine_ultimo_atendimento,
 		 atr.equipe_atendimento_recente as equipe_nome_ultimo_atendimento,
 		 atr.profissional_atendimento_recente as acs_nome_ultimo_atendimento,
-		 atr.acs_visita_domiciliar as acs_nome_visita
+		 atr.acs_visita_domiciliar as acs_nome_visita,
+		 now() as criacao_data,
+		 now() as atualizacao_data
 		 from indicador_regras_de_negocio irn
 		 left join infos_mulheres_atendimento_individual_recente atr on irn.chave_mulher = atr.chave_mulher
-)select *
-from lista_citopatologico
+)select * from lista_citopatologico
 -- retirar equipes de Palmeiras / nao e municipio parceiro
 WHERE equipe_ine_cadastro NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
 	AND equipe_ine_ultimo_atendimento NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
-		 
- 
-
-
- 
+	
