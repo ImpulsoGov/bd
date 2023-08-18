@@ -270,7 +270,7 @@ WITH base_atendimentos_pre_natal AS (
             ig.gestante_nome,
             ig.gestante_data_de_nascimento,
             COALESCE(NULLIF(ig.estabelecimento_cnes_cad_indivual::text, '-'::text), ig.estabelecimento_cnes_atendimento::text) AS estabelecimento_cnes,
-            upper(COALESCE(NULLIF(ig.estabelecimento_nome_cad_individual::text, 'N\E3o informado'::text), ig.estabelecimento_nome_atendimento::text)) AS estabelecimento_nome,
+            upper(COALESCE(NULLIF(ig.estabelecimento_nome_cad_individual::text, 'Não informado'::text), ig.estabelecimento_nome_atendimento::text)) AS estabelecimento_nome,
             COALESCE(NULLIF(ig.equipe_ine_cad_individual::text, '-'::text), ig.equipe_ine_atendimento::text) AS equipe_ine,
             upper(COALESCE(NULLIF(ig.equipe_nome_cad_individual::text, 'SEM EQUIPE'::text), ig.equipe_nome_atendimento::text)) AS equipe_nome,
             upper(COALESCE(ig.acs_visita_domiciliar, ig.acs_cad_individual, 'SEM ACS'::character varying)::text) AS acs_nome,
@@ -318,7 +318,7 @@ WITH base_atendimentos_pre_natal AS (
             count(DISTINCT bag.id_registro) AS consultas_prenatal_total,
             count(DISTINCT
                 CASE
-                    WHEN bag.data_atendimento >= bag.data_atendimento_com_primeira_dum_valida AND (bag.profissional_nome_atendimento::text <> ALL (ARRAY['N\E3o informado'::character varying::text, 'PROFISSIONAL N\C3O CADASTRADO'::character varying::text])) THEN bag.id_registro
+                    WHEN bag.data_atendimento >= bag.data_atendimento_com_primeira_dum_valida AND (bag.profissional_nome_atendimento::text <> ALL (ARRAY['Não informado'::character varying::text, 'PROFISSIONAL N\C3O CADASTRADO'::character varying::text])) THEN bag.id_registro
                     ELSE NULL::character varying
                 END) AS consultas_pre_natal_validas,
             count(
@@ -349,7 +349,7 @@ WITH base_atendimentos_pre_natal AS (
                         WHEN bag.ordem_gestacao = 'segunda_gestacao_identificada'::text AND aborto.data_registro > bag.data_fim_primeira_gestacao THEN aborto.data_registro
                         ELSE NULL::date
                     END) > 0 THEN 'Sim'::text
-                    ELSE 'N\E3o'::text
+                    ELSE 'Não'::text
                 END AS possui_registro_aborto,
                 CASE
                     WHEN count(
@@ -358,7 +358,7 @@ WITH base_atendimentos_pre_natal AS (
                         WHEN bag.ordem_gestacao = 'segunda_gestacao_identificada'::text AND parto.data_registro > (bag.data_fim_primeira_gestacao + '180 days'::interval) THEN parto.data_registro
                         ELSE NULL::date
                     END) > 0 THEN 'Sim'::text
-                    ELSE 'N\E3o'::text
+                    ELSE 'Não'::text
                 END AS possui_registro_parto,
                 bag.criacao_data
            FROM base_atendimentos_por_gestacao bag
@@ -368,7 +368,7 @@ WITH base_atendimentos_pre_natal AS (
              LEFT JOIN impulso_previne_dados_nominais.eventos_pre_natal hiv ON bag.chave_gestante::text = hiv.chave_gestante::text AND (hiv.tipo_registro::text = ANY (ARRAY['teste_rapido_exame_hiv'::character varying::text, 'exame_hiv_avaliado'::character varying::text]))
              LEFT JOIN impulso_previne_dados_nominais.eventos_pre_natal parto ON bag.chave_gestante::text = parto.chave_gestante::text AND parto.tipo_registro::text = 'registro_de_parto'::text
              LEFT JOIN impulso_previne_dados_nominais.eventos_pre_natal aborto ON bag.chave_gestante::text = aborto.chave_gestante::text AND aborto.tipo_registro::text = 'registro_de_aborto'::text
-          GROUP BY bag.municipio_id_sus, bag.chave_gestacao, bag.ordem_gestacao, bag.chave_gestante, ig.gestante_telefone, ig.gestante_nome, ig.gestante_data_de_nascimento, (COALESCE(NULLIF(ig.estabelecimento_cnes_cad_indivual::text, '-'::text), ig.estabelecimento_cnes_atendimento::text)), (upper(COALESCE(NULLIF(ig.estabelecimento_nome_cad_individual::text, 'N\E3o informado'::text), ig.estabelecimento_nome_atendimento::text))), (COALESCE(NULLIF(ig.equipe_ine_cad_individual::text, '-'::text), ig.equipe_ine_atendimento::text)), (upper(COALESCE(NULLIF(ig.equipe_nome_cad_individual::text, 'SEM EQUIPE'::text), ig.equipe_nome_atendimento::text))), (upper(COALESCE(ig.acs_visita_domiciliar, ig.acs_cad_individual, 'SEM ACS'::character varying)::text)), ig.data_ultima_visita_acs, bag.data_primeira_dum_valida, ((bag.data_primeira_dum_valida + '294 days'::interval)::date), ((bag.data_primeira_dum_valida + '294 days'::interval)::date - CURRENT_DATE), (
+          GROUP BY bag.municipio_id_sus, bag.chave_gestacao, bag.ordem_gestacao, bag.chave_gestante, ig.gestante_telefone, ig.gestante_nome, ig.gestante_data_de_nascimento, (COALESCE(NULLIF(ig.estabelecimento_cnes_cad_indivual::text, '-'::text), ig.estabelecimento_cnes_atendimento::text)), (upper(COALESCE(NULLIF(ig.estabelecimento_nome_cad_individual::text, 'Não informado'::text), ig.estabelecimento_nome_atendimento::text))), (COALESCE(NULLIF(ig.equipe_ine_cad_individual::text, '-'::text), ig.equipe_ine_atendimento::text)), (upper(COALESCE(NULLIF(ig.equipe_nome_cad_individual::text, 'SEM EQUIPE'::text), ig.equipe_nome_atendimento::text))), (upper(COALESCE(ig.acs_visita_domiciliar, ig.acs_cad_individual, 'SEM ACS'::character varying)::text)), ig.data_ultima_visita_acs, bag.data_primeira_dum_valida, ((bag.data_primeira_dum_valida + '294 days'::interval)::date), ((bag.data_primeira_dum_valida + '294 days'::interval)::date - CURRENT_DATE), (
                 CASE
                     WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2022-01-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2022-04-30'::date THEN '2022.Q1'::text
                     WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2022-05-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2022-08-31'::date THEN '2022.Q2'::text
