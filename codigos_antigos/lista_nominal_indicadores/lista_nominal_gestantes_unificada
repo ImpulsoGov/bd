@@ -456,7 +456,3 @@ WITH base_atendimentos_pre_natal AS (
             ELSE NULL::text
         END::date
  WITH DATA;
-
--- View indexes:
-CREATE INDEX lista_nominal_gestantes_consulta_prenatal_primeira_data_idx ON impulso_previne_dados_nominais.lista_nominal_gestantes_unificada USING btree (consulta_prenatal_primeira_data, consulta_prenatal_ultima_data, ordem_gestacao);
-CREATE INDEX lista_nominal_gestantes_gestacao_data_dpp_idx ON impulso_previne_dados_nominais.lista_nominal_gestantes_unificada USING btree (gestacao_data_dpp);
