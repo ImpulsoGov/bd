@@ -43,7 +43,7 @@ WITH base_atendimentos_pre_natal AS (
             b.gestante_idade_gestacional_atendimento,
             (array_agg(b.data_atendimento) FILTER (WHERE b.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY b.chave_gestante ORDER BY b.id_registro ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS primeira_data_consulta_pre_natal_com_dum,
             (array_agg(b.data_dum_atendimento) FILTER (WHERE b.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY b.chave_gestante ORDER BY b.id_registro ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS primeira_data_dum_valida,
-        	b.criacao_data
+        	max(b.criacao_data) as criacao_data
             FROM base b),
         validacao_dum AS (
          SELECT apn.municipio_id_sus,
@@ -88,7 +88,7 @@ WITH base_atendimentos_pre_natal AS (
             min(apn.data_dpp_atendimento) AS menor_data_dpp,
             max(apn.data_dpp_atendimento) - min(apn.data_dpp_atendimento) AS diff_maior_menor_data_dpp
            FROM base_atendimentos_pre_natal apn
-          GROUP BY apn.municipio_id_sus, apn.chave_gestante,apn.criacao_data
+          GROUP BY apn.municipio_id_sus, apn.chave_gestante
           ), validacao_registros_parto AS (
          SELECT b.municipio_id_sus,
             b.chave_gestante,
