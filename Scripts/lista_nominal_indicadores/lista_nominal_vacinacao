@@ -1,0 +1,78 @@
+-- DENOMINADOR: crianças que completam 12 meses no quadrimestre atual
+WITH dados_cidadao_pec AS (
+    SELECT 
+        tfcp.co_seq_fat_cidadao_pec AS id_cidadao_pec,
+        replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') AS paciente_chave,
+        replace(tfcp.no_cidadao, '  ', ' ') AS paciente_nome,
+        tempocidadaopec.dt_registro AS data_de_nascimento,
+        (array_agg(tfcp.nu_cpf_cidadao) FILTER (WHERE tfcp.nu_cpf_cidadao IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_documento_cpf,
+	    (array_agg(tfcp.nu_cns) FILTER (WHERE tfcp.nu_cns IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_documento_cns,
+       	(array_agg(tfcp.st_faleceu) FILTER (WHERE tfcp.st_faleceu IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS se_faleceu,
+	    (array_agg(tds.ds_sexo) FILTER (WHERE tds.ds_sexo IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_sexo,
+        EXTRACT(YEAR FROM age(CURRENT_DATE::timestamp with time zone, tempocidadaopec.dt_registro::timestamp with time zone)) * 12 +
+    	EXTRACT(MONTH FROM age(CURRENT_DATE::timestamp with time zone, tempocidadaopec.dt_registro::timestamp with time zone)) AS paciente_idade_atual,
+        CASE
+            WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat(date_part('year', CURRENT_DATE ::date), '-04-30')
+            WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE ::date), '-08-31')
+            WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN concat(date_part('year', CURRENT_DATE ::date), '-12-31')
+            ELSE NULL
+        END AS data_fim_quadrimestre
+    FROM esus_160050_oiapoque_ap_20230405.tb_fat_cidadao_pec tfcp
+    JOIN esus_160050_oiapoque_ap_20230405.tb_dim_tempo tempocidadaopec ON tfcp.co_dim_tempo_nascimento = tempocidadaopec.co_seq_dim_tempo
+    JOIN esus_160050_oiapoque_ap_20230405.tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfcp.co_dim_sexo
+),
+selecao_denominador as (
+with base as (
+     SELECT 
+		dcp.id_cidadao_pec,
+	     dcp.paciente_chave,
+	     dcp.paciente_nome,
+	     dcp.data_de_nascimento,
+	     dcp.paciente_documento_cpf,
+	     dcp.paciente_documento_cns,
+	     dcp.paciente_idade_atual,
+	     EXTRACT(YEAR FROM age(dcp.data_fim_quadrimestre::timestamp with time zone, dcp.data_de_nascimento::timestamp with time zone)) * 12 +
+    	 EXTRACT(MONTH FROM age(dcp.data_fim_quadrimestre::timestamp with time zone, dcp.data_de_nascimento::timestamp with time zone)) AS idade_fim_do_quadri
+	 FROM dados_cidadao_pec dcp
+	 group by 
+	 dcp.id_cidadao_pec,
+	 	 dcp.paciente_chave,
+	     dcp.paciente_nome,
+	     dcp.data_de_nascimento,
+	     dcp.paciente_documento_cpf,
+	     dcp.paciente_documento_cns,
+	     dcp.paciente_idade_atual,
+	     dcp.data_fim_quadrimestre
+	    ) select * from base where idade_fim_do_quadri = 12
+),
+fat_vacina as (
+	select 
+	sd.id_cidadao_pec,
+	sd.paciente_chave,
+	sd.paciente_idade_atual,
+	tfv.co_seq_fat_vacinacao,
+	tfv.co_dim_tipo_ficha,
+	--tfvv.co_dim_imunobiologico,
+	--tfvv.co_dim_tempo_vacina_aplicada,
+	--tdi.co_seq_dim_imunobiologico,
+	imunobiologico.nu_identificador,
+	imunobiologico.no_imunobiologico,
+	dose.no_dose_imunobiologico,
+	tempo.dt_registro
+	from  esus_160050_oiapoque_ap_20230405.tb_fat_vacinacao tfv
+	join selecao_denominador sd on sd.id_cidadao_pec = tfv.co_fat_cidadao_pec
+	left join esus_160050_oiapoque_ap_20230405.tb_fat_vacinacao_vacina tfvv on tfv.co_seq_fat_vacinacao = tfvv.co_fat_vacinacao 
+	left join esus_160050_oiapoque_ap_20230405.tb_dim_imunobiologico imunobiologico on tfvv.co_dim_imunobiologico = imunobiologico.co_seq_dim_imunobiologico 
+	left join esus_160050_oiapoque_ap_20230405.tb_dim_tempo tempo on tfvv.co_dim_tempo_vacina_aplicada  = tempo.co_seq_dim_tempo
+	left join esus_160050_oiapoque_ap_20230405.tb_dim_dose_imunobiologico dose on dose.co_seq_dim_dose_imunobiologico = tfvv.co_dim_dose_imunobiologico 
+	where imunobiologico.nu_identificador in ('22','42','17','29','39','43','46','9')
+	group by sd.id_cidadao_pec,
+	sd.paciente_chave,
+	sd.paciente_idade_atual,
+	tfv.co_seq_fat_vacinacao,
+	tfv.co_dim_tipo_ficha,
+	imunobiologico.nu_identificador,
+	imunobiologico.no_imunobiologico,
+	dose.no_dose_imunobiologico,
+	tempo.dt_registro
+) select * from fat_vacina 
