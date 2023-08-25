@@ -43,9 +43,16 @@ Códigos SQL consultados pela [Impulso Gov](https://impulsogov.org/) para consul
 ## :mag_right: Pastas
 - <code>Scripts</code>: registro de códigos.
   - <code>lista_nominal_indicadores</code>: Código das nossas listas nominais, para entendimento das mesmas, leia nossa [wiki](https://github.com/ImpulsoGov/bd/wiki/Inicio).
+<<<<<<< HEAD
   - <code>transmissor_impulso_esus</code>: Código do nosso transmissor, para entendimento do mesmo, leia nossa [wiki](https://github.com/ImpulsoGov/bd/wiki/Inicio).
 >>>>>>> 69f6cc8 (Update README.md)
+<<<<<<< HEAD
 >>>>>>> 6b90fda (Update README.md)
+=======
+=======
+  - <code>transmissor_impulso_esus</code>: Código do nosso transmissor, para entendimento do mesmo, leia nossa [wiki](https://github.com/ImpulsoGov/bd/wiki/C%C3%B3digo-do-transmissor).
+>>>>>>> 7e7b078 (Update README.md)
+>>>>>>> 58eb6f9 (Update README.md)
   
 
 ## :registered: Licença
