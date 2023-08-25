@@ -40,4 +40,4 @@ marcadores - Links para os principais objetos
 <div id='licenca'/>  
 
 ## :registered: Licença
-MIT © (?)
+MIT ©
