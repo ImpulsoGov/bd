@@ -15,7 +15,7 @@ CREATE SERVER impulsogov
 /* Utiliza um usuario com permiss?es restritas para o municipio acessar nosso banco */
 CREATE USER MAPPING FOR postgres
 	SERVER impulsogov
-    OPTIONS (user 'impulsolandia_transmissor', password '*XXXXXXXXXXXXXXXXX');
+    OPTIONS (user 'impulsolandia_transmissor', password 'Senha-Senha-Senha-Senha-Senha');
 
 /* Cria index para tabela tb_fat_cidadao_pec a fim de melhorar performace da criacaoo da view */
 DROP INDEX IF exists
@@ -66,7 +66,7 @@ begin
     ORDER BY view_versao DESC LIMIT 1;
    	SELECT True into check_out_transmissao
 	FROM impulsogov_trasmissor.transmissor_historico
-	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '351570';
+	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '111111';
 	if check_out_transmissao is not True and check_parametros is True then 
 	   	EXECUTE format('DROP MATERIALIZED VIEW IF EXISTS %s CASCADE;',var_tabela_nome);
 		EXECUTE format('CREATE MATERIALIZED VIEW %s as %s;',var_tabela_nome,var_view_codigo);
@@ -74,10 +74,10 @@ begin
 	    EXECUTE format('INSERT INTO impulsogov_trasmissor.%s (%s)
 						(SELECT %s FROM %s)',var_tabela_nome,var_tabela_campos,var_tabela_campos,var_tabela_nome);
 		EXECUTE format('UPDATE impulsogov_trasmissor.%s
-						SET municipio_id_sus = ''351570'';',var_tabela_nome);
+						SET municipio_id_sus = ''111111'';',var_tabela_nome);
 		EXECUTE format('INSERT INTO impulsogov_trasmissor.transmissor_historico
 						(execucao_data_hora,municipio_id_sus, mensagem, registros,tabela_nome,projuto_nome )
-						VALUES(CURRENT_TIMESTAMP,''351570'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);			
+						VALUES(CURRENT_TIMESTAMP,''111111'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);			
 	END IF;
 	EXCEPTION
 	        WHEN OTHERS THEN
@@ -95,7 +95,7 @@ begin
 	            VALUES (
 	            	now(),
 	                erro_mensagem,
-	                '351570',
+	                '111111',
 	                erro_contexto,
 	                'Impulso Previne - Dados Nominais',
 	                'lista_nominal_gestantes'
@@ -126,7 +126,7 @@ begin
     ORDER BY view_versao DESC LIMIT 1;
    	SELECT True into check_out_transmissao
 	FROM impulsogov_trasmissor.transmissor_historico
-	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '351570';
+	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '111111';
 	if check_out_transmissao is not True and check_parametros is True then 
 	   	EXECUTE format('DROP MATERIALIZED VIEW IF EXISTS %s CASCADE;',var_tabela_nome);
 		EXECUTE format('CREATE MATERIALIZED VIEW %s as %s;',var_tabela_nome,var_view_codigo);
@@ -134,10 +134,10 @@ begin
 	    EXECUTE format('INSERT INTO impulsogov_trasmissor.%s (%s)
 						(SELECT %s FROM %s)',var_tabela_nome,var_tabela_campos,var_tabela_campos,var_tabela_nome);
 		EXECUTE format('UPDATE impulsogov_trasmissor.%s
-						SET municipio_id_sus = ''351570'';',var_tabela_nome);
+						SET municipio_id_sus = ''111111'';',var_tabela_nome);
 		EXECUTE format('INSERT INTO impulsogov_trasmissor.transmissor_historico
 						(execucao_data_hora,municipio_id_sus, mensagem, registros,tabela_nome,projuto_nome )
-						VALUES(CURRENT_TIMESTAMP,''351570'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);	
+						VALUES(CURRENT_TIMESTAMP,''111111'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);	
 	END IF;
 	EXCEPTION
 	        WHEN OTHERS THEN
@@ -155,7 +155,7 @@ begin
 	            VALUES (
 	            	now(),
 	                erro_mensagem,
-	                '351570',
+	                '111111',
 	                erro_contexto,
 	                'Impulso Previne - Dados Nominais',
 	                'lista_nominal_hipertensos'
@@ -186,7 +186,7 @@ begin
     ORDER BY view_versao DESC LIMIT 1;
    	SELECT True into check_out_transmissao
 	FROM impulsogov_trasmissor.transmissor_historico
-	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '351570';
+	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '111111';
 	if check_out_transmissao is not True and check_parametros is True then 
 	   	EXECUTE format('DROP MATERIALIZED VIEW IF EXISTS %s CASCADE;',var_tabela_nome);
 		EXECUTE format('CREATE MATERIALIZED VIEW %s as %s;',var_tabela_nome,var_view_codigo);
@@ -194,10 +194,10 @@ begin
 	    EXECUTE format('INSERT INTO impulsogov_trasmissor.%s (%s)
 						(SELECT %s FROM %s)',var_tabela_nome,var_tabela_campos,var_tabela_campos,var_tabela_nome);
 		EXECUTE format('UPDATE impulsogov_trasmissor.%s
-						SET municipio_id_sus = ''351570'';',var_tabela_nome);
+						SET municipio_id_sus = ''111111'';',var_tabela_nome);
 		EXECUTE format('INSERT INTO impulsogov_trasmissor.transmissor_historico
 						(execucao_data_hora,municipio_id_sus, mensagem, registros,tabela_nome,projuto_nome )
-						VALUES(CURRENT_TIMESTAMP,''351570'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);
+						VALUES(CURRENT_TIMESTAMP,''111111'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);
 	END IF;
 	EXCEPTION
         WHEN OTHERS THEN
@@ -215,7 +215,7 @@ begin
             VALUES (
             	now(),
                 erro_mensagem,
-                '351570',
+                '111111',
                 erro_contexto,
                 'Impulso Previne - Dados Nominais',
                 'lista_nominal_diabeticos'
@@ -246,7 +246,7 @@ begin
     ORDER BY view_versao DESC LIMIT 1;
    	SELECT True into check_out_transmissao
 	FROM impulsogov_trasmissor.transmissor_historico
-	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '351570';
+	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '111111';
 	if check_out_transmissao is not True and check_parametros is True then 
 	   	EXECUTE format('DROP MATERIALIZED VIEW IF EXISTS %s CASCADE;',var_tabela_nome);
 		EXECUTE format('CREATE MATERIALIZED VIEW %s as %s;',var_tabela_nome,var_view_codigo);
@@ -254,10 +254,10 @@ begin
 	    EXECUTE format('INSERT INTO impulsogov_trasmissor.%s (%s)
 						(SELECT %s FROM %s)',var_tabela_nome,var_tabela_campos,var_tabela_campos,var_tabela_nome);
 		EXECUTE format('UPDATE impulsogov_trasmissor.%s
-						SET municipio_id_sus = ''351570'';',var_tabela_nome);
+						SET municipio_id_sus = ''111111'';',var_tabela_nome);
 		EXECUTE format('INSERT INTO impulsogov_trasmissor.transmissor_historico
 						(execucao_data_hora,municipio_id_sus, mensagem, registros,tabela_nome,projuto_nome )
-						VALUES(CURRENT_TIMESTAMP,''351570'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);
+						VALUES(CURRENT_TIMESTAMP,''111111'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);
 		
 	END IF;
 	EXCEPTION
@@ -276,7 +276,7 @@ begin
             VALUES (
             	now(),
                 erro_mensagem,
-                '351570',
+                '111111',
                 erro_contexto,
                 'Impulso Previne - Dados Nominais',
                 'lista_nominal_citopatologico'
@@ -306,7 +306,7 @@ begin
     ORDER BY view_versao DESC LIMIT 1;
    	SELECT True into check_out_transmissao
 	FROM impulsogov_trasmissor.transmissor_historico
-	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '351570';
+	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '111111';
 	if check_out_transmissao is not True and check_parametros is True then 
 	   	EXECUTE format('DROP MATERIALIZED VIEW IF EXISTS %s CASCADE;',var_tabela_nome);
 		EXECUTE format('CREATE MATERIALIZED VIEW %s as %s;',var_tabela_nome,var_view_codigo);
@@ -314,10 +314,10 @@ begin
 	    EXECUTE format('INSERT INTO impulsogov_trasmissor.%s (%s)
 						(SELECT %s FROM %s)',var_tabela_nome,var_tabela_campos,var_tabela_campos,var_tabela_nome);
 		EXECUTE format('UPDATE impulsogov_trasmissor.%s
-						SET municipio_id_sus = ''351570'';',var_tabela_nome);
+						SET municipio_id_sus = ''111111'';',var_tabela_nome);
 		EXECUTE format('INSERT INTO impulsogov_trasmissor.transmissor_historico
 						(execucao_data_hora,municipio_id_sus, mensagem, registros,tabela_nome,projuto_nome )
-						VALUES(CURRENT_TIMESTAMP,''351570'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);
+						VALUES(CURRENT_TIMESTAMP,''111111'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);
 
 	END IF;
 	EXCEPTION
@@ -336,7 +336,7 @@ begin
             VALUES (
             	now(),
                 erro_mensagem,
-                '351570',
+                '111111',
                 erro_contexto,
                 'Impulso Previne - Dados Nominais',
                 'lista_nominal_vacinacao'
@@ -367,7 +367,7 @@ begin
     ORDER BY view_versao DESC LIMIT 1;
    	SELECT True into check_out_transmissao
 	FROM impulsogov_trasmissor.transmissor_historico
-	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '351570';
+	where projuto_nome = var_projuto_nome and tabela_nome = var_tabela_nome and execucao_data_hora::date = current_date and municipio_id_sus = '111111';
 	if check_out_transmissao is not True and check_parametros is True then 
 	   	EXECUTE format('DROP MATERIALIZED VIEW IF EXISTS %s CASCADE;',var_tabela_nome);
 		EXECUTE format('CREATE MATERIALIZED VIEW %s as %s;',var_tabela_nome,var_view_codigo);
@@ -375,10 +375,10 @@ begin
 	    EXECUTE format('INSERT INTO impulsogov_trasmissor.%s (%s)
 						(SELECT %s FROM %s)',var_tabela_nome,var_tabela_campos,var_tabela_campos,var_tabela_nome);
 		EXECUTE format('UPDATE impulsogov_trasmissor.%s
-						SET municipio_id_sus = ''351570'';',var_tabela_nome);
+						SET municipio_id_sus = ''111111'';',var_tabela_nome);
 		EXECUTE format('INSERT INTO impulsogov_trasmissor.transmissor_historico
 						(execucao_data_hora,municipio_id_sus, mensagem, registros,tabela_nome,projuto_nome )
-						VALUES(CURRENT_TIMESTAMP,''351570'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);
+						VALUES(CURRENT_TIMESTAMP,''111111'', ''Trasmiss?o realizada com sucesso'', (select count (*) from %s), ''%s'', ''%s'');',var_tabela_nome,var_tabela_nome,var_projuto_nome);
 	END IF;
 	EXCEPTION
         WHEN OTHERS THEN
@@ -396,7 +396,7 @@ begin
             VALUES (
             	now(),
                 erro_mensagem,
-                '351570',
+                '111111',
                 erro_contexto,
                 'Impulso Previne - Dados Nominais',
                 'relatorio_mensal_indicadores'
