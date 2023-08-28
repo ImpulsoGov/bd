@@ -1,5 +1,6 @@
 -- DENOMINADOR - todas pessoas com hipertensao autorrefeira ou diagnósticada
 WITH possui_hipertensao_autorreferida AS (
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_hipertensos.sql
         WITH ultimo_cadastro_individual AS (
                 SELECT 
                         tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento AS chave_paciente,
@@ -115,19 +116,146 @@ WITH possui_hipertensao_autorreferida AS (
                 AND tempo.dt_registro <= current_date
                 AND tempo.nu_ano <> 3000 
         GROUP BY 1
+=======
+	WITH ultimo_cadastro_individual AS (
+		SELECT 
+			tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento AS chave_paciente,
+			cadastro.st_hipertensao_arterial,
+			ROW_NUMBER() OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY cadastro.co_seq_fat_cad_individual DESC) = 1 AS ultimo_cadastro_individual
+		FROM tb_fat_cad_individual cadastro
+		JOIN tb_fat_cidadao_pec tfcp 
+			ON cadastro.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
+		JOIN tb_dim_tempo tempo 
+			ON cadastro.co_dim_tempo = tempo.co_seq_dim_tempo
+		WHERE cadastro.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
+			AND tempo.nu_ano <> 3000 
+			AND tempo.dt_registro <= current_date
+	)
+	SELECT 
+		ci.chave_paciente,
+		ci.st_hipertensao_arterial = 1 AS possui_hipertensao_autorreferida
+	FROM ultimo_cadastro_individual ci 
+	WHERE ci.ultimo_cadastro_individual IS TRUE 
+		AND ci.st_hipertensao_arterial = 1
+)
+, possui_hipertensao_diagnosticada AS (
+	SELECT 
+		DISTINCT 
+		tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento AS chave_paciente,
+		TRUE AS possui_hipertensao_diagnosticada
+	FROM tb_fat_atendimento_individual atendimento
+	JOIN tb_fat_cidadao_pec tfcp 
+		ON atendimento.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec
+	JOIN tb_dim_tempo tempo 
+		ON atendimento.co_dim_tempo = tempo.co_seq_dim_tempo
+	JOIN tb_fat_atd_ind_problemas problemas 
+		ON atendimento.co_seq_fat_atd_ind = problemas.co_fat_atd_ind
+	JOIN tb_dim_cbo cbo 
+		ON problemas.co_dim_cbo_1 = cbo.co_seq_dim_cbo
+		AND (cbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text]))
+	LEFT JOIN tb_dim_ciap ciap 
+		ON problemas.co_dim_ciap = ciap.co_seq_dim_ciap
+	LEFT JOIN tb_dim_cid cid 
+		ON problemas.co_dim_cid = cid.co_seq_dim_cid
+	WHERE atendimento.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
+		AND ((ciap.nu_ciap::text = ANY (ARRAY['K86'::character varying::text, 'K87'::character varying::text, 'ABP005'::character varying::text]))
+		OR (cid.nu_cid::text = ANY (ARRAY['I10'::character varying::text, 'I11'::character varying::text, 'I110'::character varying::text, 'I119'::character varying::text, 'I12'::character varying::text, 'I120'::character varying::text, 'I129'::character varying::text, 'I13'::character varying::text, 'I130'::character varying::text, 'I131'::character varying::text, 'I132'::character varying::text, 'I139'::character varying::text, 'I15'::character varying::text, 'I150'::character varying::text, 'I151'::character varying::text, 'I152'::character varying::text, 'I158'::character varying::text, 'I159'::character varying::text, 'O10'::character varying::text, 'O100'::character varying::text, 'O101'::character varying::text, 'O102'::character varying::text, 'O103'::character varying::text, 'O104'::character varying::text, 'O109'::character varying::text, 'O11'::character varying::text]))) 
+		AND tempo.nu_ano <> 3000 
+		AND tempo.dt_registro <= current_date
+)
+, denominador_hipertensos AS (
+	SELECT 
+		DISTINCT 
+		tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento AS chave_paciente,
+		tfcp.no_cidadao AS cidadao_nome,
+		tdt.dt_registro AS dt_nascimento,
+		(array_agg(tfcp.no_social_cidadao) FILTER (WHERE tfcp.no_social_cidadao IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_nome_social,
+		(array_agg(tfcp.nu_cpf_cidadao) FILTER (WHERE tfcp.nu_cpf_cidadao IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_cpf,
+	    (array_agg(tfcp.nu_cns) FILTER (WHERE tfcp.nu_cns IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_cns,
+	    (array_agg(tds.ds_sexo) FILTER (WHERE tds.ds_sexo IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_sexo,
+	    FIRST_VALUE(tfcp.co_seq_fat_cidadao_pec) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS co_seq_fat_cidadao_pec, -- valor arbitrario
+		COALESCE(haref.possui_hipertensao_autorreferida,FALSE) AS possui_hipertensao_autorreferida,
+		COALESCE(hdia.possui_hipertensao_diagnosticada,FALSE) AS possui_hipertensao_diagnosticada,
+		COALESCE(FIRST_VALUE(tfcp.st_faleceu) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),0) AS se_faleceu
+	FROM tb_fat_cidadao_pec tfcp
+	LEFT JOIN tb_dim_tempo tdt 
+		ON tfcp.co_dim_tempo_nascimento = tdt.co_seq_dim_tempo
+	LEFT JOIN tb_dim_sexo tds 
+		ON tfcp.co_dim_sexo = tds.co_seq_dim_sexo
+	LEFT JOIN possui_hipertensao_autorreferida haref
+		ON haref.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+	LEFT JOIN possui_hipertensao_diagnosticada hdia
+		ON hdia.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+	WHERE (hdia.possui_hipertensao_diagnosticada OR haref.possui_hipertensao_autorreferida)
+)
+-- NUMERADOR
+, afericao_pressao AS (
+	SELECT 
+		dh.chave_paciente,
+		MAX(tempo.dt_registro) AS dt_afericao_pressao_mais_recente
+	FROM tb_fat_proced_atend_proced fichaproced
+	JOIN tb_fat_cidadao_pec tfcp 
+		ON fichaproced.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
+	JOIN denominador_hipertensos dh 
+		ON dh.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+	JOIN tb_dim_procedimento proced 
+		ON fichaproced.co_dim_procedimento = proced.co_seq_dim_procedimento
+	JOIN tb_dim_tempo tempo 
+		ON fichaproced.co_dim_tempo = tempo.co_seq_dim_tempo
+	JOIN tb_dim_cbo cbo 
+		ON fichaproced.co_dim_cbo = cbo.co_seq_dim_cbo 
+		AND (cbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text, '3222%'::text]))
+	WHERE  (proced.co_proced::text = ANY (ARRAY['0301100039'::character varying::text, 'ABPG033'::character varying::text])) 
+		AND tempo.dt_registro <= current_date
+	GROUP BY 1
+)
+, consulta_hipertensao AS (
+	SELECT 
+		dh.chave_paciente,
+		max(tempo.dt_registro) AS dt_consulta_mais_recente
+	FROM tb_fat_atendimento_individual atendimento
+	JOIN tb_fat_cidadao_pec tfcp 
+		ON atendimento.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
+	JOIN denominador_hipertensos dh 
+		ON dh.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+	JOIN tb_dim_tempo tempo 
+		ON atendimento.co_dim_tempo = tempo.co_seq_dim_tempo
+	JOIN tb_fat_atd_ind_problemas problemas 
+		ON atendimento.co_seq_fat_atd_ind = problemas.co_fat_atd_ind
+	JOIN tb_dim_cbo cbo 
+		ON problemas.co_dim_cbo_1 = cbo.co_seq_dim_cbo 
+		AND (cbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text]))
+	LEFT JOIN tb_dim_ciap ciap 
+		ON problemas.co_dim_ciap = ciap.co_seq_dim_ciap
+	LEFT JOIN tb_dim_cid cid 
+		ON problemas.co_dim_cid = cid.co_seq_dim_cid
+	WHERE  ((ciap.nu_ciap::text = ANY (ARRAY['K86'::character varying::text, 'K87'::character varying::text, 'ABP005'::character varying::text])) 
+		OR (cid.nu_cid::text = ANY (ARRAY['I10'::character varying::text, 'I11'::character varying::text, 'I110'::character varying::text, 'I119'::character varying::text, 'I12'::character varying::text, 'I120'::character varying::text, 'I129'::character varying::text, 'I13'::character varying::text, 'I130'::character varying::text, 'I131'::character varying::text, 'I132'::character varying::text, 'I139'::character varying::text, 'I15'::character varying::text, 'I150'::character varying::text, 'I151'::character varying::text, 'I152'::character varying::text, 'I158'::character varying::text, 'I159'::character varying::text, 'O10'::character varying::text, 'O100'::character varying::text, 'O101'::character varying::text, 'O102'::character varying::text, 'O103'::character varying::text, 'O104'::character varying::text, 'O109'::character varying::text, 'O11'::character varying::text]))) 
+		AND tempo.dt_registro <= current_date
+	GROUP BY 1
+>>>>>>> c4260ea (Adiciona código de transmissão da lista de hipertensos):Scripts/transmissor_impulso_esus/lista_nominal_hipertensos.sql
 )
 -- Informações de vinculação
 , cadastro_individual_recente AS (
 -- Dados do cadastro individual (dados para vinculação de equipe e ACS da mulher)
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_hipertensos.sql
                 SELECT 
                         dh.chave_paciente,
                         tdt.dt_registro AS data_ultimo_cadastro,
                         tfci.nu_micro_area AS micro_area_cad_individual,
                         NULLIF(uns.nu_cnes::text, '-'::text) AS estabelecimento_cnes_cadastro,
+=======
+		SELECT 
+			dh.chave_paciente,
+			tdt.dt_registro AS data_ultimo_cadastro,
+			tfci.nu_micro_area AS micro_area_cad_individual,
+			NULLIF(uns.nu_cnes::text, '-'::text) AS estabelecimento_cnes_cadastro,
+>>>>>>> c4260ea (Adiciona código de transmissão da lista de hipertensos):Scripts/transmissor_impulso_esus/lista_nominal_hipertensos.sql
             NULLIF(uns.no_unidade_saude::text, 'Não informado'::text) AS estabelecimento_nome_cadastro,
             NULLIF(eq.nu_ine::text, '-'::text) AS equipe_ine_cadastro,
             NULLIF(eq.no_equipe::text, 'SEM EQUIPE'::text) AS equipe_nome_cadastro,
             NULLIF(acs.no_profissional::text, 'SEM EQUIPE'::text) AS acs_nome_cadastro,
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_hipertensos.sql
                         COALESCE(cidadaoterritoriorecente.st_mudou_se,0) AS se_mudou,
                         ROW_NUMBER() OVER (PARTITION BY dh.chave_paciente ORDER BY tfci.co_seq_fat_cad_individual DESC) = 1 AS ultimo_cadastro_individual
                 FROM tb_fat_cad_individual tfci
@@ -216,6 +344,96 @@ WITH possui_hipertensao_autorreferida AS (
 )
         SELECT 
                 CASE
+=======
+			COALESCE(cidadaoterritoriorecente.st_mudou_se,0) AS se_mudou,
+			ROW_NUMBER() OVER (PARTITION BY dh.chave_paciente ORDER BY tfci.co_seq_fat_cad_individual DESC) = 1 AS ultimo_cadastro_individual
+		FROM tb_fat_cad_individual tfci
+		JOIN tb_fat_cidadao_pec tfcp
+			ON tfcp.co_seq_fat_cidadao_pec = tfci.co_fat_cidadao_pec
+		JOIN denominador_hipertensos dh 
+			ON dh.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+		LEFT JOIN tb_dim_tempo tdt 
+			ON tdt.co_seq_dim_tempo = tfci.co_dim_tempo
+		LEFT JOIN tb_dim_equipe eq
+			ON eq.co_seq_dim_equipe = tfci.co_dim_equipe
+		LEFT JOIN tb_dim_profissional acs
+			ON acs.co_seq_dim_profissional = tfci.co_dim_profissional
+		LEFT JOIN tb_dim_unidade_saude uns
+			ON uns.co_seq_dim_unidade_saude = tfci.co_dim_unidade_saude 
+		LEFT JOIN tb_fat_cidadao_territorio cidadaoterritoriorecente 
+			ON cidadaoterritoriorecente.co_fat_cad_individual = tfci.co_seq_fat_cad_individual
+) 
+, visita_domiciliar_recente AS (
+-- Dados das visitas domiciliares realizadas pelos ACS (dados para vinculação de ACS da mulher)
+		SELECT 
+			dh.chave_paciente,
+		    tfcp.co_seq_fat_cidadao_pec,
+			tdt.dt_registro AS data_visita_acs,
+			NULLIF(acs.no_profissional::text, 'SEM EQUIPE'::text) AS acs_nome_visita,
+			ROW_NUMBER() OVER (PARTITION BY dh.chave_paciente ORDER BY tdt.dt_registro DESC) = 1 AS ultima_visita_domiciliar
+		FROM tb_fat_visita_domiciliar visitadomiciliar
+		JOIN tb_fat_cidadao_pec tfcp
+			ON tfcp.co_seq_fat_cidadao_pec = visitadomiciliar.co_fat_cidadao_pec 
+		JOIN denominador_hipertensos dh 
+			ON dh.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+		LEFT JOIN tb_dim_profissional acs
+			ON acs.co_seq_dim_profissional = visitadomiciliar.co_dim_profissional
+		LEFT JOIN tb_dim_tempo tdt 
+			ON tdt.co_seq_dim_tempo = visitadomiciliar.co_dim_tempo
+		)
+, cadastro_domiciliar_recente AS (
+-- Dados do cadastro da família e do domicílio da mulher (dados para vinculação de ACS da mulher)
+		SELECT 
+			dh.chave_paciente,
+			tdt.dt_registro AS data_cadastro_dom_familia,
+			caddomiciliarfamilia.nu_micro_area AS micro_area_domicilio,
+			uns.nu_cnes AS cnes_estabelecimento_cad_dom_familia,
+			uns.no_unidade_saude AS estabelecimento_cad_dom_familia,
+			eq.nu_ine AS ine_equipe_cad_dom_familia,
+			eq.no_equipe AS equipe_cad_dom_familia,
+			acs.no_profissional AS acs_cad_dom_familia,
+			NULLIF(concat(cadomiciliar.no_logradouro, ', ', cadomiciliar.nu_num_logradouro), ', '::text) AS paciente_endereco,
+			ROW_NUMBER() OVER (PARTITION BY dh.chave_paciente ORDER BY tdt.dt_registro DESC) = 1  AS ultimo_cadastro_domiciliar_familia
+		FROM tb_fat_cad_dom_familia caddomiciliarfamilia
+		JOIN tb_fat_cad_domiciliar cadomiciliar 
+			ON cadomiciliar.co_seq_fat_cad_domiciliar = caddomiciliarfamilia.co_fat_cad_domiciliar
+		JOIN tb_fat_cidadao_pec tfcp
+			ON tfcp.co_seq_fat_cidadao_pec = caddomiciliarfamilia.co_fat_cidadao_pec 
+		JOIN denominador_hipertensos dh 
+			ON dh.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+		LEFT JOIN tb_dim_tempo tdt 
+			ON tdt.co_seq_dim_tempo = caddomiciliarfamilia.co_dim_tempo
+		LEFT JOIN tb_dim_equipe eq
+			ON eq.co_seq_dim_equipe = caddomiciliarfamilia.co_dim_equipe
+		LEFT JOIN tb_dim_profissional acs
+			ON acs.co_seq_dim_profissional = caddomiciliarfamilia.co_dim_profissional
+		LEFT JOIN tb_dim_unidade_saude uns
+			ON uns.co_seq_dim_unidade_saude = caddomiciliarfamilia.co_dim_unidade_saude  	
+)
+, atendimento_recente AS (
+	SELECT 
+		dh.chave_paciente,
+		tdt.dt_registro AS dt_ultima_consulta,
+		NULLIF(unidadeatendimentorecente.nu_cnes::text, '-'::text) AS estabelecimento_cnes_atendimento,
+	    NULLIF(unidadeatendimentorecente.no_unidade_saude::text, 'Não informado'::text) AS estabelecimento_nome_atendimento,
+	    NULLIF(equipeatendimentorecente.nu_ine::text, '-'::text) AS equipe_ine_atendimento,
+	    NULLIF(equipeatendimentorecente.no_equipe::text, 'SEM EQUIPE'::text) AS equipe_nome_atendimento,
+		ROW_NUMBER() OVER (PARTITION BY dh.chave_paciente ORDER BY tdt.dt_registro DESC) = 1  AS ultimo_atendimento
+	FROM tb_fat_atendimento_individual atendimento	
+	JOIN tb_dim_tempo tdt 
+	 	ON atendimento.co_dim_tempo = tdt.co_seq_dim_tempo
+	JOIN tb_fat_cidadao_pec tfcp
+		ON tfcp.co_seq_fat_cidadao_pec = atendimento.co_fat_cidadao_pec 
+	JOIN denominador_hipertensos dh 
+		ON dh.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+	LEFT JOIN tb_dim_equipe equipeatendimentorecente 
+		ON equipeatendimentorecente.co_seq_dim_equipe = atendimento.co_dim_equipe_1
+	LEFT JOIN tb_dim_unidade_saude unidadeatendimentorecente 
+		ON unidadeatendimentorecente.co_seq_dim_unidade_saude = atendimento.co_dim_unidade_saude_1                             
+)
+	SELECT 
+		CASE
+>>>>>>> c4260ea (Adiciona código de transmissão da lista de hipertensos):Scripts/transmissor_impulso_esus/lista_nominal_hipertensos.sql
             WHEN date_part('month'::text, current_date) >= 1::double precision AND date_part('month'::text, current_date) <= 4::double precision THEN concat(date_part('year'::text, current_date), '.Q1')
             WHEN date_part('month'::text, current_date) >= 5::double precision AND date_part('month'::text, current_date) <= 8::double precision THEN concat(date_part('year'::text, current_date), '.Q2')
             WHEN date_part('month'::text, current_date) >= 9::double precision AND date_part('month'::text, current_date) <= 12::double precision THEN concat(date_part('year'::text, current_date), '.Q3')
@@ -237,7 +455,11 @@ WITH possui_hipertensao_autorreferida AS (
             END::date - '180 days'::interval) THEN true
             ELSE false
         END AS realizou_afericao_ultimos_6_meses,
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_hipertensos.sql
         ap.dt_afericao_pressao_mais_recente,
+=======
+    	ap.dt_afericao_pressao_mais_recente,
+>>>>>>> c4260ea (Adiciona código de transmissão da lista de hipertensos):Scripts/transmissor_impulso_esus/lista_nominal_hipertensos.sql
         CASE
             WHEN ch.dt_consulta_mais_recente <=
             CASE
@@ -281,6 +503,7 @@ WITH possui_hipertensao_autorreferida AS (
     now() as criacao_data
 FROM denominador_hipertensos dh
 LEFT JOIN afericao_pressao ap 
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_hipertensos.sql
         ON ap.chave_paciente = dh.chave_paciente
 LEFT JOIN consulta_hipertensao ch
         ON ch.chave_paciente = dh.chave_paciente
@@ -299,3 +522,23 @@ LEFT JOIN atendimento_recente ar
 -- retirar equipes de Palmeiras / nao e municipio parceiro
 WHERE cir.equipe_ine_cadastro NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
         AND ar.equipe_ine_atendimento NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
+=======
+	ON ap.chave_paciente = dh.chave_paciente
+LEFT JOIN consulta_hipertensao ch
+	ON ch.chave_paciente = dh.chave_paciente
+LEFT JOIN cadastro_individual_recente cir 
+	ON cir.chave_paciente = dh.chave_paciente
+	AND cir.ultimo_cadastro_individual IS TRUE 
+LEFT JOIN visita_domiciliar_recente vdr 
+	ON vdr.chave_paciente = dh.chave_paciente
+	AND vdr.ultima_visita_domiciliar IS TRUE 
+LEFT JOIN cadastro_domiciliar_recente cdr 
+	ON cdr.chave_paciente = dh.chave_paciente
+	AND cdr.ultimo_cadastro_domiciliar_familia IS TRUE
+LEFT JOIN atendimento_recente ar 
+	ON ar.chave_paciente = dh.chave_paciente
+	AND ar.ultimo_atendimento IS TRUE 
+-- retirar equipes de Palmeiras / nao e municipio parceiro
+WHERE cir.equipe_ine_cadastro NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
+	AND ar.equipe_ine_atendimento NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
+>>>>>>> c4260ea (Adiciona código de transmissão da lista de hipertensos):Scripts/transmissor_impulso_esus/lista_nominal_hipertensos.sql
