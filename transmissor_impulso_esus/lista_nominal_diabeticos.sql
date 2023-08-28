@@ -11,6 +11,11 @@ WITH possui_diabetes_autoreferida AS (
 		JOIN tb_dim_tempo tempo 
 			ON cadastro.co_dim_tempo = tempo.co_seq_dim_tempo
 		WHERE cadastro.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
+=======
+			AND tempo.nu_ano <> 3000 
+			AND tempo.dt_registro <= current_date
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 	)
 	SELECT 
 		ci.chave_paciente,
@@ -27,18 +32,31 @@ WITH possui_diabetes_autoreferida AS (
 	FROM tb_fat_atendimento_individual atendimento
 	JOIN tb_fat_cidadao_pec tfcp 
 		ON atendimento.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 	LEFT JOIN tb_dim_tempo tempo 
 		ON atendimento.co_dim_tempo = tempo.co_seq_dim_tempo
 	LEFT JOIN tb_fat_atd_ind_problemas problemas 
 		ON atendimento.co_seq_fat_atd_ind = problemas.co_fat_atd_ind
 	LEFT JOIN tb_dim_cbo cbo 
+=======
+	JOIN tb_dim_tempo tempo 
+		ON atendimento.co_dim_tempo = tempo.co_seq_dim_tempo
+	JOIN tb_fat_atd_ind_problemas problemas 
+		ON atendimento.co_seq_fat_atd_ind = problemas.co_fat_atd_ind
+	JOIN tb_dim_cbo cbo 
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 		ON problemas.co_dim_cbo_1 = cbo.co_seq_dim_cbo
 	LEFT JOIN tb_dim_ciap ciap 
 		ON problemas.co_dim_ciap = ciap.co_seq_dim_ciap
 	LEFT JOIN tb_dim_cid cid 
 		ON problemas.co_dim_cid = cid.co_seq_dim_cid 
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 	WHERE ((ciap.nu_ciap::text = ANY (ARRAY['T89'::character varying::text, 'T90'::character varying::text, 'ABP006'::character varying::text])) 
 		OR (cid.nu_cid::text = ANY (ARRAY['E10'::character varying::text, 'E100'::character varying::text, 'E101'::character varying::text, 'E102'::character varying::text, 'E103'::character varying::text, 'E104'::character varying::text, 'E105'::character varying::text, 'E106'::character varying::text, 'E107'::character varying::text, 'E108'::character varying::text, 'E109'::character varying::text, 'E11'::character varying::text, 'E110'::character varying::text, 'E111'::character varying::text, 'E112'::character varying::text, 'E113'::character varying::text, 'E114'::character varying::text, 'E115'::character varying::text, 'E116'::character varying::text, 'E117'::character varying::text, 'E118'::character varying::text, 'E119'::character varying::text, 'E12'::character varying::text, 'E120'::character varying::text, 'E121'::character varying::text, 'E122'::character varying::text, 'E123'::character varying::text, 'E124'::character varying::text, 'E125'::character varying::text, 'E126'::character varying::text, 'E127'::character varying::text, 'E128'::character varying::text, 'E129'::character varying::text, 'E13'::character varying::text, 'E130'::character varying::text, 'E131'::character varying::text, 'E132'::character varying::text, 'E133'::character varying::text, 'E134'::character varying::text, 'E135'::character varying::text, 'E136'::character varying::text, 'E137'::character varying::text, 'E138'::character varying::text, 'E139'::character varying::text, 'E14'::character varying::text, 'E140'::character varying::text, 'E141'::character varying::text, 'E142'::character varying::text, 'E143'::character varying::text, 'E144'::character varying::text, 'E145'::character varying::text, 'E146'::character varying::text, 'E147'::character varying::text, 'E148'::character varying::text, 'E149'::character varying::text, 'O240'::character varying::text, 'O241'::character varying::text, 'O242'::character varying::text, 'O243'::character varying::text])))
+=======
+		AND (cid.nu_cid::text = ANY (ARRAY['E10'::character varying::text, 'E100'::character varying::text, 'E101'::character varying::text, 'E102'::character varying::text, 'E103'::character varying::text, 'E104'::character varying::text, 'E105'::character varying::text, 'E106'::character varying::text, 'E107'::character varying::text, 'E108'::character varying::text, 'E109'::character varying::text, 'E11'::character varying::text, 'E110'::character varying::text, 'E111'::character varying::text, 'E112'::character varying::text, 'E113'::character varying::text, 'E114'::character varying::text, 'E115'::character varying::text, 'E116'::character varying::text, 'E117'::character varying::text, 'E118'::character varying::text, 'E119'::character varying::text, 'E12'::character varying::text, 'E120'::character varying::text, 'E121'::character varying::text, 'E122'::character varying::text, 'E123'::character varying::text, 'E124'::character varying::text, 'E125'::character varying::text, 'E126'::character varying::text, 'E127'::character varying::text, 'E128'::character varying::text, 'E129'::character varying::text, 'E13'::character varying::text, 'E130'::character varying::text, 'E131'::character varying::text, 'E132'::character varying::text, 'E133'::character varying::text, 'E134'::character varying::text, 'E135'::character varying::text, 'E136'::character varying::text, 'E137'::character varying::text, 'E138'::character varying::text, 'E139'::character varying::text, 'E14'::character varying::text, 'E140'::character varying::text, 'E141'::character varying::text, 'E142'::character varying::text, 'E143'::character varying::text, 'E144'::character varying::text, 'E145'::character varying::text, 'E146'::character varying::text, 'E147'::character varying::text, 'E148'::character varying::text, 'E149'::character varying::text, 'O240'::character varying::text, 'O241'::character varying::text, 'O242'::character varying::text, 'O243'::character varying::text]))
+	WHERE (ciap.nu_ciap::text = ANY (ARRAY['T89'::character varying::text, 'T90'::character varying::text, 'ABP006'::character varying::text])) 
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 		AND (cbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text])) 
 		AND tempo.nu_ano <> 3000 
 		AND tempo.dt_registro <= current_date
@@ -51,9 +69,15 @@ WITH possui_diabetes_autoreferida AS (
 		tdt.dt_registro AS dt_nascimento,
 		(array_agg(tfcp.no_social_cidadao) FILTER (WHERE tfcp.no_social_cidadao IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_nome_social,
 		(array_agg(tfcp.nu_cpf_cidadao) FILTER (WHERE tfcp.nu_cpf_cidadao IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_cpf,
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 		(array_agg(tfcp.nu_cns) FILTER (WHERE tfcp.nu_cns IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_cns,
 		(array_agg(tds.ds_sexo) FILTER (WHERE tds.ds_sexo IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_sexo,
 		FIRST_VALUE(tfcp.co_seq_fat_cidadao_pec) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS co_seq_fat_cidadao_pec, -- valor arbitrario
+=======
+	    (array_agg(tfcp.nu_cns) FILTER (WHERE tfcp.nu_cns IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_cns,
+	    (array_agg(tds.ds_sexo) FILTER (WHERE tds.ds_sexo IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_sexo,
+	    FIRST_VALUE(tfcp.co_seq_fat_cidadao_pec) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS co_seq_fat_cidadao_pec, -- valor arbitrario
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 		COALESCE(daref.possui_diabetes_autoreferida,FALSE) AS possui_diabetes_autoreferida,
 		COALESCE(ddia.possui_diabetes_diagnosticada,FALSE) AS possui_diabetes_diagnosticada,
 		COALESCE(FIRST_VALUE(tfcp.st_faleceu) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),0) AS se_faleceu
@@ -87,7 +111,10 @@ WITH possui_diabetes_autoreferida AS (
 	WHERE (cbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text])) 
 		AND (tdp.co_proced::text = ANY (ARRAY['0202010503'::text, 'ABEX008'::text])) 
 		AND tempo.dt_registro <= current_date
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 		AND tempo.nu_ano <> 3000 
+=======
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 	GROUP BY 1
 )
 , consulta_diabetes AS (
@@ -99,12 +126,22 @@ WITH possui_diabetes_autoreferida AS (
 		ON atendimento.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
 	JOIN denominador_diabeticos dd 
 		ON dd.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 	LEFT  JOIN tb_dim_tempo tempo 
 		ON atendimento.co_dim_tempo = tempo.co_seq_dim_tempo
 	LEFT  JOIN tb_fat_atd_ind_problemas problemas 
 		ON atendimento.co_seq_fat_atd_ind = problemas.co_fat_atd_ind
 	LEFT JOIN tb_dim_cbo cbo 
 		ON problemas.co_dim_cbo_1 = cbo.co_seq_dim_cbo 
+=======
+	JOIN tb_dim_tempo tempo 
+		ON atendimento.co_dim_tempo = tempo.co_seq_dim_tempo
+	JOIN tb_fat_atd_ind_problemas problemas 
+		ON atendimento.co_seq_fat_atd_ind = problemas.co_fat_atd_ind
+	JOIN tb_dim_cbo cbo 
+		ON problemas.co_dim_cbo_1 = cbo.co_seq_dim_cbo 
+		AND (cbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text]))
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 	LEFT JOIN tb_dim_ciap ciap 
 		ON problemas.co_dim_ciap = ciap.co_seq_dim_ciap
 	LEFT JOIN tb_dim_cid cid 
@@ -112,7 +149,10 @@ WITH possui_diabetes_autoreferida AS (
 	WHERE ((cid.nu_cid::text = ANY (ARRAY['E10'::character varying::text, 'E100'::character varying::text, 'E101'::character varying::text, 'E102'::character varying::text, 'E103'::character varying::text, 'E104'::character varying::text, 'E105'::character varying::text, 'E106'::character varying::text, 'E107'::character varying::text, 'E108'::character varying::text, 'E109'::character varying::text, 'E11'::character varying::text, 'E110'::character varying::text, 'E111'::character varying::text, 'E112'::character varying::text, 'E113'::character varying::text, 'E114'::character varying::text, 'E115'::character varying::text, 'E116'::character varying::text, 'E117'::character varying::text, 'E118'::character varying::text, 'E119'::character varying::text, 'E12'::character varying::text, 'E120'::character varying::text, 'E121'::character varying::text, 'E122'::character varying::text, 'E123'::character varying::text, 'E124'::character varying::text, 'E125'::character varying::text, 'E126'::character varying::text, 'E127'::character varying::text, 'E128'::character varying::text, 'E129'::character varying::text, 'E13'::character varying::text, 'E130'::character varying::text, 'E131'::character varying::text, 'E132'::character varying::text, 'E133'::character varying::text, 'E134'::character varying::text, 'E135'::character varying::text, 'E136'::character varying::text, 'E137'::character varying::text, 'E138'::character varying::text, 'E139'::character varying::text, 'E14'::character varying::text, 'E140'::character varying::text, 'E141'::character varying::text, 'E142'::character varying::text, 'E143'::character varying::text, 'E144'::character varying::text, 'E145'::character varying::text, 'E146'::character varying::text, 'E147'::character varying::text, 'E148'::character varying::text, 'E149'::character varying::text, 'O240'::character varying::text, 'O241'::character varying::text, 'O242'::character varying::text, 'O243'::character varying::text])) 
 		OR (ciap.nu_ciap::text = ANY (ARRAY['T89'::character varying::text, 'T90'::character varying::text, 'ABP006'::character varying::text]))) 
 		AND tempo.dt_registro <= current_date
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 		AND (cbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text]))
+=======
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 	GROUP BY 1
 )
 -- Informações de vinculação
@@ -123,10 +163,17 @@ WITH possui_diabetes_autoreferida AS (
 			tdt.dt_registro AS data_ultimo_cadastro,
 			tfci.nu_micro_area AS micro_area_cad_individual,
 			NULLIF(uns.nu_cnes::text, '-'::text) AS estabelecimento_cnes_cadastro,
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 			NULLIF(uns.no_unidade_saude::text, 'Não informado'::text) AS estabelecimento_nome_cadastro,
 			NULLIF(eq.nu_ine::text, '-'::text) AS equipe_ine_cadastro,
 			NULLIF(eq.no_equipe::text, 'SEM EQUIPE'::text) AS equipe_nome_cadastro,
 			NULLIF(acs.no_profissional::text, 'SEM EQUIPE'::text) AS acs_nome_cadastro,
+=======
+            NULLIF(uns.no_unidade_saude::text, 'Não informado'::text) AS estabelecimento_nome_cadastro,
+            NULLIF(eq.nu_ine::text, '-'::text) AS equipe_ine_cadastro,
+            NULLIF(eq.no_equipe::text, 'SEM EQUIPE'::text) AS equipe_nome_cadastro,
+            NULLIF(acs.no_profissional::text, 'SEM EQUIPE'::text) AS acs_nome_cadastro,
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 			COALESCE(cidadaoterritoriorecente.st_mudou_se,0) AS se_mudou,
 			row_number() OVER (PARTITION BY dd.chave_paciente ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_individual
 		FROM tb_fat_cad_individual tfci
@@ -149,7 +196,11 @@ WITH possui_diabetes_autoreferida AS (
 -- Dados das visitas domiciliares realizadas pelos ACS (dados para vinculação de ACS da mulher)
 		SELECT 
 			dd.chave_paciente,
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 			tfcp.co_seq_fat_cidadao_pec,
+=======
+		    tfcp.co_seq_fat_cidadao_pec,
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 			tdt.dt_registro AS data_visita_acs,
 			NULLIF(acs.no_profissional::text, 'SEM EQUIPE'::text) AS acs_nome_visita,
 			row_number() OVER (PARTITION BY dd.chave_paciente ORDER BY tdt.dt_registro DESC) = 1 AS ultima_visita_domiciliar
@@ -190,13 +241,18 @@ WITH possui_diabetes_autoreferida AS (
 		LEFT JOIN tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = caddomiciliarfamilia.co_dim_profissional
 		LEFT JOIN tb_dim_unidade_saude uns
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 			ON uns.co_seq_dim_unidade_saude = caddomiciliarfamilia.co_dim_unidade_saude     
+=======
+			ON uns.co_seq_dim_unidade_saude = caddomiciliarfamilia.co_dim_unidade_saude  	
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 )
 , atendimento_recente AS (
 	SELECT 
 		dd.chave_paciente,
 		tdt.dt_registro AS dt_ultima_consulta,
 		NULLIF(unidadeatendimentorecente.nu_cnes::text, '-'::text) AS estabelecimento_cnes_atendimento,
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 		NULLIF(unidadeatendimentorecente.no_unidade_saude::text, 'Não informado'::text) AS estabelecimento_nome_atendimento,
 		NULLIF(equipeatendimentorecente.nu_ine::text, '-'::text) AS equipe_ine_atendimento,
 		NULLIF(equipeatendimentorecente.no_equipe::text, 'SEM EQUIPE'::text) AS equipe_nome_atendimento,
@@ -204,6 +260,15 @@ WITH possui_diabetes_autoreferida AS (
 	FROM tb_fat_atendimento_individual atendimento  
 	JOIN tb_dim_tempo tdt 
 		ON atendimento.co_dim_tempo = tdt.co_seq_dim_tempo
+=======
+	    NULLIF(unidadeatendimentorecente.no_unidade_saude::text, 'Não informado'::text) AS estabelecimento_nome_atendimento,
+	    NULLIF(equipeatendimentorecente.nu_ine::text, '-'::text) AS equipe_ine_atendimento,
+	    NULLIF(equipeatendimentorecente.no_equipe::text, 'SEM EQUIPE'::text) AS equipe_nome_atendimento,
+		row_number() OVER (PARTITION BY dd.chave_paciente ORDER BY tdt.dt_registro DESC) = 1  AS ultimo_atendimento
+	FROM tb_fat_atendimento_individual atendimento	
+	JOIN tb_dim_tempo tdt 
+	 	ON atendimento.co_dim_tempo = tdt.co_seq_dim_tempo
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 	JOIN tb_fat_cidadao_pec tfcp
 		ON tfcp.co_seq_fat_cidadao_pec = atendimento.co_fat_cidadao_pec 
 	JOIN denominador_diabeticos dd 
@@ -215,6 +280,7 @@ WITH possui_diabetes_autoreferida AS (
 )
 	SELECT 
 		CASE
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 			WHEN date_part('month'::text, current_date) >= 1::double precision AND date_part('month'::text, current_date) <= 4::double precision THEN concat(date_part('year'::text, current_date), '.Q1')
 			WHEN date_part('month'::text, current_date) >= 5::double precision AND date_part('month'::text, current_date) <= 8::double precision THEN concat(date_part('year'::text, current_date), '.Q2')
 			WHEN date_part('month'::text, current_date) >= 9::double precision AND date_part('month'::text, current_date) <= 12::double precision THEN concat(date_part('year'::text, current_date), '.Q3')
@@ -278,6 +344,71 @@ WITH possui_diabetes_autoreferida AS (
 	dd.se_faleceu,
 	cir.se_mudou, 
 	now() as criacao_data
+=======
+            WHEN date_part('month'::text, current_date) >= 1::double precision AND date_part('month'::text, current_date) <= 4::double precision THEN concat(date_part('year'::text, current_date), '.Q1')
+            WHEN date_part('month'::text, current_date) >= 5::double precision AND date_part('month'::text, current_date) <= 8::double precision THEN concat(date_part('year'::text, current_date), '.Q2')
+            WHEN date_part('month'::text, current_date) >= 9::double precision AND date_part('month'::text, current_date) <= 12::double precision THEN concat(date_part('year'::text, current_date), '.Q3')
+            ELSE NULL::text
+        END AS quadrimestre_atual,
+        CASE
+            WHEN hg.dt_solicitacao_hemoglobina_glicada_mais_recente <=
+            CASE
+                WHEN date_part('month'::text, current_date) >= 1::double precision AND date_part('month'::text, current_date) <= 4::double precision THEN concat(date_part('year'::text, current_date), '-04-30')
+                WHEN date_part('month'::text, current_date) >= 5::double precision AND date_part('month'::text, current_date) <= 8::double precision THEN concat(date_part('year'::text, current_date), '-08-31')
+                WHEN date_part('month'::text, current_date) >= 9::double precision AND date_part('month'::text, current_date) <= 12::double precision THEN concat(date_part('year'::text, current_date), '-12-31')
+                ELSE NULL::text
+            END::date AND hg.dt_solicitacao_hemoglobina_glicada_mais_recente >= (
+            CASE
+                WHEN date_part('month'::text, current_date) >= 1::double precision AND date_part('month'::text, current_date) <= 4::double precision THEN concat(date_part('year'::text, current_date), '-04-30')
+                WHEN date_part('month'::text, current_date) >= 5::double precision AND date_part('month'::text, current_date) <= 8::double precision THEN concat(date_part('year'::text, current_date), '-08-31')
+                WHEN date_part('month'::text, current_date) >= 9::double precision AND date_part('month'::text, current_date) <= 12::double precision THEN concat(date_part('year'::text, current_date), '-12-31')
+                ELSE NULL::text
+            END::date - '180 days'::interval) THEN true
+            ELSE false
+        END AS realizou_solicitacao_hemoglobina_ultimos_6_meses,
+    	hg.dt_solicitacao_hemoglobina_glicada_mais_recente,
+        CASE
+            WHEN cd.dt_consulta_mais_recente <=
+            CASE
+                WHEN date_part('month'::text, current_date) >= 1::double precision AND date_part('month'::text, current_date) <= 4::double precision THEN concat(date_part('year'::text, current_date), '-04-30')
+                WHEN date_part('month'::text, current_date) >= 5::double precision AND date_part('month'::text, current_date) <= 8::double precision THEN concat(date_part('year'::text, current_date), '-08-31')
+                WHEN date_part('month'::text, current_date) >= 9::double precision AND date_part('month'::text, current_date) <= 12::double precision THEN concat(date_part('year'::text, current_date), '-12-31')
+                ELSE NULL::text
+            END::date AND cd.dt_consulta_mais_recente >= (
+            CASE
+                WHEN date_part('month'::text, current_date) >= 1::double precision AND date_part('month'::text, current_date) <= 4::double precision THEN concat(date_part('year'::text, current_date), '-04-30')
+                WHEN date_part('month'::text, current_date) >= 5::double precision AND date_part('month'::text, current_date) <= 8::double precision THEN concat(date_part('year'::text, current_date), '-08-31')
+                WHEN date_part('month'::text, current_date) >= 9::double precision AND date_part('month'::text, current_date) <= 12::double precision THEN concat(date_part('year'::text, current_date), '-12-31')
+                ELSE NULL::text
+            END::date - '180 days'::interval) THEN true
+            ELSE false
+        END AS realizou_consulta_ultimos_6_meses,
+    cd.dt_consulta_mais_recente,
+    dd.co_seq_fat_cidadao_pec,
+    dd.cidadao_cpf,
+    dd.cidadao_cns,
+    dd.cidadao_nome,
+    dd.cidadao_nome_social,
+    dd.cidadao_sexo,
+    dd.dt_nascimento,
+    ar.estabelecimento_cnes_atendimento,
+    cir.estabelecimento_cnes_cadastro,
+    ar.estabelecimento_nome_atendimento,
+    cir.estabelecimento_nome_cadastro,
+    ar.equipe_ine_atendimento,
+    cir.equipe_ine_cadastro,
+    ar.equipe_nome_atendimento,
+    cir.equipe_nome_cadastro,
+    cir.acs_nome_cadastro,
+    vdr.acs_nome_visita,
+    dd.possui_diabetes_autoreferida,
+    dd.possui_diabetes_diagnosticada,
+    cir.data_ultimo_cadastro,
+    ar.dt_ultima_consulta,
+    dd.se_faleceu,
+    cir.se_mudou, 
+    now() as criacao_data
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
 FROM denominador_diabeticos dd
 LEFT JOIN hemoglobina_glicada hg 
 	ON hg.chave_paciente = dd.chave_paciente
@@ -297,4 +428,8 @@ LEFT JOIN atendimento_recente ar
 	AND ar.ultimo_atendimento IS TRUE 
 -- retirar equipes de Palmeiras / nao e municipio parceiro
 WHERE cir.equipe_ine_cadastro NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
+<<<<<<< HEAD:transmissor_impulso_esus/lista_nominal_diabeticos.sql
 	AND ar.equipe_ine_atendimento NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
+=======
+	AND ar.equipe_ine_atendimento NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
+>>>>>>> 7833e23 (Adiciona código de transmissão da lista de diabeticos):Scripts/transmissor_impulso_esus/lista_nominal_diabeticos.sql
