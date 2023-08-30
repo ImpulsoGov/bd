@@ -10,7 +10,7 @@ impulsogov
 CASCADE;
 CREATE SERVER impulsogov
 	FOREIGN DATA WRAPPER postgres_fdw
-    OPTIONS (host '35.239.239.250', dbname 'esus-backups',port '5432');
+    OPTIONS (host '00.000.000.000', dbname 'esus-backups',port '5432');
 
 /* Utiliza um usuario com permiss?es restritas para o municipio acessar nosso banco */
 CREATE USER MAPPING FOR postgres
