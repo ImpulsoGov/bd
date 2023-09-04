@@ -31,28 +31,28 @@ WITH atendimentos_pre_natal AS (
 			uns.no_unidade_saude AS estabelecimento_atendimento,
 			eq.nu_ine AS ine_equipe_atendimento,
 			eq.no_equipe AS equipe_atendimento
-	    FROM esus_3169356_tresmarias_mg_20230314.tb_fat_atendimento_individual tfai
-	    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cbo tdcbo 
+	    FROM tb_fat_atendimento_individual tfai
+	    JOIN tb_dim_cbo tdcbo 
 	    	ON tdcbo.co_seq_dim_cbo = tfai.co_dim_cbo_1
-	    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+	    JOIN tb_dim_tempo tdt 
 	    	ON tfai.co_dim_tempo = tdt.co_seq_dim_tempo
-	    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdtdum 
+	    JOIN tb_dim_tempo tdtdum 
 	    	ON tfai.co_dim_tempo_dum = tdtdum.co_seq_dim_tempo
-	    JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_atd_ind_problemas tfaip 
+	    JOIN tb_fat_atd_ind_problemas tfaip 
 	    	ON tfai.co_seq_fat_atd_ind = tfaip.co_fat_atd_ind
-	    LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdprof
+	    LEFT JOIN tb_dim_profissional tdprof
 			ON tdprof.co_seq_dim_profissional = tfai.co_dim_profissional_1
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+		LEFT JOIN tb_dim_equipe eq
 			ON eq.co_seq_dim_equipe = tfai.co_dim_equipe_1
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns 
+		LEFT JOIN tb_dim_unidade_saude uns 
 			ON uns.co_seq_dim_unidade_saude = tfai.co_dim_unidade_saude_1
-	    JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp 
+	    JOIN tb_fat_cidadao_pec tfcp 
 	    	ON tfcp.co_seq_fat_cidadao_pec = tfai.co_fat_cidadao_pec
-	    JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tempocidadaopec 
+	    JOIN tb_dim_tempo tempocidadaopec 
 	    	ON tempocidadaopec.co_seq_dim_tempo = tfcp.co_dim_tempo_nascimento
-	    LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cid tdcid 
+	    LEFT JOIN tb_dim_cid tdcid 
 	    	ON tdcid.co_seq_dim_cid = tfaip.co_dim_cid
-	    LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_ciap tdciap 
+	    LEFT JOIN tb_dim_ciap tdciap 
 	    	ON tdciap.co_seq_dim_ciap = tfaip.co_dim_ciap
 	   WHERE (tdcbo.nu_cbo::text ~~ ANY (ARRAY['2231%'::text, '2235%'::text, '2251%'::text, '2252%'::text, '2253%'::text])) 
 	   		AND ((tdciap.nu_ciap::text = ANY (ARRAY['ABP001'::text, 'W03'::text, 'W05'::text, 'W29'::text, 'W71'::text, 'W78'::text, 'W79'::text, 'W80'::text, 'W81'::text, 'W84'::text, 'W85'::text])) 
@@ -94,22 +94,22 @@ WITH atendimentos_pre_natal AS (
 		uns.no_unidade_saude AS estabelecimento_atendimento,
 		eq.nu_ine AS ine_equipe_atendimento,
 		eq.no_equipe AS equipe_atendimento
-	FROM esus_3169356_tresmarias_mg_20230314.tb_fat_atendimento_individual tfaiparto
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_atd_ind_problemas tfaipparto 
+	FROM tb_fat_atendimento_individual tfaiparto
+	JOIN tb_fat_atd_ind_problemas tfaipparto 
 		ON tfaiparto.co_seq_fat_atd_ind = tfaipparto.co_fat_atd_ind
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdtempoparto 
+	JOIN tb_dim_tempo tdtempoparto 
 		ON tdtempoparto.co_seq_dim_tempo = tfaiparto.co_dim_tempo
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdprof
+	LEFT JOIN tb_dim_profissional tdprof
 		ON tdprof.co_seq_dim_profissional = tfaiparto.co_dim_profissional_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+	LEFT JOIN tb_dim_equipe eq
 		ON eq.co_seq_dim_equipe = tfaiparto.co_dim_equipe_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns 
+	LEFT JOIN tb_dim_unidade_saude uns 
 		ON uns.co_seq_dim_unidade_saude = tfaiparto.co_dim_unidade_saude_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cid tdcidparto 
+	LEFT JOIN tb_dim_cid tdcidparto 
 		ON tdcidparto.co_seq_dim_cid = tfaipparto.co_dim_cid
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_ciap tdciapparto 
+	LEFT JOIN tb_dim_ciap tdciapparto 
 		ON tdciapparto.co_seq_dim_ciap = tfaipparto.co_dim_ciap
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp 
+	LEFT JOIN tb_fat_cidadao_pec tfcp 
 		ON tfaiparto.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec
 	JOIN gestantes_unicas gu 
 		ON gu.chave_gestante = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
@@ -137,22 +137,22 @@ WITH atendimentos_pre_natal AS (
 		uns.no_unidade_saude AS estabelecimento_atendimento,
 		eq.nu_ine AS ine_equipe_atendimento,
 		eq.no_equipe AS equipe_atendimento
-	FROM esus_3169356_tresmarias_mg_20230314.tb_fat_atendimento_individual tfaiaborto
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_atd_ind_problemas tfaipaborto 
+	FROM tb_fat_atendimento_individual tfaiaborto
+	JOIN tb_fat_atd_ind_problemas tfaipaborto 
 		ON tfaiaborto.co_seq_fat_atd_ind = tfaipaborto.co_fat_atd_ind
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdtempoaborto 
+	JOIN tb_dim_tempo tdtempoaborto 
 		ON tdtempoaborto.co_seq_dim_tempo = tfaiaborto.co_dim_tempo
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdprof
+	LEFT JOIN tb_dim_profissional tdprof
 		ON tdprof.co_seq_dim_profissional = tfaiaborto.co_dim_profissional_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+	LEFT JOIN tb_dim_equipe eq
 		ON eq.co_seq_dim_equipe = tfaiaborto.co_dim_equipe_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns 
+	LEFT JOIN tb_dim_unidade_saude uns 
 		ON uns.co_seq_dim_unidade_saude = tfaiaborto.co_dim_unidade_saude_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cid tdcidaborto 
+	LEFT JOIN tb_dim_cid tdcidaborto 
 		ON tdcidaborto.co_seq_dim_cid = tfaipaborto.co_dim_cid
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_ciap tdciapaborto 
+	LEFT JOIN tb_dim_ciap tdciapaborto 
 		ON tdciapaborto.co_seq_dim_ciap = tfaipaborto.co_dim_ciap
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp 
+	LEFT JOIN tb_fat_cidadao_pec tfcp 
 		ON tfaiaborto.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec
 	JOIN gestantes_unicas gu 
 		ON gu.chave_gestante = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
@@ -181,20 +181,20 @@ WITH atendimentos_pre_natal AS (
 		uns.no_unidade_saude AS estabelecimento_atendimento,
 		eq.nu_ine AS ine_equipe_atendimento,
 		eq.no_equipe AS equipe_atendimento
-	FROM esus_3169356_tresmarias_mg_20230314.tb_fat_atendimento_odonto tfaodont
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp
+	FROM tb_fat_atendimento_odonto tfaodont
+	JOIN tb_fat_cidadao_pec tfcp
 		ON tfcp.co_seq_fat_cidadao_pec = tfaodont.co_fat_cidadao_pec
 	JOIN gestantes_unicas gu 
 		ON gu.chave_gestante = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdprof
+	LEFT JOIN tb_dim_profissional tdprof
 		ON tdprof.co_seq_dim_profissional = tfaodont.co_dim_profissional_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+	LEFT JOIN tb_dim_equipe eq
 		ON eq.co_seq_dim_equipe = tfaodont.co_dim_equipe_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns 
+	LEFT JOIN tb_dim_unidade_saude uns 
 		ON uns.co_seq_dim_unidade_saude = tfaodont.co_dim_unidade_saude_1
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cbo otdcbo 
+	JOIN tb_dim_cbo otdcbo 
 		ON otdcbo.co_seq_dim_cbo = tfaodont.co_dim_cbo_1
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo otdtempo 
+	JOIN tb_dim_tempo otdtempo 
 		ON otdtempo.co_seq_dim_tempo = tfaodont.co_dim_tempo
 	WHERE otdcbo.nu_cbo::text ~~ '2232%'::text 
 	    AND otdtempo.dt_registro >= (( 
@@ -227,22 +227,22 @@ WITH atendimentos_pre_natal AS (
 		uns.no_unidade_saude AS estabelecimento_atendimento,
 		eq.nu_ine AS ine_equipe_atendimento,
 		eq.no_equipe AS equipe_atendimento
-	FROM esus_3169356_tresmarias_mg_20230314.tb_fat_proced_atend_proced tfpap
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp
+	FROM tb_fat_proced_atend_proced tfpap
+	JOIN tb_fat_cidadao_pec tfcp
 		ON tfcp.co_seq_fat_cidadao_pec = tfpap.co_fat_cidadao_pec
 	JOIN gestantes_unicas gu 
 		ON gu.chave_gestante = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_procedimento tdp 
+	JOIN tb_dim_procedimento tdp 
 		ON tdp.co_seq_dim_procedimento = tfpap.co_dim_procedimento
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdprof
+	LEFT JOIN tb_dim_profissional tdprof
 		ON tdprof.co_seq_dim_profissional = tfpap.co_dim_profissional
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+	LEFT JOIN tb_dim_equipe eq
 		ON eq.co_seq_dim_equipe = tfpap.co_dim_equipe
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns 
+	LEFT JOIN tb_dim_unidade_saude uns 
 		ON uns.co_seq_dim_unidade_saude = tfpap.co_dim_unidade_saude
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cbo tdcbo 
+	JOIN tb_dim_cbo tdcbo 
 		ON tdcbo.co_seq_dim_cbo = tfpap.co_dim_cbo
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdtempo 
+	JOIN tb_dim_tempo tdtempo 
 		ON tdtempo.co_seq_dim_tempo = tfpap.co_dim_tempo
 	WHERE  (tdcbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text, '3222%'::text]))
 		AND (tdp.co_proced::text = ANY (ARRAY['0214010058'::text, '0214010040'::text, 'ABPG024'::text]))
@@ -275,22 +275,22 @@ UNION ALL
 		uns.no_unidade_saude AS estabelecimento_atendimento,
 		eq.nu_ine AS ine_equipe_atendimento,
 		eq.no_equipe AS equipe_atendimento
-	FROM esus_3169356_tresmarias_mg_20230314.tb_fat_atd_ind_procedimentos tfaip
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp
+	FROM tb_fat_atd_ind_procedimentos tfaip
+	JOIN tb_fat_cidadao_pec tfcp
 		ON tfcp.co_seq_fat_cidadao_pec = tfaip.co_fat_cidadao_pec
 	JOIN gestantes_unicas gu 
 		ON gu.chave_gestante = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_procedimento tdp 
+	JOIN tb_dim_procedimento tdp 
 		ON tdp.co_seq_dim_procedimento = tfaip.co_dim_procedimento_avaliado
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdprof
+	LEFT JOIN tb_dim_profissional tdprof
 		ON tdprof.co_seq_dim_profissional = tfaip.co_dim_profissional_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+	LEFT JOIN tb_dim_equipe eq
 		ON eq.co_seq_dim_equipe = tfaip.co_dim_equipe_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns 
+	LEFT JOIN tb_dim_unidade_saude uns 
 		ON uns.co_seq_dim_unidade_saude = tfaip.co_dim_unidade_saude_1
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cbo tdcbo 
+	JOIN tb_dim_cbo tdcbo 
 		ON tdcbo.co_seq_dim_cbo = tfaip.co_dim_cbo_1
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdtempo 
+	JOIN tb_dim_tempo tdtempo 
 		ON tdtempo.co_seq_dim_tempo = tfaip.co_dim_tempo
 	WHERE  (tdcbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text, '3222%'::text])) 
 		AND (tdp.co_proced::text = ANY (ARRAY['0202030300'::text, 'ABEX018'::text]))
@@ -324,22 +324,22 @@ UNION ALL
 		uns.no_unidade_saude AS estabelecimento_atendimento,
 		eq.nu_ine AS ine_equipe_atendimento,
 		eq.no_equipe AS equipe_atendimento
-	FROM esus_3169356_tresmarias_mg_20230314.tb_fat_proced_atend_proced tfpap
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp
+	FROM tb_fat_proced_atend_proced tfpap
+	JOIN tb_fat_cidadao_pec tfcp
 		ON tfcp.co_seq_fat_cidadao_pec = tfpap.co_fat_cidadao_pec
 	JOIN gestantes_unicas gu 
 		ON gu.chave_gestante = tfcp.no_cidadao::text||tfcp.co_dim_tempo_nascimento
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_procedimento tdp 
+	JOIN tb_dim_procedimento tdp 
 		ON tdp.co_seq_dim_procedimento = tfpap.co_dim_procedimento
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdprof
+	LEFT JOIN tb_dim_profissional tdprof
 		ON tdprof.co_seq_dim_profissional = tfpap.co_dim_profissional
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+	LEFT JOIN tb_dim_equipe eq
 		ON eq.co_seq_dim_equipe = tfpap.co_dim_equipe
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns 
+	LEFT JOIN tb_dim_unidade_saude uns 
 		ON uns.co_seq_dim_unidade_saude = tfpap.co_dim_unidade_saude
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cbo tdcbo 
+	JOIN tb_dim_cbo tdcbo 
 		ON tdcbo.co_seq_dim_cbo = tfpap.co_dim_cbo
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdtempo 
+	JOIN tb_dim_tempo tdtempo 
 		ON tdtempo.co_seq_dim_tempo = tfpap.co_dim_tempo
 	WHERE (tdcbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text, '3222%'::text])) 
 		AND (tdp.co_proced::text = ANY (ARRAY['0214010074'::text, '0214010082'::text, 'ABPG026'::text]))
@@ -372,22 +372,22 @@ UNION ALL
 		uns.no_unidade_saude AS estabelecimento_atendimento,
 		eq.nu_ine AS ine_equipe_atendimento,
 		eq.no_equipe AS equipe_atendimento
-	FROM esus_3169356_tresmarias_mg_20230314.tb_fat_atd_ind_procedimentos tfaip
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcp
+	FROM tb_fat_atd_ind_procedimentos tfaip
+	JOIN tb_fat_cidadao_pec tfcp
 		ON tfcp.co_seq_fat_cidadao_pec = tfaip.co_fat_cidadao_pec
 	JOIN gestantes_unicas gu 
 		ON gu.chave_gestante = tfcp.no_cidadao::text||tfcp.co_dim_tempo_nascimento
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_procedimento tdp 
+	JOIN tb_dim_procedimento tdp 
 		ON tdp.co_seq_dim_procedimento = tfaip.co_dim_procedimento_avaliado
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional tdprof
+	LEFT JOIN tb_dim_profissional tdprof
 		ON tdprof.co_seq_dim_profissional = tfaip.co_dim_profissional_1	
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+	LEFT JOIN tb_dim_equipe eq
 		ON eq.co_seq_dim_equipe = tfaip.co_dim_equipe_1
-	LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns 
+	LEFT JOIN tb_dim_unidade_saude uns 
 		ON uns.co_seq_dim_unidade_saude = tfaip.co_dim_unidade_saude_1
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_cbo tdcbo 
+	JOIN tb_dim_cbo tdcbo 
 		ON tdcbo.co_seq_dim_cbo = tfaip.co_dim_cbo_1
-	JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdtempo 
+	JOIN tb_dim_tempo tdtempo 
 		ON tdtempo.co_seq_dim_tempo = tfaip.co_dim_tempo
 	WHERE (tdcbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text, '3222%'::text])) 
 		AND (tdp.co_proced::text = ANY (ARRAY['0202031110'::text, '0202031179'::text, 'ABEX019'::text]))
@@ -426,18 +426,18 @@ UNION ALL
 			eq.no_equipe AS equipe_cad_individual,
 			acs.no_profissional AS acs_cad_individual,
 			row_number() OVER (PARTITION BY gu.chave_gestante ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_individual
-		FROM esus_3169356_tresmarias_mg_20230314.tb_fat_cad_individual tfci
-		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcpec
+		FROM tb_fat_cad_individual tfci
+		JOIN tb_fat_cidadao_pec tfcpec
 			ON tfcpec.co_seq_fat_cidadao_pec = tfci.co_fat_cidadao_pec
 		JOIN gestantes_unicas gu 
 			ON gu.chave_gestante = tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+		LEFT JOIN tb_dim_tempo tdt 
 			ON tdt.co_seq_dim_tempo = tfci.co_dim_tempo
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+		LEFT JOIN tb_dim_equipe eq
 			ON eq.co_seq_dim_equipe = tfci.co_dim_equipe
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional acs
+		LEFT JOIN tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = tfci.co_dim_profissional
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns
+		LEFT JOIN tb_dim_unidade_saude uns
 			ON uns.co_seq_dim_unidade_saude = tfci.co_dim_unidade_saude  
 		)
 	SELECT * FROM base WHERE ultimo_cadastro_individual IS TRUE
@@ -451,14 +451,14 @@ UNION ALL
 			tdt.dt_registro AS data_visita_acs,
 			acs.no_profissional AS acs_visita_domiciliar,
 			row_number() OVER (PARTITION BY gu.chave_gestante ORDER BY tdt.dt_registro DESC) = 1 AS ultima_visita_domiciliar
-		FROM esus_3169356_tresmarias_mg_20230314.tb_fat_visita_domiciliar visitadomiciliar
-		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcpec
+		FROM tb_fat_visita_domiciliar visitadomiciliar
+		JOIN tb_fat_cidadao_pec tfcpec
 			ON tfcpec.co_seq_fat_cidadao_pec = visitadomiciliar.co_fat_cidadao_pec 
 		JOIN gestantes_unicas gu 
 			ON gu.chave_gestante = tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional acs
+		LEFT JOIN tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = visitadomiciliar.co_dim_profissional
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+		LEFT JOIN tb_dim_tempo tdt 
 			ON tdt.co_seq_dim_tempo = visitadomiciliar.co_dim_tempo
 		)
 	SELECT * FROM base WHERE ultima_visita_domiciliar IS TRUE 
@@ -477,20 +477,20 @@ UNION ALL
 			acs.no_profissional AS acs_cad_dom_familia,
 			NULLIF(concat(cadomiciliar.no_logradouro, ', ', cadomiciliar.nu_num_logradouro), ', '::text) AS gestante_endereco,
 			row_number() OVER (PARTITION BY gu.chave_gestante ORDER BY tdt.dt_registro DESC) = 1  AS ultimo_cadastro_domiciliar_familia
-		FROM esus_3169356_tresmarias_mg_20230314.tb_fat_cad_dom_familia caddomiciliarfamilia
-		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cad_domiciliar cadomiciliar 
+		FROM tb_fat_cad_dom_familia caddomiciliarfamilia
+		JOIN tb_fat_cad_domiciliar cadomiciliar 
 			ON cadomiciliar.co_seq_fat_cad_domiciliar = caddomiciliarfamilia.co_fat_cad_domiciliar
-		JOIN esus_3169356_tresmarias_mg_20230314.tb_fat_cidadao_pec tfcpec
+		JOIN tb_fat_cidadao_pec tfcpec
 			ON tfcpec.co_seq_fat_cidadao_pec = caddomiciliarfamilia.co_fat_cidadao_pec 
 		JOIN gestantes_unicas gu 
 			ON gu.chave_gestante = tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_tempo tdt 
+		LEFT JOIN tb_dim_tempo tdt 
 			ON tdt.co_seq_dim_tempo = caddomiciliarfamilia.co_dim_tempo
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_equipe eq
+		LEFT JOIN tb_dim_equipe eq
 			ON eq.co_seq_dim_equipe = caddomiciliarfamilia.co_dim_equipe
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_profissional acs
+		LEFT JOIN tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = caddomiciliarfamilia.co_dim_profissional
-		LEFT JOIN esus_3169356_tresmarias_mg_20230314.tb_dim_unidade_saude uns
+		LEFT JOIN tb_dim_unidade_saude uns
 			ON uns.co_seq_dim_unidade_saude = caddomiciliarfamilia.co_dim_unidade_saude  		
 		)
 	SELECT * FROM base WHERE ultimo_cadastro_domiciliar_familia IS TRUE
@@ -549,42 +549,43 @@ UNION ALL
 				b.profissional_atendimento,
 				-- Se a data de DUM é inválida ('3000-12-31'), procuramos o registro de idade_gestacional (casos de ficha CDS)
 				CASE
-					WHEN b.data_dum <> '3000-12-31'::date
-						THEN b.data_dum
-					WHEN b.idade_gestacional_atendimento IS NOT NULL 
-						THEN (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision)::date
-					ELSE NULL::date
-				END AS data_dum_atendimento,
-				CASE
-					WHEN b.data_dum <> '3000-12-31'::date
-						THEN (b.data_dum + '294 days'::INTERVAL)::date
-					WHEN b.idade_gestacional_atendimento IS NOT NULL 
-						THEN (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision + '294 days'::INTERVAL)::date
-					ELSE NULL::date
-				END AS data_dpp_atendimento,
-				CASE
-					WHEN b.data_dum <> '3000-12-31'::date
-						THEN (CURRENT_DATE - b.data_dum) / 7
-					WHEN b.idade_gestacional_atendimento IS NOT NULL 
-						THEN (CURRENT_DATE - (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision)::date) / 7
-					ELSE NULL::integer
-				END AS gestante_idade_gestacional,
-				CASE 
-					WHEN b.idade_gestacional_atendimento IS NOT NULL
-						THEN b.idade_gestacional_atendimento
-					WHEN b.data_dum <> '3000-12-31'::date
-						THEN (b.data_registro - b.data_dum) / 7
-					ELSE NULL::integer
-				END AS gestante_idade_gestacional_atendimento
+                    WHEN COALESCE(b.data_dum,'3000-12-31'::date) <> '3000-12-31'::date
+                        THEN b.data_dum
+                    WHEN b.idade_gestacional_atendimento IS NOT NULL 
+                        THEN (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision)::date
+                    ELSE NULL::date
+                END AS data_dum_atendimento,
+                CASE
+                    WHEN COALESCE(b.data_dum,'3000-12-31'::date) <> '3000-12-31'::date
+                        THEN (b.data_dum + '294 days'::INTERVAL)::date
+                    WHEN b.idade_gestacional_atendimento IS NOT NULL 
+                        THEN (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision + '294 days'::INTERVAL)::date
+                    ELSE NULL::date
+                END AS data_dpp_atendimento,
+                CASE
+                    WHEN COALESCE(b.data_dum,'3000-12-31'::date) <> '3000-12-31'::date
+                        THEN (CURRENT_DATE - b.data_dum) / 7
+                    WHEN b.idade_gestacional_atendimento IS NOT NULL 
+                        THEN (CURRENT_DATE - (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision)::date) / 7
+                    ELSE NULL::integer
+                END AS gestante_idade_gestacional,
+                CASE 
+                    WHEN COALESCE(b.data_dum,'3000-12-31'::date) <> '3000-12-31'::date
+                        THEN (b.data_registro - b.data_dum) / 7
+                    WHEN b.idade_gestacional_atendimento IS NOT NULL
+                        THEN b.idade_gestacional_atendimento
+                    ELSE NULL::integer
+                END AS gestante_idade_gestacional_atendimento
 			FROM base_final_registros b
 			WHERE b.tipo_registro = 'consulta_pre_natal'
-			)
+			)		
 		SELECT 
 			b.*,
 			-- Pelas regras do SISAB a data de DUM considerada na gestação é a primeira data com registro válido 
 			(array_agg(b.data_atendimento) FILTER (WHERE b.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY b.chave_gestante ORDER BY b.id_registro ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS primeira_data_consulta_pre_natal_com_DUM,
 			(array_agg(b.data_dum_atendimento) FILTER (WHERE b.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY b.chave_gestante ORDER BY b.id_registro ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS primeira_data_dum_valida
 		FROM base b
+		--select * from base_atendimentos_pre_natal
 )
 , validacao_dum AS (
 -- Análise da data de DUM que é a base para definição do fim e início das gestacoes
@@ -706,6 +707,7 @@ UNION ALL
 		(array_agg(apn.data_dum_atendimento) FILTER (WHERE apn.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS data_primeira_DUM_valida,
 		(array_agg(apn.data_atendimento) FILTER (WHERE apn.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS data_atendimento_com_primeira_DUM_valida,
 		(array_agg(apn.gestante_idade_gestacional_atendimento) FILTER (WHERE apn.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS idade_gestacional_atendimento_com_primeira_DUM_valida,
+		(array_agg(apn.gestante_idade_gestacional) FILTER (WHERE apn.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS idade_gestacional_atual_com_primeira_DUM_valida,
 		cg.data_fim_primeira_gestacao,
 		cg.tipo_encerramento_primeira_gestacao,
 		cg.quant_gestacoes,
@@ -742,6 +744,7 @@ UNION ALL
 		(array_agg(apn.data_dum_atendimento) FILTER (WHERE apn.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS data_primeira_DUM_valida,
 		(array_agg(apn.data_atendimento) FILTER (WHERE apn.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS data_atendimento_com_primeira_DUM_valida,
 		(array_agg(apn.gestante_idade_gestacional_atendimento) FILTER (WHERE apn.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS idade_gestacional_atendimento_com_primeira_DUM_valida,
+		(array_agg(apn.gestante_idade_gestacional) FILTER (WHERE apn.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY apn.chave_gestante ORDER BY apn.data_atendimento ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS idade_gestacional_atual_com_primeira_DUM_valida,
 		cg.data_fim_primeira_gestacao,
 		cg.tipo_encerramento_primeira_gestacao,
 		cg.quant_gestacoes,
@@ -814,14 +817,6 @@ SELECT * FROM base WHERE ultimo_atendimento_individual IS TRUE
 		UPPER(COALESCE(NULLIF(ig.equipe_cad_individual::text, 'SEM EQUIPE'::text), ig.equipe_atendimento::text)) AS equipe_nome,
 		UPPER(COALESCE(ig.acs_visita_domiciliar, ig.acs_cad_individual, 'SEM ACS')) AS acs_nome,
 		ig.data_ultima_visita_acs AS acs_data_ultima_visita,
-		ig.estabelecimento_cnes_atendimento,
-		ig.estabelecimento_atendimento,
-		ig.ine_equipe_atendimento,
-		ig.equipe_atendimento,
-		ig.cnes_estabelecimento_cad_individual,
-		ig.estabelecimento_cad_individual,
-		ig.ine_equipe_cad_individual,
-		ig.equipe_cad_individual,
 		bag.data_primeira_DUM_valida AS gestacao_data_dum,
 		(bag.data_primeira_DUM_valida + '294 days'::INTERVAL)::DATE AS gestacao_data_dpp,
 		(bag.data_primeira_DUM_valida + '294 days'::INTERVAL)::DATE - CURRENT_DATE AS gestacao_dpp_dias_para,
@@ -848,7 +843,7 @@ SELECT * FROM base WHERE ultimo_atendimento_individual IS TRUE
 		bag.tipo_encerramento_primeira_gestacao,
 		ig.gestante_documento_cpf,
 		ig.gestante_documento_cns,
-		MAX(bag.gestante_idade_gestacional) AS gestacao_idade_gestacional_atual,
+		bag.idade_gestacional_atual_com_primeira_DUM_valida AS gestacao_idade_gestacional_atual,
 		CONCAT(max(bag.quant_gestacoes),', ',max(bag.tipo_registro_parto),', ', max(bag.tipo_registro_aborto),', ',max(bag.registro_com_dpp_passado), ', ',max(consulta_proxima_fim_gestacao)) AS sinalizacao_erro_registro,
 		-- No caso de somente DUM inváidas, não inferimos datas de início e fim de gestação
 		CASE 
@@ -932,8 +927,9 @@ SELECT * FROM base WHERE ultimo_atendimento_individual IS TRUE
 	LEFT JOIN base_final_registros aborto 
 		ON bag.chave_gestante = aborto.chave_gestante
 		AND aborto.tipo_registro = 'registro_de_aborto'
-	GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
+	GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 
 )
+, aux AS (
 SELECT 
 	*, 
 	CASE
@@ -951,9 +947,13 @@ WHERE
 						 		WHEN date_part('month', CURRENT_DATE) >= 9::double precision AND date_part('month', CURRENT_DATE) <= 12::double precision THEN concat(date_part('year', CURRENT_DATE), '-05-01')
 						 		ELSE NULL::text
 							END::date)
-	OR consulta_prenatal_ultima_data >= (CASE
+	OR consulta_prenatal_ultima_data >= CASE
 								 			WHEN date_part('month', CURRENT_DATE) >= 1::double precision AND date_part('month', CURRENT_DATE) <= 4::double precision THEN concat(date_part('year', (CURRENT_DATE - '365 days'::interval)::date), '-09-01')
 									 		WHEN date_part('month', CURRENT_DATE) >= 5::double precision AND date_part('month', CURRENT_DATE) <= 8::double precision THEN concat(date_part('year', CURRENT_DATE), '-01-01')
 									 		WHEN date_part('month', CURRENT_DATE) >= 9::double precision AND date_part('month', CURRENT_DATE) <= 12::double precision THEN concat(date_part('year', CURRENT_DATE), '-05-01')
 									 		ELSE NULL::text
-										END::date)
+										END::date
+)
+SELECT *
+FROM aux
+where equipe_ine not in ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
