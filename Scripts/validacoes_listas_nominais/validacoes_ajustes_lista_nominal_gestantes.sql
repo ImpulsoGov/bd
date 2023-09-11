@@ -4,6 +4,7 @@ SELECT
     COUNT(1) AS cont_linhas,
     COUNT(DISTINCT chave_gestacao) AS cont_chaves_nominais_distintas
 <<<<<<< HEAD
+<<<<<<< HEAD
 FROM aux1 -- Adicionar CTE com o resultado final da consulta da lista nominal (transmissao, lista unificada ou painel)
 )
 -- Checar denominador e numerador
@@ -12,6 +13,9 @@ FROM aux1 -- Adicionar CTE com o resultado final da consulta da lista nominal (t
         concat(m.nome, ' - ', m.uf_sigla) AS municipio_uf,
 =======
 FROM aux1 -- Adicionar CTE com o resultado final da consulta
+=======
+FROM aux1 -- Adicionar CTE com o resultado final da consulta da lista nominal (transmissao, lista unificada ou painel)
+>>>>>>> fd470ac (Update validacoes_ajustes_lista_nominal_gestantes.sql)
 )
 -- Checar denominador e numerador
 , dem_num AS (
@@ -35,6 +39,7 @@ FROM aux1 -- Adicionar CTE com o resultado final da consulta
                     ELSE NULL::character varying
                 END) AS gestantes_odonto_realizado
 <<<<<<< HEAD
+<<<<<<< HEAD
     FROM aux1 l
     LEFT JOIN listas_de_codigos.municipios m 
         ON m.id_sus = l.municipio_id_sus-- Adicionar CTE com o resultado final da consulta (transmissao, lista unificada ou painel)
@@ -44,6 +49,9 @@ FROM aux1 -- Adicionar CTE com o resultado final da consulta
 )
 =======
     FROM aux1 l -- Adicionar CTE com o resultado final da consulta
+=======
+    FROM aux1 l -- Adicionar CTE com o resultado final da consulta (transmissao, lista unificada ou painel)
+>>>>>>> fd470ac (Update validacoes_ajustes_lista_nominal_gestantes.sql)
     WHERE l.possui_registro_aborto = 'Não'::text 
         AND l.gestacao_quadrimestre = '2023.Q3'::text -- Adicionar quadimestre atual
     GROUP BY 1
