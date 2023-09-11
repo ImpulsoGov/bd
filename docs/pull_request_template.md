@@ -2,11 +2,14 @@ _**Alterações de código das listas nominais**_
 
 **Motivo do ajuste:**
 <<<<<<< HEAD
+<<<<<<< HEAD
 Descreva porque a alteração deve ser feita
 
 **O que está sendo alterado:**
 Explique sucintamente as partes do código que estão sendo alteradas
 =======
+=======
+>>>>>>> 7eaa166 (Update pull_request_template.md)
 <<<<<<< HEAD
 Descreva porque a alteração deve ser feita.
 
@@ -18,7 +21,16 @@ Descreva porque a alteração deve ser feita
 **O que está sendo alterado:**
 Explique sucintamente as partes do código que estão sendo alteradas
 >>>>>>> 0bd3002 (Create pull_request_template.md)
+<<<<<<< HEAD
 >>>>>>> 5a0b475 (Create pull_request_template.md)
+=======
+=======
+Descreva porque a alteração deve ser feita.
+
+**O que está sendo alterado:**
+Explique sucintamente as partes do código que estão sendo alteradas.
+>>>>>>> 47d357b (Update pull_request_template.md)
+>>>>>>> 7eaa166 (Update pull_request_template.md)
 
 
 _**Validações obrigatórias**_
@@ -29,12 +41,21 @@ _**Validações obrigatórias**_
 - [] Código ajustado funcionando no bd analítico
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 7eaa166 (Update pull_request_template.md)
 <<<<<<< HEAD
 [Códigos sql para validações quantitativas - Scripts/validacoes_listas_nominais](https://github.com/ImpulsoGov/bd/tree/b3e45be01efc4e82ce4985ed4df9af6d0f286a41/Scripts/validacoes_listas_nominais))
 =======
 >>>>>>> 0bd3002 (Create pull_request_template.md)
+<<<<<<< HEAD
 >>>>>>> 5a0b475 (Create pull_request_template.md)
+=======
+=======
+[Códigos sql para validações quantitativas - Scripts/validacoes_listas_nominais](https://github.com/ImpulsoGov/bd/tree/b3e45be01efc4e82ce4985ed4df9af6d0f286a41/Scripts/validacoes_listas_nominais))
+>>>>>>> 47d357b (Update pull_request_template.md)
+>>>>>>> 7eaa166 (Update pull_request_template.md)
 - [] Check duplicados e variação de linhas 
 - [] Check variações denominador e numerador do quadrimestre atual por município 
 
