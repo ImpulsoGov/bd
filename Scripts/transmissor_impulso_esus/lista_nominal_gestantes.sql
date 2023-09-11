@@ -1,3 +1,16 @@
+-- Lista Pré natal 
+/* 
+	Base com o histórico de registros referentes aos indicadores de pré-natal
+	
+	Granularidade - cada linha é um registro único das seguintes ocorrências:
+	  * consultas de pré-natal
+	  * registros de parto ou aborto
+	  * atendimento odontológico
+	  * exames de sífilis e HIV
+	
+	Janela de observação: nove meses anteriores antes do início do último quadrimestre
+	Objetivo: trazer histórico completo de atendimento de gestações encerradas no quadrimeste anterior, atual e futuros
+*/
 WITH atendimentos_pre_natal AS (
 -- Filtro de atendimento realizados a partir de 9 meses antes do início do último quadrimestre	
 	SELECT 
@@ -537,33 +550,33 @@ UNION ALL
 				b.profissional_atendimento,
 				-- Se a data de DUM é inválida ('3000-12-31'), procuramos o registro de idade_gestacional (casos de ficha CDS)
 				CASE
-					WHEN b.data_dum <> '3000-12-31'::date
-						THEN b.data_dum
-					WHEN b.idade_gestacional_atendimento IS NOT NULL 
-						THEN (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision)::date
-					ELSE NULL::date
-				END AS data_dum_atendimento,
-				CASE
-					WHEN b.data_dum <> '3000-12-31'::date
-						THEN (b.data_dum + '294 days'::INTERVAL)::date
-					WHEN b.idade_gestacional_atendimento IS NOT NULL 
-						THEN (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision + '294 days'::INTERVAL)::date
-					ELSE NULL::date
-				END AS data_dpp_atendimento,
-				CASE
-					WHEN b.data_dum <> '3000-12-31'::date
-						THEN (CURRENT_DATE - b.data_dum) / 7
-					WHEN b.idade_gestacional_atendimento IS NOT NULL 
-						THEN (CURRENT_DATE - (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision)::date) / 7
-					ELSE NULL::integer
-				END AS gestante_idade_gestacional,
-				CASE 
-					WHEN b.idade_gestacional_atendimento IS NOT NULL
-						THEN b.idade_gestacional_atendimento
-					WHEN b.data_dum <> '3000-12-31'::date
-						THEN (b.data_registro - b.data_dum) / 7
-					ELSE NULL::integer
-				END AS gestante_idade_gestacional_atendimento
+                    WHEN COALESCE(b.data_dum,'3000-12-31'::date) <> '3000-12-31'::date
+                        THEN b.data_dum
+                    WHEN b.idade_gestacional_atendimento IS NOT NULL 
+                        THEN (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision)::date
+                    ELSE NULL::date
+                END AS data_dum_atendimento,
+                CASE
+                    WHEN COALESCE(b.data_dum,'3000-12-31'::date) <> '3000-12-31'::date
+                        THEN (b.data_dum + '294 days'::INTERVAL)::date
+                    WHEN b.idade_gestacional_atendimento IS NOT NULL 
+                        THEN (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision + '294 days'::INTERVAL)::date
+                    ELSE NULL::date
+                END AS data_dpp_atendimento,
+                CASE
+                    WHEN COALESCE(b.data_dum,'3000-12-31'::date) <> '3000-12-31'::date
+                        THEN (CURRENT_DATE - b.data_dum) / 7
+                    WHEN b.idade_gestacional_atendimento IS NOT NULL 
+                        THEN (CURRENT_DATE - (b.data_registro - '7 days'::interval * b.idade_gestacional_atendimento::double precision)::date) / 7
+                    ELSE NULL::integer
+                END AS gestante_idade_gestacional,
+                CASE 
+                    WHEN COALESCE(b.data_dum,'3000-12-31'::date) <> '3000-12-31'::date
+                        THEN (b.data_registro - b.data_dum) / 7
+                    WHEN b.idade_gestacional_atendimento IS NOT NULL
+                        THEN b.idade_gestacional_atendimento
+                    ELSE NULL::integer
+                END AS gestante_idade_gestacional_atendimento
 			FROM base_final_registros b
 			WHERE b.tipo_registro = 'consulta_pre_natal'
 			)		
@@ -942,7 +955,6 @@ WHERE
 									 		ELSE NULL::text
 										END::date
 )
---Filtra equipes de municipio que não é parceiro
 SELECT *
 FROM aux
 where equipe_ine not in ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
