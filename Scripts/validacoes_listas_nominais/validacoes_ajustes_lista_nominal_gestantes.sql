@@ -3,12 +3,20 @@
 SELECT 
     COUNT(1) AS cont_linhas,
     COUNT(DISTINCT chave_gestacao) AS cont_chaves_nominais_distintas
+<<<<<<< HEAD
 FROM aux1 -- Adicionar CTE com o resultado final da consulta da lista nominal (transmissao, lista unificada ou painel)
 )
 -- Checar denominador e numerador
 , dem_num AS (
         SELECT
         concat(m.nome, ' - ', m.uf_sigla) AS municipio_uf,
+=======
+FROM aux1 -- Adicionar CTE com o resultado final da consulta
+)
+-- Checar denominador e numerador
+, dem_num AS (
+    SELECT
+>>>>>>> fa49bbb (renomeia arquivo)
         l.gestacao_quadrimestre,
         count(DISTINCT l.chave_gestacao) AS gestantes_denominador,
             count(DISTINCT
@@ -26,6 +34,7 @@ FROM aux1 -- Adicionar CTE com o resultado final da consulta da lista nominal (t
                     WHEN l.atendimento_odontologico_realizado IS TRUE THEN l.chave_gestacao::character varying
                     ELSE NULL::character varying
                 END) AS gestantes_odonto_realizado
+<<<<<<< HEAD
     FROM aux1 l
     LEFT JOIN listas_de_codigos.municipios m 
         ON m.id_sus = l.municipio_id_sus-- Adicionar CTE com o resultado final da consulta (transmissao, lista unificada ou painel)
@@ -33,3 +42,9 @@ FROM aux1 -- Adicionar CTE com o resultado final da consulta da lista nominal (t
         AND l.gestacao_quadrimestre = '2023.Q3'::text -- Adicionar quadimestre atual
     GROUP BY 1, 2
 )
+=======
+    FROM aux1 l -- Adicionar CTE com o resultado final da consulta
+    WHERE l.possui_registro_aborto = 'Não'::text 
+        AND l.gestacao_quadrimestre = '2023.Q3'::text -- Adicionar quadimestre atual
+    GROUP BY 1
+>>>>>>> fa49bbb (renomeia arquivo)
