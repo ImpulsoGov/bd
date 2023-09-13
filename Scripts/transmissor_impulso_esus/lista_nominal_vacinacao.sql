@@ -23,10 +23,10 @@ WITH dados_cidadao_pec AS (
             WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN concat(date_part('year', CURRENT_DATE ::date), '-12-31')
             ELSE NULL
         END AS data_fim_quadrimestre
-    FROM esus_160050_oiapoque_ap_20230405.tb_fat_cidadao_pec tfcp
-    JOIN esus_160050_oiapoque_ap_20230405.tb_dim_tempo tempocidadaopec ON tfcp.co_dim_tempo_nascimento = tempocidadaopec.co_seq_dim_tempo
-    JOIN esus_160050_oiapoque_ap_20230405.tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfcp.co_dim_sexo
-    left join esus_160050_oiapoque_ap_20230405.tb_fat_cad_individual tfci on tfci.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
+    FROM public.tb_fat_cidadao_pec tfcp
+    JOIN public.tb_dim_tempo tempocidadaopec ON tfcp.co_dim_tempo_nascimento = tempocidadaopec.co_seq_dim_tempo
+    JOIN public.tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfcp.co_dim_sexo
+    left join public.tb_fat_cad_individual tfci on tfci.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
 ),
 selecao_denominador as (
 WITH base as (
@@ -47,7 +47,7 @@ WITH base as (
 	     EXTRACT(YEAR FROM age(dcp.data_inicio_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(dcp.data_inicio_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) AS idade_inicio_do_quadri,
 	     EXTRACT(YEAR FROM age(dcp.data_fim_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(dcp.data_fim_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) AS idade_fim_do_quadri
 	     FROM dados_cidadao_pec dcp
-	left join esus_160050_oiapoque_ap_20230405.tb_fat_cidadao_pec responsavel on dcp.id_cidadao_pec_responsavel  = responsavel.co_seq_fat_cidadao_pec 
+	left join public.tb_fat_cidadao_pec responsavel on dcp.id_cidadao_pec_responsavel  = responsavel.co_seq_fat_cidadao_pec 
 	 GROUP BY 
 	 dcp.id_cidadao_pec,
 	 	 dcp.chave_cidadao,
@@ -85,17 +85,17 @@ historico_vacinacao as (
 		profissional.nu_cns,
 		cbo.nu_cbo,
 		cbo.no_cbo
-	FROM  esus_160050_oiapoque_ap_20230405.tb_fat_cidadao_pec tfcp 
-	left join esus_160050_oiapoque_ap_20230405.tb_fat_vacinacao tfv on tfcp.co_seq_fat_cidadao_pec  = tfv.co_fat_cidadao_pec
-	LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_fat_vacinacao_vacina tfvv on tfv.co_seq_fat_vacinacao = tfvv.co_fat_vacinacao 
-	LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_imunobiologico imunobiologico on tfvv.co_dim_imunobiologico = imunobiologico.co_seq_dim_imunobiologico 
-	LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_tempo tempo on tfvv.co_dim_tempo_vacina_aplicada  = tempo.co_seq_dim_tempo
-	LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_dose_imunobiologico dose on dose.co_seq_dim_dose_imunobiologico = tfvv.co_dim_dose_imunobiologico 
-	LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_equipe equipe on equipe.co_seq_dim_equipe = tfv.co_dim_equipe 
-	LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_profissional profissional on profissional.co_seq_dim_profissional = tfvv.co_dim_profissional 
-	LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_cbo cbo on cbo.co_seq_dim_cbo = tfvv.co_dim_cbo
-	LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_unidade_saude unidadesaude on unidadesaude.co_seq_dim_unidade_saude = tfvv.co_dim_unidade_saude 
-	left join esus_160050_oiapoque_ap_20230405.tb_dim_tipo_ficha tf on tfv.co_dim_tipo_ficha = tf.co_seq_dim_tipo_ficha 
+	FROM  public.tb_fat_cidadao_pec tfcp 
+	left join public.tb_fat_vacinacao tfv on tfcp.co_seq_fat_cidadao_pec  = tfv.co_fat_cidadao_pec
+	LEFT JOIN public.tb_fat_vacinacao_vacina tfvv on tfv.co_seq_fat_vacinacao = tfvv.co_fat_vacinacao 
+	LEFT JOIN public.tb_dim_imunobiologico imunobiologico on tfvv.co_dim_imunobiologico = imunobiologico.co_seq_dim_imunobiologico 
+	LEFT JOIN public.tb_dim_tempo tempo on tfvv.co_dim_tempo_vacina_aplicada  = tempo.co_seq_dim_tempo
+	LEFT JOIN public.tb_dim_dose_imunobiologico dose on dose.co_seq_dim_dose_imunobiologico = tfvv.co_dim_dose_imunobiologico 
+	LEFT JOIN public.tb_dim_equipe equipe on equipe.co_seq_dim_equipe = tfv.co_dim_equipe 
+	LEFT JOIN public.tb_dim_profissional profissional on profissional.co_seq_dim_profissional = tfvv.co_dim_profissional 
+	LEFT JOIN public.tb_dim_cbo cbo on cbo.co_seq_dim_cbo = tfvv.co_dim_cbo
+	LEFT JOIN public.tb_dim_unidade_saude unidadesaude on unidadesaude.co_seq_dim_unidade_saude = tfvv.co_dim_unidade_saude 
+	left join public.tb_dim_tipo_ficha tf on tfv.co_dim_tipo_ficha = tf.co_seq_dim_tipo_ficha 
 	WHERE imunobiologico.nu_identificador in ('22','42','17','29','39','43','46','9')
 	AND (cbo.nu_cbo::text ~~ ANY (ARRAY['%2235%'::text, '%2251%'::text, '%2252%'::text, '%2253%'::text, '%2231%'::text, '%3222%'::text]))
 	GROUP BY
@@ -130,18 +130,18 @@ cadastro_individual_recente AS (
 			eq.no_equipe AS equipe_cad_individual,
 			acs.no_profissional AS acs_cad_individual,
 			row_number() OVER (PARTITION BY sd.chave_cidadao ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_individual
-		FROM esus_160050_oiapoque_ap_20230405.tb_fat_cad_individual tfci
-		JOIN esus_160050_oiapoque_ap_20230405.tb_fat_cidadao_pec tfcpec
+		FROM public.tb_fat_cad_individual tfci
+		JOIN public.tb_fat_cidadao_pec tfcpec
 			ON tfcpec.co_seq_fat_cidadao_pec = tfci.co_fat_cidadao_pec
 		JOIN selecao_denominador sd 
 			ON sd.chave_cidadao = replace(tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento,' ','')
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_tempo tdt 
+		LEFT JOIN public.tb_dim_tempo tdt 
 			ON tdt.co_seq_dim_tempo = tfci.co_dim_tempo
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_equipe eq
+		LEFT JOIN public.tb_dim_equipe eq
 			ON eq.co_seq_dim_equipe = tfci.co_dim_equipe
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_profissional acs
+		LEFT JOIN public.tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = tfci.co_dim_profissional
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_unidade_saude uns
+		LEFT JOIN public.tb_dim_unidade_saude uns
 			ON uns.co_seq_dim_unidade_saude = tfci.co_dim_unidade_saude  
 		)
 	SELECT * FROM base WHERE ultimo_cadastro_individual IS true
@@ -161,18 +161,18 @@ SELECT
 			eq.nu_ine AS ine_equipe_atendimento_recente,
 			eq.no_equipe AS equipe_atendimento_recente,
 			row_number() OVER (PARTITION BY sd.chave_cidadao ORDER BY tfai.co_seq_fat_atd_ind DESC) = 1 AS ultimo_atendimento_individual
-	    FROM esus_160050_oiapoque_ap_20230405.tb_fat_atendimento_individual tfai
-	    JOIN esus_160050_oiapoque_ap_20230405.tb_dim_tempo tdt 
+	    FROM public.tb_fat_atendimento_individual tfai
+	    JOIN public.tb_dim_tempo tdt 
 	    	ON tfai.co_dim_tempo = tdt.co_seq_dim_tempo
-	    LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_profissional tdprof
+	    LEFT JOIN public.tb_dim_profissional tdprof
 			ON tdprof.co_seq_dim_profissional = tfai.co_dim_profissional_1
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_equipe eq
+		LEFT JOIN public.tb_dim_equipe eq
 			ON eq.co_seq_dim_equipe = tfai.co_dim_equipe_1
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_unidade_saude uns 
+		LEFT JOIN public.tb_dim_unidade_saude uns 
 			ON uns.co_seq_dim_unidade_saude = tfai.co_dim_unidade_saude_1
-	    JOIN esus_160050_oiapoque_ap_20230405.tb_fat_cidadao_pec tfcp 
+	    JOIN public.tb_fat_cidadao_pec tfcp 
 	    	ON tfcp.co_seq_fat_cidadao_pec = tfai.co_fat_cidadao_pec
-	    JOIN esus_160050_oiapoque_ap_20230405.tb_dim_tempo tempocidadaopec 
+	    JOIN public.tb_dim_tempo tempocidadaopec 
 	    	ON tempocidadaopec.co_seq_dim_tempo = tfcp.co_dim_tempo_nascimento
 	  	JOIN selecao_denominador sd 
 			ON sd.chave_cidadao = replace(tfcp.no_cidadao::text||tfcp.co_dim_tempo_nascimento,' ','')
@@ -188,14 +188,14 @@ visita_domiciliar_recente AS (
 			tdt.dt_registro AS data_visita_acs,
 			acs.no_profissional AS acs_visita_domiciliar,
 			row_number() OVER (PARTITION BY sd.chave_cidadao ORDER BY tdt.dt_registro DESC) = 1 AS ultima_visita_domiciliar
-		FROM esus_160050_oiapoque_ap_20230405.tb_fat_visita_domiciliar visitadomiciliar
-		JOIN esus_160050_oiapoque_ap_20230405.tb_fat_cidadao_pec tfcpec
+		FROM public.tb_fat_visita_domiciliar visitadomiciliar
+		JOIN public.tb_fat_cidadao_pec tfcpec
 			ON tfcpec.co_seq_fat_cidadao_pec = visitadomiciliar.co_fat_cidadao_pec 
 		JOIN selecao_denominador sd
 			ON sd.chave_cidadao = replace(tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento,' ','')
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_profissional acs
+		LEFT JOIN public.tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = visitadomiciliar.co_dim_profissional
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_tempo tdt 
+		LEFT JOIN public.tb_dim_tempo tdt 
 			ON tdt.co_seq_dim_tempo = visitadomiciliar.co_dim_tempo
 		)
 	SELECT * FROM base WHERE ultima_visita_domiciliar IS TRUE 
@@ -214,20 +214,20 @@ cadastro_domiciliar_recente AS (
 			acs.no_profissional AS acs_cad_dom_familia,
 			NULLIF(concat(cadomiciliar.no_logradouro, ', ', cadomiciliar.nu_num_logradouro), ', '::text) AS paciente_endereco,
 			row_number() OVER (PARTITION BY sd.chave_cidadao ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_domiciliar_familia
-		FROM esus_160050_oiapoque_ap_20230405.tb_fat_cad_dom_familia caddomiciliarfamilia
-		JOIN esus_160050_oiapoque_ap_20230405.tb_fat_cad_domiciliar cadomiciliar
+		FROM public.tb_fat_cad_dom_familia caddomiciliarfamilia
+		JOIN public.tb_fat_cad_domiciliar cadomiciliar
 			ON cadomiciliar.co_seq_fat_cad_domiciliar = caddomiciliarfamilia.co_fat_cad_domiciliar
-		JOIN esus_160050_oiapoque_ap_20230405.tb_fat_cidadao_pec tfcpec
+		JOIN public.tb_fat_cidadao_pec tfcpec
 			ON tfcpec.co_seq_fat_cidadao_pec = caddomiciliarfamilia.co_fat_cidadao_pec
 		JOIN selecao_denominador sd
 			ON sd.chave_cidadao = replace(tfcpec.no_cidadao::text || tfcpec.co_dim_tempo_nascimento, ' ', '')
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_tempo tdt
+		LEFT JOIN public.tb_dim_tempo tdt
 			ON tdt.co_seq_dim_tempo = caddomiciliarfamilia.co_dim_tempo
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_equipe eq
+		LEFT JOIN public.tb_dim_equipe eq
 			ON eq.co_seq_dim_equipe = caddomiciliarfamilia.co_dim_equipe
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_profissional acs
+		LEFT JOIN public.tb_dim_profissional acs
 			ON acs.co_seq_dim_profissional = caddomiciliarfamilia.co_dim_profissional
-		LEFT JOIN esus_160050_oiapoque_ap_20230405.tb_dim_unidade_saude uns
+		LEFT JOIN public.tb_dim_unidade_saude uns
 			ON uns.co_seq_dim_unidade_saude = caddomiciliarfamilia.co_dim_unidade_saude
 	)
 	SELECT * FROM base WHERE ultimo_cadastro_domiciliar_familia IS true
@@ -313,4 +313,3 @@ vinculacao_equipe AS (
 from selecao_denominador sd 
 	left join historico_vacinacao hvc on sd.chave_cidadao=hvc.chave_cidadao 
 	left join vinculacao_equipe vinculacao on vinculacao.chave_cidadao = sd.chave_cidadao
-order by sd.paciente_idade_atual desc
