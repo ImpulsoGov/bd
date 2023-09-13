@@ -272,8 +272,7 @@ vinculacao_equipe AS (
 		ar.data_registro,
 		vdr.acs_visita_domiciliar,
 		vdr.data_visita_acs 
-),  selecao_denominador_historico_vacinacao as (
-select
+) select
 	sd.chave_cidadao,
 	sd.cidadao_nome,
 	sd.cidadao_cpf,
@@ -315,4 +314,3 @@ from selecao_denominador sd
 	left join historico_vacinacao hvc on sd.chave_cidadao=hvc.chave_cidadao 
 	left join vinculacao_equipe vinculacao on vinculacao.chave_cidadao = sd.chave_cidadao
 order by sd.paciente_idade_atual desc
-) select * from selecao_denominador_historico_vacinacao 
