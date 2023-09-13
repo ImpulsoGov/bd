@@ -29,3 +29,4 @@ FROM aux1 -- Adicionar CTE com o resultado final da consulta da lista nominal (t
     WHERE l.possui_registro_aborto = 'Não'::text 
         AND l.gestacao_quadrimestre = '2023.Q3'::text -- Adicionar quadimestre atual
     GROUP BY 1
+)
