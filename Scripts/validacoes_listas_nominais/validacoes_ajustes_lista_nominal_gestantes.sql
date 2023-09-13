@@ -7,7 +7,8 @@ FROM aux1 -- Adicionar CTE com o resultado final da consulta da lista nominal (t
 )
 -- Checar denominador e numerador
 , dem_num AS (
-    SELECT
+        SELECT
+        concat(m.nome, ' - ', m.uf_sigla) AS municipio_uf,
         l.gestacao_quadrimestre,
         count(DISTINCT l.chave_gestacao) AS gestantes_denominador,
             count(DISTINCT
@@ -25,8 +26,10 @@ FROM aux1 -- Adicionar CTE com o resultado final da consulta da lista nominal (t
                     WHEN l.atendimento_odontologico_realizado IS TRUE THEN l.chave_gestacao::character varying
                     ELSE NULL::character varying
                 END) AS gestantes_odonto_realizado
-    FROM aux1 l -- Adicionar CTE com o resultado final da consulta (transmissao, lista unificada ou painel)
+    FROM aux1 l
+    LEFT JOIN listas_de_codigos.municipios m 
+        ON m.id_sus = l.municipio_id_sus-- Adicionar CTE com o resultado final da consulta (transmissao, lista unificada ou painel)
     WHERE l.possui_registro_aborto = 'Não'::text 
         AND l.gestacao_quadrimestre = '2023.Q3'::text -- Adicionar quadimestre atual
-    GROUP BY 1
+    GROUP BY 1, 2
 )
