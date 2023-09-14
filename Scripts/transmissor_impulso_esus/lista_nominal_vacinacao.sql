@@ -140,8 +140,6 @@ SELECT
 			ON uns.co_seq_dim_unidade_saude = tfai.co_dim_unidade_saude_1
 	    JOIN public.tb_fat_cidadao_pec tfcp 
 	    	ON tfcp.co_seq_fat_cidadao_pec = tfai.co_fat_cidadao_pec
-	    JOIN public.tb_dim_tempo tempocidadaopec 
-	    	ON tempocidadaopec.co_seq_dim_tempo = tfcp.co_dim_tempo_nascimento
 	  	JOIN selecao_denominador sd 
 			ON sd.chave_cidadao = replace(tfcp.no_cidadao::text||tfcp.co_dim_tempo_nascimento,' ','')
 		) 	
@@ -225,21 +223,7 @@ vinculacao_equipe AS (
 		ON cdr.chave_cidadao = sd.chave_cidadao
 	left join atendimento_mais_recente ar
 		on ar.chave_cidadao = sd.chave_cidadao
-	GROUP BY
-		sd.chave_cidadao,
-		cir.data_cadastro_individual,
-		cir.cnes_estabelecimento_cad_individual,
-		cir.estabelecimento_cad_individual, 
-		cir.ine_equipe_cad_individual,
-		cir.equipe_cad_individual,
-		cir.acs_cad_individual,
-		ar.estabelecimento_cnes_atendimento_recente, 
-		ar.estabelecimento_atendimento_recente, 
-		ar.ine_equipe_atendimento_recente,
-		ar.equipe_atendimento_recente,
-		ar.data_registro,
-		vdr.acs_visita_domiciliar,
-		vdr.data_visita_acs 
+	GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
 ) select
 	sd.chave_cidadao,
 	sd.cidadao_nome,
