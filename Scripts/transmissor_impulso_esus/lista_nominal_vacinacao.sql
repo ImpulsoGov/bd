@@ -24,8 +24,8 @@ WITH dados_cidadao_pec AS (
             ELSE NULL::date
         END AS data_fim_quadrimestre
     FROM public.tb_fat_cidadao_pec tfcp
-    JOIN public.tb_dim_tempo tempocidadaopec ON tfcp.co_dim_tempo_nascimento = tempocidadaopec.co_seq_dim_tempo
-    JOIN public.tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfcp.co_dim_sexo
+    LEFT JOIN public.tb_dim_tempo tempocidadaopec ON tfcp.co_dim_tempo_nascimento = tempocidadaopec.co_seq_dim_tempo
+    LEFT JOIN public.tb_dim_sexo tds ON tds.co_seq_dim_sexo = tfcp.co_dim_sexo
     left join public.tb_fat_cad_individual tfci on tfci.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
 ),
 selecao_denominador as (
