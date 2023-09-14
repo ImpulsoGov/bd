@@ -45,7 +45,7 @@ WITH base as (
 	     EXTRACT(YEAR FROM age(dcp.data_inicio_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(dcp.data_inicio_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) AS idade_inicio_do_quadri,
 	     EXTRACT(YEAR FROM age(dcp.data_fim_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(dcp.data_fim_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) AS idade_fim_do_quadri
 	     FROM dados_cidadao_pec dcp
-	left join esus_160050_oiapoque_ap_20230405.tb_fat_cidadao_pec responsavel on dcp.id_cidadao_pec_responsavel  = responsavel.co_seq_fat_cidadao_pec 
+	left join public.tb_fat_cidadao_pec responsavel on dcp.id_cidadao_pec_responsavel  = responsavel.co_seq_fat_cidadao_pec 
 	) SELECT * FROM base 
 	  WHERE idade_fim_do_quadri <= 16 
 	  GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
