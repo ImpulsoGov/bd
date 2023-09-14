@@ -31,7 +31,6 @@ WITH dados_cidadao_pec AS (
 selecao_denominador as (
 WITH base as (
      SELECT 
-		dcp.id_cidadao_pec,
 	     dcp.chave_cidadao,
 	     dcp.cidadao_nome,
 	     dcp.dt_nascimento,
@@ -40,33 +39,16 @@ WITH base as (
 	     dcp.cidadao_sexo,
 	     dcp.paciente_idade_atual,
 	     dcp.se_faleceu,
-	     dcp.id_cidadao_pec_responsavel,
-	     responsavel.no_cidadao as cidadao_nome_responsavel,
-	     responsavel.nu_cns as cidadao_cns_responsavel,
-	     responsavel.nu_cpf_cidadao as cidadao_cpf_responsavel,
+	     (array_agg(responsavel.no_cidadao) FILTER (WHERE responsavel.no_cidadao IS NOT NULL) OVER (PARTITION BY dcp.chave_cidadao ORDER BY dcp.id_cidadao_pec_responsavel DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED following))[1] AS cidadao_nome_responsavel,
+	     (array_agg(responsavel.nu_cns) FILTER (WHERE responsavel.nu_cns IS NOT NULL) OVER (PARTITION BY dcp.chave_cidadao ORDER BY dcp.id_cidadao_pec_responsavel DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED following))[1] AS cidadao_cns_responsavel,
+	     (array_agg(responsavel.nu_cpf_cidadao) FILTER (WHERE responsavel.nu_cpf_cidadao IS NOT NULL) OVER (PARTITION BY dcp.chave_cidadao ORDER BY dcp.id_cidadao_pec_responsavel DESC ROWS BETWEEN UNBOUNDED PRECEDING AND unbounded following))[1] AS cidadao_cpf_responsavel,
 	     EXTRACT(YEAR FROM age(dcp.data_inicio_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(dcp.data_inicio_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) AS idade_inicio_do_quadri,
 	     EXTRACT(YEAR FROM age(dcp.data_fim_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(dcp.data_fim_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) AS idade_fim_do_quadri
 	     FROM dados_cidadao_pec dcp
-	left join public.tb_fat_cidadao_pec responsavel on dcp.id_cidadao_pec_responsavel  = responsavel.co_seq_fat_cidadao_pec 
-	 GROUP BY 
-	 dcp.id_cidadao_pec,
-	 	 dcp.chave_cidadao,
-	     dcp.cidadao_nome,
-	     dcp.cidadao_sexo,
-	     dcp.dt_nascimento,
-	     dcp.cidadao_cpf,
-	     dcp.cidadao_cns,
-	     dcp.paciente_idade_atual,
-	     dcp.id_cidadao_pec_responsavel,
-	     dcp.data_fim_quadrimestre,
-	     dcp.data_inicio_quadrimestre,
-	     dcp.se_faleceu,
-	     responsavel.no_cidadao,
-	     responsavel.no_cidadao,
-	     responsavel.nu_cns,
-	     responsavel.nu_cpf_cidadao
+	left join esus_160050_oiapoque_ap_20230405.tb_fat_cidadao_pec responsavel on dcp.id_cidadao_pec_responsavel  = responsavel.co_seq_fat_cidadao_pec 
 	) SELECT * FROM base 
 	  WHERE idade_fim_do_quadri <= 16 
+	  GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 ),
 historico_vacinacao as (
 	SELECT 
