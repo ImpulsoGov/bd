@@ -261,7 +261,7 @@ vinculacao_equipe AS (
 	vinculacao.equipe_nome_atendimento,
 	vinculacao.data_ultimo_atendimento_individual,
 	vinculacao.data_ultima_vista_domiciliar,
-	vinculacao.acs_nome_visita
+	vinculacao.acs_nome_visita,
 	now() as criacao_data
 from selecao_denominador sd 
 	left join historico_vacinacao hvc on sd.chave_cidadao=hvc.chave_cidadao 
