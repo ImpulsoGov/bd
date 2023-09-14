@@ -9,8 +9,8 @@ WITH dados_cidadao_pec AS (
 	    (array_agg(tfcp.nu_cns) FILTER (WHERE tfcp.nu_cns IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_cns,
        	(array_agg(tfcp.st_faleceu) FILTER (WHERE tfcp.st_faleceu IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS se_faleceu,
 	    (array_agg(tds.ds_sexo) FILTER (WHERE tds.ds_sexo IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_sexo,
-	    tfci.co_fat_cidadao_pec_responsvl as id_cidadao_pec_responsavel,
-	    EXTRACT(YEAR FROM age(CURRENT_DATE::timestamp WITH time zone, tempocidadaopec.dt_registro::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(CURRENT_DATE::timestamp WITH time zone, tempocidadaopec.dt_registro::timestamp WITH time zone)) AS paciente_idade_atual,
+	    (array_agg(tfci.co_fat_cidadao_pec_responsvl ) FILTER (WHERE tfci.co_fat_cidadao_pec_responsvl IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS  id_cidadao_pec_responsavel,
+	    EXTRACT(YEAR FROM age(CURRENT_DATE::timestamp WITH time zone, tempocidadaopec.dt_registro::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(CURRENT_DATE::timestamp WITH time zone, tempocidadaopec.dt_registro::timestamp WITH time zone)) AS cidadao_idade_meses_atual,
         case 
             WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat(date_part('year', CURRENT_DATE ::date), '-01-01')::date
             WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE ::date), '-05-01')::date
@@ -37,17 +37,17 @@ WITH base as (
 	     dcp.cidadao_cpf,
 	     dcp.cidadao_cns,
 	     dcp.cidadao_sexo,
-	     dcp.paciente_idade_atual,
+	     dcp.cidadao_idade_meses_atual,
 	     dcp.se_faleceu,
-	     (array_agg(responsavel.no_cidadao) FILTER (WHERE responsavel.no_cidadao IS NOT NULL) OVER (PARTITION BY dcp.chave_cidadao ORDER BY dcp.id_cidadao_pec_responsavel DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED following))[1] AS cidadao_nome_responsavel,
-	     (array_agg(responsavel.nu_cns) FILTER (WHERE responsavel.nu_cns IS NOT NULL) OVER (PARTITION BY dcp.chave_cidadao ORDER BY dcp.id_cidadao_pec_responsavel DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED following))[1] AS cidadao_cns_responsavel,
-	     (array_agg(responsavel.nu_cpf_cidadao) FILTER (WHERE responsavel.nu_cpf_cidadao IS NOT NULL) OVER (PARTITION BY dcp.chave_cidadao ORDER BY dcp.id_cidadao_pec_responsavel DESC ROWS BETWEEN UNBOUNDED PRECEDING AND unbounded following))[1] AS cidadao_cpf_responsavel,
-	     EXTRACT(YEAR FROM age(dcp.data_inicio_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(dcp.data_inicio_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) AS idade_inicio_do_quadri,
-	     EXTRACT(YEAR FROM age(dcp.data_fim_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(dcp.data_fim_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) AS idade_fim_do_quadri
+	     responsavel.no_cidadao as cidadao_nome_responsavel,
+	     responsavel.nu_cns as cidadao_cns_responsavel,
+	     responsavel.nu_cpf_cidadao as cidadao_cpf_responsavel,
+	     EXTRACT(YEAR FROM age(dcp.data_inicio_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(dcp.data_inicio_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) AS cidadao_idade_meses_inicio_quadri,
+	     EXTRACT(YEAR FROM age(dcp.data_fim_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) * 12 + EXTRACT(MONTH FROM age(dcp.data_fim_quadrimestre::timestamp WITH time zone, dcp.dt_nascimento::timestamp WITH time zone)) AS cidadao_idade_meses_fim_quadri
 	     FROM dados_cidadao_pec dcp
 	left join public.tb_fat_cidadao_pec responsavel on dcp.id_cidadao_pec_responsavel  = responsavel.co_seq_fat_cidadao_pec 
 	) SELECT * FROM base 
-	  WHERE idade_fim_do_quadri <= 16 
+	  WHERE cidadao_idade_meses_fim_quadri <= 16 
 	  GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 ),
 historico_vacinacao as (
@@ -79,7 +79,7 @@ historico_vacinacao as (
 	LEFT JOIN public.tb_dim_cbo cbo on cbo.co_seq_dim_cbo = tfvv.co_dim_cbo
 	LEFT JOIN public.tb_dim_unidade_saude unidadesaude on unidadesaude.co_seq_dim_unidade_saude = tfvv.co_dim_unidade_saude 
 	left join public.tb_dim_tipo_ficha tf on tfv.co_dim_tipo_ficha = tf.co_seq_dim_tipo_ficha 
-	leftjoin selecao_denominador sd on sd.chave_cidadao =  replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') 
+	join selecao_denominador sd on sd.chave_cidadao =  replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') 
 	WHERE imunobiologico.nu_identificador in ('22','42','17','29','39','43','46','9')
 	AND (cbo.nu_cbo::text ~~ ANY (ARRAY['%2235%'::text, '%2251%'::text, '%2252%'::text, '%2253%'::text, '%2231%'::text, '%3222%'::text]))
 	GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
@@ -234,9 +234,9 @@ vinculacao_equipe AS (
 	sd.cidadao_nome_responsavel,
 	sd.cidadao_cns_responsavel,
 	sd.cidadao_cpf_responsavel,
-	sd.paciente_idade_atual,
-	sd.idade_inicio_do_quadri,
-	sd.idade_fim_do_quadri,
+	sd.cidadao_idade_meses_atual,
+	sd.cidadao_idade_meses_inicio_quadri,
+	sd.cidadao_idade_meses_fim_quadri,
 	sd.se_faleceu,
 	hvc.co_seq_fat_vacinacao,
 	hvc.co_seq_fat_vacinacao_vacina,
