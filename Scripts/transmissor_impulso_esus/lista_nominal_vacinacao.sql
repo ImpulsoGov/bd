@@ -54,6 +54,7 @@ historico_vacinacao as (
 	SELECT 
         replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') AS chave_cidadao,
 		tfv.co_seq_fat_vacinacao,
+		tfvv.co_seq_fat_vacinacao_vacina,
 		tf.ds_tipo_ficha as tipo_ficha,
 		imunobiologico.nu_identificador as codigo_vacina,
 		imunobiologico.no_imunobiologico as nome_vacina,
@@ -78,25 +79,10 @@ historico_vacinacao as (
 	LEFT JOIN public.tb_dim_cbo cbo on cbo.co_seq_dim_cbo = tfvv.co_dim_cbo
 	LEFT JOIN public.tb_dim_unidade_saude unidadesaude on unidadesaude.co_seq_dim_unidade_saude = tfvv.co_dim_unidade_saude 
 	left join public.tb_dim_tipo_ficha tf on tfv.co_dim_tipo_ficha = tf.co_seq_dim_tipo_ficha 
+	join selecao_denominador sd on sd.chave_cidadao =  replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') 
 	WHERE imunobiologico.nu_identificador in ('22','42','17','29','39','43','46','9')
 	AND (cbo.nu_cbo::text ~~ ANY (ARRAY['%2235%'::text, '%2251%'::text, '%2252%'::text, '%2253%'::text, '%2231%'::text, '%3222%'::text]))
-	GROUP BY
-		tfcp.no_cidadao,
-		tf.ds_tipo_ficha,
-		tfcp.co_dim_tempo_nascimento,
-		tfv.co_seq_fat_vacinacao,
-		imunobiologico.nu_identificador,
-		imunobiologico.no_imunobiologico,
-		dose.no_dose_imunobiologico,
-		tempo.dt_registro,
-		unidadesaude.nu_cnes,
-		unidadesaude.no_unidade_saude,
-		equipe.nu_ine,
-		equipe.no_equipe,
-		profissional.no_profissional,
-		profissional.nu_cns,
-		cbo.nu_cbo,
-		cbo.no_cbo
+	GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
 ), 
 -- INFORMAÇÕES DE ATENDIMENTO MAIS RECENTE
 cadastro_individual_recente AS (
