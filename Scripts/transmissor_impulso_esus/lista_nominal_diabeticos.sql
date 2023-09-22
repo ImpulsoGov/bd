@@ -1,3 +1,4 @@
+
 -- DENOMINADOR - todas pessoas diabetes autorreferida ou diagnósticada
 WITH possui_diabetes_autoreferida AS (
 	WITH ultimo_cadastro_individual AS (
