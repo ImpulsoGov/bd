@@ -1,0 +1,263 @@
+-- impulso_previne.relatorio_egestor_corrigido_painel_insights_financiamento_isf source
+
+CREATE MATERIALIZED VIEW impulso_previne.relatorio_egestor_corrigido_painel_insights_financiamento_isf
+TABLESPACE pg_default
+AS WITH selecao_correcao AS (
+         SELECT egestor_financiamento_desempenho_isf.municipio_id_sus,
+            egestor_financiamento_desempenho_isf.esf,
+            egestor_financiamento_desempenho_isf.eap_30h,
+            egestor_financiamento_desempenho_isf.eap_20h,
+            egestor_financiamento_desempenho_isf.pagamento_desempenho,
+            egestor_financiamento_desempenho_isf.pagamento_adicional_100_meta,
+            egestor_financiamento_desempenho_isf.esf_novas,
+            egestor_financiamento_desempenho_isf.eap_30h_novas,
+            egestor_financiamento_desempenho_isf.eap_20h_novas,
+            egestor_financiamento_desempenho_isf.pagamento_adicional,
+            egestor_financiamento_desempenho_isf.pagamento_equipes_novas
+           FROM dados_publicos.egestor_financiamento_desempenho_isf
+          WHERE egestor_financiamento_desempenho_isf.periodo_data_inicio = '2022-09-01'::date
+        ), selecao_outubro AS (
+         SELECT egestor_financiamento_desempenho_isf.id,
+            egestor_financiamento_desempenho_isf.uf_sigla,
+            egestor_financiamento_desempenho_isf.municipio_nome,
+            egestor_financiamento_desempenho_isf.municipio_id_sus,
+            egestor_financiamento_desempenho_isf.periodo_data_inicio,
+            egestor_financiamento_desempenho_isf.isf_nota,
+            egestor_financiamento_desempenho_isf.pagamento_desconto,
+            egestor_financiamento_desempenho_isf.unidade_geografica_id,
+            egestor_financiamento_desempenho_isf.periodo_id,
+            egestor_financiamento_desempenho_isf.criacao_data,
+            egestor_financiamento_desempenho_isf.atualizacao_data,
+            egestor_financiamento_desempenho_isf.pagamento_total,
+            egestor_financiamento_desempenho_isf.periodo_quadrimestre
+           FROM dados_publicos.egestor_financiamento_desempenho_isf
+          WHERE egestor_financiamento_desempenho_isf.periodo_data_inicio = '2022-10-01'::date
+        ), selecao_novembro AS (
+         SELECT egestor_financiamento_desempenho_isf.id,
+            egestor_financiamento_desempenho_isf.uf_sigla,
+            egestor_financiamento_desempenho_isf.municipio_nome,
+            egestor_financiamento_desempenho_isf.municipio_id_sus,
+            egestor_financiamento_desempenho_isf.periodo_data_inicio,
+            egestor_financiamento_desempenho_isf.isf_nota,
+            egestor_financiamento_desempenho_isf.pagamento_desconto,
+            egestor_financiamento_desempenho_isf.unidade_geografica_id,
+            egestor_financiamento_desempenho_isf.periodo_id,
+            egestor_financiamento_desempenho_isf.criacao_data,
+            egestor_financiamento_desempenho_isf.atualizacao_data,
+            egestor_financiamento_desempenho_isf.pagamento_total,
+            egestor_financiamento_desempenho_isf.periodo_quadrimestre
+           FROM dados_publicos.egestor_financiamento_desempenho_isf
+          WHERE egestor_financiamento_desempenho_isf.periodo_data_inicio = '2022-11-01'::date
+        ), selecao_dezembro AS (
+         SELECT egestor_financiamento_desempenho_isf.id,
+            egestor_financiamento_desempenho_isf.uf_sigla,
+            egestor_financiamento_desempenho_isf.municipio_nome,
+            egestor_financiamento_desempenho_isf.municipio_id_sus,
+            egestor_financiamento_desempenho_isf.periodo_data_inicio,
+            egestor_financiamento_desempenho_isf.isf_nota,
+            egestor_financiamento_desempenho_isf.pagamento_desconto,
+            egestor_financiamento_desempenho_isf.unidade_geografica_id,
+            egestor_financiamento_desempenho_isf.periodo_id,
+            egestor_financiamento_desempenho_isf.criacao_data,
+            egestor_financiamento_desempenho_isf.atualizacao_data,
+            egestor_financiamento_desempenho_isf.pagamento_total,
+            egestor_financiamento_desempenho_isf.periodo_quadrimestre
+           FROM dados_publicos.egestor_financiamento_desempenho_isf
+          WHERE egestor_financiamento_desempenho_isf.periodo_data_inicio = '2022-12-01'::date
+        ), selecao_janeiro AS (
+         SELECT egestor_financiamento_desempenho_isf.id,
+            egestor_financiamento_desempenho_isf.uf_sigla,
+            egestor_financiamento_desempenho_isf.municipio_nome,
+            egestor_financiamento_desempenho_isf.municipio_id_sus,
+            egestor_financiamento_desempenho_isf.periodo_data_inicio,
+            egestor_financiamento_desempenho_isf.isf_nota,
+            egestor_financiamento_desempenho_isf.pagamento_desconto,
+            egestor_financiamento_desempenho_isf.unidade_geografica_id,
+            egestor_financiamento_desempenho_isf.periodo_id,
+            egestor_financiamento_desempenho_isf.criacao_data,
+            egestor_financiamento_desempenho_isf.atualizacao_data,
+            egestor_financiamento_desempenho_isf.pagamento_total,
+            egestor_financiamento_desempenho_isf.periodo_quadrimestre
+           FROM dados_publicos.egestor_financiamento_desempenho_isf
+          WHERE egestor_financiamento_desempenho_isf.periodo_data_inicio = '2023-01-01'::date
+        ), selecao_competencias_ajustadas AS (
+         SELECT so.id,
+            so.uf_sigla,
+            so.municipio_nome,
+            selecao_correcao.municipio_id_sus,
+            so.periodo_data_inicio,
+            so.isf_nota,
+            selecao_correcao.esf,
+            selecao_correcao.eap_30h,
+            selecao_correcao.eap_20h,
+            selecao_correcao.pagamento_desempenho,
+            selecao_correcao.pagamento_adicional_100_meta,
+            selecao_correcao.esf_novas,
+            selecao_correcao.eap_30h_novas,
+            selecao_correcao.eap_20h_novas,
+            selecao_correcao.pagamento_adicional,
+            so.pagamento_desconto,
+            so.unidade_geografica_id,
+            so.periodo_id,
+            so.criacao_data,
+            so.atualizacao_data,
+            so.pagamento_total,
+            selecao_correcao.pagamento_equipes_novas,
+            so.periodo_quadrimestre
+           FROM selecao_correcao
+             JOIN selecao_outubro so ON selecao_correcao.municipio_id_sus = so.municipio_id_sus
+        UNION ALL
+         SELECT sn.id,
+            sn.uf_sigla,
+            sn.municipio_nome,
+            selecao_correcao.municipio_id_sus,
+            sn.periodo_data_inicio,
+            sn.isf_nota,
+            selecao_correcao.esf,
+            selecao_correcao.eap_30h,
+            selecao_correcao.eap_20h,
+            selecao_correcao.pagamento_desempenho,
+            selecao_correcao.pagamento_adicional_100_meta,
+            selecao_correcao.esf_novas,
+            selecao_correcao.eap_30h_novas,
+            selecao_correcao.eap_20h_novas,
+            selecao_correcao.pagamento_adicional,
+            sn.pagamento_desconto,
+            sn.unidade_geografica_id,
+            sn.periodo_id,
+            sn.criacao_data,
+            sn.atualizacao_data,
+            sn.pagamento_total,
+            selecao_correcao.pagamento_equipes_novas,
+            sn.periodo_quadrimestre
+           FROM selecao_correcao
+             JOIN selecao_novembro sn ON selecao_correcao.municipio_id_sus = sn.municipio_id_sus
+        UNION ALL
+         SELECT sd.id,
+            sd.uf_sigla,
+            sd.municipio_nome,
+            selecao_correcao.municipio_id_sus,
+            sd.periodo_data_inicio,
+            sd.isf_nota,
+            selecao_correcao.esf,
+            selecao_correcao.eap_30h,
+            selecao_correcao.eap_20h,
+            selecao_correcao.pagamento_desempenho,
+            selecao_correcao.pagamento_adicional_100_meta,
+            selecao_correcao.esf_novas,
+            selecao_correcao.eap_30h_novas,
+            selecao_correcao.eap_20h_novas,
+            selecao_correcao.pagamento_adicional,
+            sd.pagamento_desconto,
+            sd.unidade_geografica_id,
+            sd.periodo_id,
+            sd.criacao_data,
+            sd.atualizacao_data,
+            sd.pagamento_total,
+            selecao_correcao.pagamento_equipes_novas,
+            sd.periodo_quadrimestre
+           FROM selecao_correcao
+             JOIN selecao_dezembro sd ON selecao_correcao.municipio_id_sus = sd.municipio_id_sus
+        UNION ALL
+         SELECT sj.id,
+            sj.uf_sigla,
+            sj.municipio_nome,
+            selecao_correcao.municipio_id_sus,
+            sj.periodo_data_inicio,
+            sj.isf_nota,
+            selecao_correcao.esf,
+            selecao_correcao.eap_30h,
+            selecao_correcao.eap_20h,
+            selecao_correcao.pagamento_desempenho,
+            selecao_correcao.pagamento_adicional_100_meta,
+            selecao_correcao.esf_novas,
+            selecao_correcao.eap_30h_novas,
+            selecao_correcao.eap_20h_novas,
+            selecao_correcao.pagamento_adicional,
+            sj.pagamento_desconto,
+            sj.unidade_geografica_id,
+            sj.periodo_id,
+            sj.criacao_data,
+            sj.atualizacao_data,
+            sj.pagamento_total,
+            selecao_correcao.pagamento_equipes_novas,
+            sj.periodo_quadrimestre
+           FROM selecao_correcao
+             JOIN selecao_janeiro sj ON selecao_correcao.municipio_id_sus = sj.municipio_id_sus
+        ), relatorio_egestor_sem_competencias_nulas AS (
+         SELECT efdi.id,
+            efdi.uf_sigla,
+            efdi.municipio_nome,
+            efdi.municipio_id_sus,
+            efdi.periodo_data_inicio,
+            efdi.isf_nota,
+            efdi.esf,
+            efdi.eap_30h,
+            efdi.eap_20h,
+            efdi.pagamento_desempenho,
+            efdi.pagamento_adicional_100_meta,
+            efdi.esf_novas,
+            efdi.eap_30h_novas,
+            efdi.eap_20h_novas,
+            efdi.pagamento_adicional,
+            efdi.pagamento_desconto,
+            efdi.unidade_geografica_id,
+            efdi.periodo_id,
+            efdi.criacao_data,
+            efdi.atualizacao_data,
+            efdi.pagamento_total,
+            efdi.pagamento_equipes_novas,
+            efdi.periodo_quadrimestre
+           FROM dados_publicos.egestor_financiamento_desempenho_isf efdi
+          WHERE efdi.periodo_data_inicio <> ALL (ARRAY['2022-10-01'::date, '2022-11-01'::date, '2022-12-01'::date, '2023-01-01'::date])
+        )
+ SELECT selecao_competencias_ajustadas.id,
+    selecao_competencias_ajustadas.uf_sigla,
+    selecao_competencias_ajustadas.municipio_nome,
+    selecao_competencias_ajustadas.municipio_id_sus,
+    selecao_competencias_ajustadas.periodo_data_inicio,
+    selecao_competencias_ajustadas.isf_nota,
+    selecao_competencias_ajustadas.esf,
+    selecao_competencias_ajustadas.eap_30h,
+    selecao_competencias_ajustadas.eap_20h,
+    selecao_competencias_ajustadas.pagamento_desempenho,
+    selecao_competencias_ajustadas.pagamento_adicional_100_meta,
+    selecao_competencias_ajustadas.esf_novas,
+    selecao_competencias_ajustadas.eap_30h_novas,
+    selecao_competencias_ajustadas.eap_20h_novas,
+    selecao_competencias_ajustadas.pagamento_adicional,
+    selecao_competencias_ajustadas.pagamento_desconto,
+    selecao_competencias_ajustadas.unidade_geografica_id,
+    selecao_competencias_ajustadas.periodo_id,
+    selecao_competencias_ajustadas.criacao_data,
+    selecao_competencias_ajustadas.atualizacao_data,
+    selecao_competencias_ajustadas.pagamento_total,
+    selecao_competencias_ajustadas.pagamento_equipes_novas,
+    selecao_competencias_ajustadas.periodo_quadrimestre
+   FROM selecao_competencias_ajustadas
+UNION ALL
+ SELECT relatorio_egestor_sem_competencias_nulas.id,
+    relatorio_egestor_sem_competencias_nulas.uf_sigla,
+    relatorio_egestor_sem_competencias_nulas.municipio_nome,
+    relatorio_egestor_sem_competencias_nulas.municipio_id_sus,
+    relatorio_egestor_sem_competencias_nulas.periodo_data_inicio,
+    relatorio_egestor_sem_competencias_nulas.isf_nota,
+    relatorio_egestor_sem_competencias_nulas.esf,
+    relatorio_egestor_sem_competencias_nulas.eap_30h,
+    relatorio_egestor_sem_competencias_nulas.eap_20h,
+    relatorio_egestor_sem_competencias_nulas.pagamento_desempenho,
+    relatorio_egestor_sem_competencias_nulas.pagamento_adicional_100_meta,
+    relatorio_egestor_sem_competencias_nulas.esf_novas,
+    relatorio_egestor_sem_competencias_nulas.eap_30h_novas,
+    relatorio_egestor_sem_competencias_nulas.eap_20h_novas,
+    relatorio_egestor_sem_competencias_nulas.pagamento_adicional,
+    relatorio_egestor_sem_competencias_nulas.pagamento_desconto,
+    relatorio_egestor_sem_competencias_nulas.unidade_geografica_id,
+    relatorio_egestor_sem_competencias_nulas.periodo_id,
+    relatorio_egestor_sem_competencias_nulas.criacao_data,
+    relatorio_egestor_sem_competencias_nulas.atualizacao_data,
+    relatorio_egestor_sem_competencias_nulas.pagamento_total,
+    relatorio_egestor_sem_competencias_nulas.pagamento_equipes_novas,
+    relatorio_egestor_sem_competencias_nulas.periodo_quadrimestre
+   FROM relatorio_egestor_sem_competencias_nulas
+WITH DATA;
