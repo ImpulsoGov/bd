@@ -27,7 +27,8 @@ AS WITH base_atendimentos_pre_natal AS (
                             WHEN COALESCE(b_1.data_dum, '3000-12-31'::date) <> '3000-12-31'::date THEN (b_1.data_registro - b_1.data_dum) / 7
                             WHEN b_1.idade_gestacional_atendimento IS NOT NULL THEN b_1.idade_gestacional_atendimento
                             ELSE NULL::integer
-                        END AS gestante_idade_gestacional_atendimento
+                        END AS gestante_idade_gestacional_atendimento,
+                        b_1.criacao_data
                    FROM impulso_previne_dados_nominais.eventos_pre_natal b_1
                   WHERE b_1.tipo_registro::text = 'consulta_pre_natal'::text
                 )
@@ -41,7 +42,8 @@ AS WITH base_atendimentos_pre_natal AS (
             b.gestante_idade_gestacional,
             b.gestante_idade_gestacional_atendimento,
             (array_agg(b.data_atendimento) FILTER (WHERE b.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY b.chave_gestante ORDER BY b.id_registro ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS primeira_data_consulta_pre_natal_com_dum,
-            (array_agg(b.data_dum_atendimento) FILTER (WHERE b.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY b.chave_gestante ORDER BY b.id_registro ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS primeira_data_dum_valida
+            (array_agg(b.data_dum_atendimento) FILTER (WHERE b.data_dum_atendimento IS NOT NULL) OVER (PARTITION BY b.chave_gestante ORDER BY b.id_registro ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS primeira_data_dum_valida,
+            b.criacao_data
            FROM base b
         ), validacao_dum AS (
          SELECT apn.municipio_id_sus,
@@ -84,7 +86,8 @@ AS WITH base_atendimentos_pre_natal AS (
             max(apn.primeira_data_dum_valida) + '294 days'::interval AS primeira_data_dpp,
             max(apn.data_dpp_atendimento) AS maior_data_dpp,
             min(apn.data_dpp_atendimento) AS menor_data_dpp,
-            max(apn.data_dpp_atendimento) - min(apn.data_dpp_atendimento) AS diff_maior_menor_data_dpp
+            max(apn.data_dpp_atendimento) - min(apn.data_dpp_atendimento) AS diff_maior_menor_data_dpp,
+            max(apn.criacao_data)
            FROM base_atendimentos_pre_natal apn
           GROUP BY apn.municipio_id_sus, apn.chave_gestante
         ), validacao_registros_parto AS (
@@ -171,7 +174,8 @@ AS WITH base_atendimentos_pre_natal AS (
                 CASE
                     WHEN (apn.data_atendimento - cg.data_fim_primeira_gestacao) >= 0 AND (apn.data_atendimento - cg.data_fim_primeira_gestacao) <= 30 THEN 'possivel_consulta_pos_parto_ou_parto_tardio_ou_erro_DUM'::text
                     ELSE NULL::text
-                END AS consulta_proxima_fim_gestacao
+                END AS consulta_proxima_fim_gestacao,
+                apn.criacao_data
            FROM base_atendimentos_pre_natal apn
              JOIN analise_gestante cg ON cg.chave_gestante::text = apn.chave_gestante::text AND cg.municipio_id_sus::text = apn.municipio_id_sus::text
           WHERE apn.data_atendimento < cg.data_fim_primeira_gestacao OR cg.data_fim_primeira_gestacao IS NULL
@@ -206,7 +210,8 @@ AS WITH base_atendimentos_pre_natal AS (
                 CASE
                     WHEN (apn.data_atendimento - cg.data_fim_primeira_gestacao) >= 0 AND (apn.data_atendimento - cg.data_fim_primeira_gestacao) <= 30 THEN 'possivel_consulta_pos_parto_ou_parto_tardio_ou_erro_DUM'::text
                     ELSE NULL::text
-                END AS consulta_proxima_fim_gestacao
+                END AS consulta_proxima_fim_gestacao,
+                apn.criacao_data
            FROM base_atendimentos_pre_natal apn
              JOIN analise_gestante cg ON cg.chave_gestante::text = apn.chave_gestante::text AND cg.municipio_id_sus::text = apn.municipio_id_sus::text
           WHERE apn.data_atendimento >= cg.data_fim_primeira_gestacao
@@ -356,7 +361,8 @@ AS WITH base_atendimentos_pre_natal AS (
                         ELSE NULL::date
                     END) > 0 THEN 'Sim'::text
                     ELSE 'Não'::text
-                END AS possui_registro_parto
+                END AS possui_registro_parto,
+                max(bag.criacao_data) as criacao_data
            FROM base_atendimentos_por_gestacao bag
              LEFT JOIN infos_gestante_atendimento_individual_recente ig ON bag.chave_gestante::text = ig.chave_gestante::text AND bag.municipio_id_sus::text = ig.municipio_id_sus::text
              LEFT JOIN impulso_previne_dados_nominais.eventos_pre_natal odonto ON bag.chave_gestante::text = odonto.chave_gestante::text AND bag.municipio_id_sus::text = odonto.municipio_id_sus::text AND odonto.tipo_registro::text = 'atendimento_odontologico'::text
@@ -379,7 +385,7 @@ AS WITH base_atendimentos_pre_natal AS (
                     WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2025-05-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2025-08-31'::date THEN '2025.Q2'::text
                     WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2025-09-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2025-08-31'::date THEN '2025.Q3'::text
                     ELSE 'SEM QUADRI'::text
-                END), bag.idade_gestacional_atendimento_com_primeira_dum_valida, bag.data_primeiro_atendimento, bag.data_ultimo_atendimento, (CURRENT_DATE - bag.data_ultimo_atendimento), bag.data_fim_primeira_gestacao, bag.tipo_encerramento_primeira_gestacao, ig.gestante_documento_cpf, ig.gestante_documento_cns, bag.idade_gestacional_atual_com_primeira_dum_valida
+                END), bag.idade_gestacional_atendimento_com_primeira_dum_valida, bag.data_primeiro_atendimento, bag.data_ultimo_atendimento, (CURRENT_DATE - bag.data_ultimo_atendimento), bag.data_fim_primeira_gestacao, bag.tipo_encerramento_primeira_gestacao, ig.gestante_documento_cpf, ig.gestante_documento_cns, bag.idade_gestacional_atual_com_primeira_dum_valida, bag.criacao_data
         ), aux AS (
          SELECT base_final_gestacoes.municipio_id_sus,
             base_final_gestacoes.chave_gestacao,
@@ -422,7 +428,7 @@ AS WITH base_atendimentos_pre_natal AS (
                     ELSE false
                 END AS exame_sifilis_hiv_realizado,
             now() AS atualizacao_data,
-            now() AS criacao_data
+            base_final_gestacoes.criacao_data
            FROM base_final_gestacoes
           WHERE base_final_gestacoes.gestacao_data_dpp >=
                 CASE
@@ -479,4 +485,4 @@ AS WITH base_atendimentos_pre_natal AS (
     aux.criacao_data
    FROM aux
   WHERE aux.equipe_ine <> ALL (ARRAY['0000071722'::text, '0000071730'::text, '0001511912'::text, '0001846892'::text, '0001847236'::text, '0002275872'::text])
-WITH DATA
+WITH DATA;
