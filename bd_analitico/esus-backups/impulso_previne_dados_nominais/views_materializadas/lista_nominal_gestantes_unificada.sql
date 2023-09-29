@@ -89,7 +89,7 @@ AS WITH base_atendimentos_pre_natal AS (
             max(apn.data_dpp_atendimento) - min(apn.data_dpp_atendimento) AS diff_maior_menor_data_dpp,
             max(apn.criacao_data)
            FROM base_atendimentos_pre_natal apn
-          GROUP BY apn.municipio_id_sus, apn.chave_gestante, apn.criacao_data
+          GROUP BY apn.municipio_id_sus, apn.chave_gestante
         ), validacao_registros_parto AS (
          SELECT b.municipio_id_sus,
             b.chave_gestante,
@@ -362,7 +362,7 @@ AS WITH base_atendimentos_pre_natal AS (
                     END) > 0 THEN 'Sim'::text
                     ELSE 'Não'::text
                 END AS possui_registro_parto,
-                bag.criacao_data
+                max(bag.criacao_data) as criacao_data
            FROM base_atendimentos_por_gestacao bag
              LEFT JOIN infos_gestante_atendimento_individual_recente ig ON bag.chave_gestante::text = ig.chave_gestante::text AND bag.municipio_id_sus::text = ig.municipio_id_sus::text
              LEFT JOIN impulso_previne_dados_nominais.eventos_pre_natal odonto ON bag.chave_gestante::text = odonto.chave_gestante::text AND bag.municipio_id_sus::text = odonto.municipio_id_sus::text AND odonto.tipo_registro::text = 'atendimento_odontologico'::text
