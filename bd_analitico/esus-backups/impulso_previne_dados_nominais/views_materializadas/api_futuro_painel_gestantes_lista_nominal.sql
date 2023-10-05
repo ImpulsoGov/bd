@@ -19,18 +19,17 @@ AS WITH acs_info AS (
     tb1.gestacao_idade_gestacional_atual,
     tb1.gestacao_idade_gestacional_primeiro_atendimento,
     tb1.consulta_prenatal_ultima_data,
-    tb1.consultas_prenatal_total,
     tb1.consultas_pre_natal_validas,
         CASE
-            WHEN tb1.atendimento_odontologico_realizado THEN 1
-            WHEN tb1.atendimento_odontologico_realizado IS FALSE THEN 2
+            WHEN tb1.atendimento_odontologico_realizado_valido THEN 1
+            WHEN tb1.atendimento_odontologico_realizado_valido IS FALSE THEN 2
             ELSE 0
         END AS id_atendimeno_odontologico,
         CASE
-            WHEN tb1.exame_hiv_realizado AND tb1.exame_sifilis_realizado IS FALSE THEN 1
-            WHEN tb1.exame_sifilis_realizado AND tb1.exame_hiv_realizado IS FALSE THEN 2
-            WHEN tb1.exame_sifilis_realizado IS FALSE AND tb1.exame_hiv_realizado IS FALSE THEN 3
-            WHEN tb1.exame_sifilis_realizado AND tb1.exame_hiv_realizado THEN 4
+            WHEN tb1.exame_hiv_realizado_valido AND tb1.exame_sifilis_realizado_valido IS FALSE THEN 1
+            WHEN tb1.exame_sifilis_realizado_valido AND tb1.exame_hiv_realizado_valido IS FALSE THEN 2
+            WHEN tb1.exame_sifilis_realizado_valido IS FALSE AND tb1.exame_hiv_realizado_valido IS FALSE THEN 3
+            WHEN tb1.exame_sifilis_realizado_valido AND tb1.exame_hiv_realizado_valido THEN 4
             ELSE NULL::integer
         END AS id_exame_hiv_sifiis,
     tb1.acs_nome,
@@ -58,8 +57,6 @@ AS WITH acs_info AS (
             ELSE 0
         END AS id_sinalizacao_aborto,
     tb1.ordem_primeira_consulta_com_dum,
-    tb1.consultas_prenatal_total AS consulta_total_base_local,
-    tb1.consultas_pre_natal_validas AS consulta_total_estimativa,
     acs.acs_visita_domiciliar,
     acs.acs_cad_dom_familia,
     acs.acs_cad_individual,
