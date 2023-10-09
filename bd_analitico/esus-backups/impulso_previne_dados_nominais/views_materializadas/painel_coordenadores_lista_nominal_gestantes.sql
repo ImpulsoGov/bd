@@ -250,8 +250,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
     SELECT 
         municipio_id_sus,
     	impulso_previne_dados_nominais.equipe_ine(municipio_id_sus::text, equipe_ine) AS equipe_ine,
-        MAX(GREATEST(consulta_prenatal_ultima_data::date, acs_data_ultima_visita::date)) AS dt_registro_producao_mais_recente,
-        MIN(LEAST(consulta_prenatal_ultima_data::date, acs_data_ultima_visita::date)) AS dt_registro_producao_mais_antigo
+        MAX(GREATEST(consulta_prenatal_ultima_data::date)) AS dt_registro_producao_mais_recente,
+        MIN(LEAST(consulta_prenatal_ultima_data::date) AS dt_registro_producao_mais_antigo
     FROM une_as_bases
     GROUP BY 1, 2
 )
