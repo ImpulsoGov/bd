@@ -260,6 +260,16 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_transmissoes_recentes.criacao_data
            FROM dados_transmissoes_recentes
         )
+, data_registro_producao AS (
+    SELECT 
+        municipio_id_sus,
+    	impulso_previne_dados_nominais.equipe_ine(municipio_id_sus::text, COALESCE(equipe_ine_cadastro, equipe_ine_atendimento)) AS equipe_ine_cadastro,
+        MAX(GREATEST(dt_afericao_pressao_mais_recente::date,dt_consulta_mais_recente::date,data_ultimo_cadastro::date,dt_ultima_consulta::date)) AS dt_registro_producao_mais_recente,
+        MIN(LEAST(dt_afericao_pressao_mais_recente::date,dt_consulta_mais_recente::date,data_ultimo_cadastro::date,dt_ultima_consulta::date)) AS dt_registro_producao_mais_antigo
+    FROM une_as_bases
+    GROUP BY 1, 2
+)
+, tabela_aux as ( 
  SELECT tb1.municipio_id_sus,
     concat(tb2.nome, ' - ', tb2.uf_sigla) AS municipio_uf,
     tb1.quadrimestre_atual,
@@ -346,4 +356,12 @@ AS WITH dados_anonimizados_demo_vicosa AS (
    FROM une_as_bases tb1
      LEFT JOIN listas_de_codigos.municipios tb2 ON tb1.municipio_id_sus::bpchar = tb2.id_sus
   WHERE COALESCE(tb1.se_faleceu, 0) <> 1
+) 
+SELECT
+    tabela_aux.*,
+    drp.dt_registro_producao_mais_recente
+FROM tabela_aux
+LEFT JOIN data_registro_producao drp 
+    ON drp.municipio_id_sus = tabela_aux.municipio_id_sus
+    AND drp.equipe_ine_cadastro = tabela_aux.equipe_ine_cadastro
 WITH DATA;
