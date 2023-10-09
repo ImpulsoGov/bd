@@ -261,7 +261,16 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_transmissoes_recentes.criacao_data
            FROM dados_transmissoes_recentes
         )
- SELECT tb1.municipio_id_sus,
+, data_registro_producao AS (
+    SELECT 
+        municipio_id_sus,
+    	impulso_previne_dados_nominais.equipe_ine(municipio_id_sus::text, COALESCE(equipe_ine_cadastro, equipe_ine_atendimento)) AS equipe_ine,
+        MAX(GREATEST(dt_solicitacao_hemoglobina_glicada_mais_recente::date,dt_consulta_mais_recente::date,data_ultimo_cadastro::date,dt_ultima_consulta::date)) AS dt_registro_producao_mais_recente,
+        MIN(LEAST(dt_solicitacao_hemoglobina_glicada_mais_recente::date,dt_consulta_mais_recente::date,data_ultimo_cadastro::date,dt_ultima_consulta::date)) AS dt_registro_producao_mais_antigo
+    FROM une_as_bases
+    GROUP BY 1, 2
+), tabela_aux as (
+SELECT tb1.municipio_id_sus,
     tb1.cidadao_nome,
     tb1.dt_nascimento,
         CASE
@@ -313,4 +322,12 @@ AS WITH dados_anonimizados_demo_vicosa AS (
     CURRENT_TIMESTAMP AS atualizacao_data
    FROM une_as_bases tb1
   WHERE COALESCE(tb1.se_faleceu, 0) <> 1
+) 
+SELECT
+    tabela_aux.*,
+    drp.dt_registro_producao_mais_recente
+FROM tabela_aux
+LEFT JOIN data_registro_producao drp 
+    ON drp.municipio_id_sus = tabela_aux.municipio_id_sus
+    AND drp.equipe_ine = tabela_aux.equipe_ine
 WITH DATA;

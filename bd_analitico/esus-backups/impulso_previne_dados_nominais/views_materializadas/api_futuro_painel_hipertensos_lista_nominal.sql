@@ -262,6 +262,15 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_transmissoes_recentes.criacao_data
            FROM dados_transmissoes_recentes
         )
+, data_registro_producao AS (
+    SELECT 
+        municipio_id_sus,
+    	impulso_previne_dados_nominais.equipe_ine(municipio_id_sus::text, COALESCE(equipe_ine_cadastro, equipe_ine_atendimento)) AS equipe_ine,
+        MAX(GREATEST(dt_afericao_pressao_mais_recente::date,dt_consulta_mais_recente::date,data_ultimo_cadastro::date,dt_ultima_consulta::date)) AS dt_registro_producao_mais_recente,
+        MIN(LEAST(dt_afericao_pressao_mais_recente::date,dt_consulta_mais_recente::date,data_ultimo_cadastro::date,dt_ultima_consulta::date)) AS dt_registro_producao_mais_antigo
+    FROM une_as_bases
+    GROUP BY 1, 2
+), tabela_aux as (
  SELECT tb1.municipio_id_sus,
     tb1.cidadao_nome,
     tb1.dt_nascimento,
@@ -277,18 +286,18 @@ AS WITH dados_anonimizados_demo_vicosa AS (
     tb1.dt_consulta_mais_recente,
         CASE
             WHEN tb1.realizou_consulta_ultimos_6_meses THEN 'Em dia'::text
-            ELSE esus_160050_oiapoque_ap_20230405.prazo_proximo_dia()
+            ELSE impulso_previne_dados_nominais.prazo_proximo_dia()
         END AS prazo_proxima_consulta,
     tb1.dt_afericao_pressao_mais_recente::date AS dt_afericao_pressao_mais_recente,
         CASE
             WHEN tb1.realizou_afericao_ultimos_6_meses THEN 'Em dia'::text
-            ELSE esus_160050_oiapoque_ap_20230405.prazo_proximo_dia()
+            ELSE impulso_previne_dados_nominais.prazo_proximo_dia()
         END AS prazo_proxima_afericao_pa,
     COALESCE(tb1.acs_nome_visita, tb1.acs_nome_cadastro) AS acs_nome,
     COALESCE(tb1.estabelecimento_cnes_cadastro, tb1.estabelecimento_cnes_atendimento) AS estabelecimento_cnes,
     COALESCE(tb1.estabelecimento_nome_cadastro, tb1.estabelecimento_nome_atendimento) AS estabelecimento_nome,
-    esus_160050_oiapoque_ap_20230405.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento)) AS equipe_ine,
-    esus_160050_oiapoque_ap_20230405.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento)) AS equipe_nome,
+    impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento)) AS equipe_ine,
+    impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento)) AS equipe_nome,
         CASE
             WHEN tb1.possui_hipertensao_diagnosticada THEN 2
             WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS FALSE THEN 1
@@ -314,4 +323,11 @@ AS WITH dados_anonimizados_demo_vicosa AS (
     CURRENT_TIMESTAMP AS atualizacao_data
    FROM une_as_bases tb1
   WHERE COALESCE(tb1.se_faleceu, 0) <> 1
+) SELECT
+    tabela_aux.*,
+    drp.dt_registro_producao_mais_recente
+FROM tabela_aux
+LEFT JOIN data_registro_producao drp 
+    ON drp.municipio_id_sus = tabela_aux.municipio_id_sus
+    AND drp.equipe_ine = tabela_aux.equipe_ine
 WITH DATA;
