@@ -234,7 +234,7 @@ WITH possui_hipertensao_autorreferida AS (
                 WHEN date_part('month'::text, current_date) >= 5::double precision AND date_part('month'::text, current_date) <= 8::double precision THEN concat(date_part('year'::text, current_date), '-08-31')
                 WHEN date_part('month'::text, current_date) >= 9::double precision AND date_part('month'::text, current_date) <= 12::double precision THEN concat(date_part('year'::text, current_date), '-12-31')
                 ELSE NULL::text
-            END::date - '180 days'::interval) THEN true
+            END::date - '6 months'::interval) THEN true
             ELSE false
         END AS realizou_afericao_ultimos_6_meses,
         ap.dt_afericao_pressao_mais_recente,
@@ -251,7 +251,7 @@ WITH possui_hipertensao_autorreferida AS (
                 WHEN date_part('month'::text, current_date) >= 5::double precision AND date_part('month'::text, current_date) <= 8::double precision THEN concat(date_part('year'::text, current_date), '-08-31')
                 WHEN date_part('month'::text, current_date) >= 9::double precision AND date_part('month'::text, current_date) <= 12::double precision THEN concat(date_part('year'::text, current_date), '-12-31')
                 ELSE NULL::text
-            END::date - '180 days'::interval) THEN true
+            END::date - '6 months'::interval) THEN true
             ELSE false
         END AS realizou_consulta_ultimos_6_meses,
     ch.dt_consulta_mais_recente,
