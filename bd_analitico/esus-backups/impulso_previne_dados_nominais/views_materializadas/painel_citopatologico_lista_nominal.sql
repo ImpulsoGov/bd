@@ -268,6 +268,16 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_transmissoes_recentes.criacao_data
            FROM dados_transmissoes_recentes
         )
+, data_registro_producao AS (
+    SELECT 
+        municipio_id_sus,
+        impulso_previne_dados_nominais.equipe_ine(municipio_id_sus::text, COALESCE(equipe_ine_cadastro, equipe_ine_ultimo_atendimento)::text) AS ine_master,
+        MAX(GREATEST(dt_ultimo_exame,dt_ultimo_atendimento,dt_ultimo_cadastro)) AS dt_registro_producao_mais_recente,
+        MIN(LEAST(dt_ultimo_exame,dt_ultimo_atendimento,dt_ultimo_cadastro)) AS dt_registro_producao_mais_antigo
+    FROM une_as_bases
+    GROUP BY 1, 2
+)
+, tabela_aux AS (
  SELECT tb1.municipio_id_sus,
     concat(tb2.nome, ' - ', tb2.uf_sigla) AS municipio_uf,
     tb1.paciente_nome,
@@ -308,4 +318,11 @@ AS WITH dados_anonimizados_demo_vicosa AS (
     CURRENT_TIMESTAMP AS atualizacao_data
    FROM une_as_bases tb1
      LEFT JOIN listas_de_codigos.municipios tb2 ON tb1.municipio_id_sus::bpchar = tb2.id_sus
+) SELECT
+    tabela_aux.*,
+    drp.dt_registro_producao_mais_recente
+FROM tabela_aux
+LEFT JOIN data_registro_producao drp 
+    ON drp.municipio_id_sus = tabela_aux.municipio_id_sus
+    AND drp.ine_master = tabela_aux.ine_master
 WITH DATA;

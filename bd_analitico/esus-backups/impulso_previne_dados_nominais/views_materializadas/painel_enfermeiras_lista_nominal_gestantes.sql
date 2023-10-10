@@ -246,7 +246,16 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_transmissoes_recentes.municipio_id_sus
            FROM dados_transmissoes_recentes
         )
- SELECT tb1.municipio_id_sus,
+, data_registro_producao AS (
+    SELECT 
+        municipio_id_sus,
+    	impulso_previne_dados_nominais.equipe_ine(municipio_id_sus::text, equipe_ine) AS equipe_ine,
+        MAX(GREATEST(consulta_prenatal_ultima_data::date)) AS dt_registro_producao_mais_recente,
+        MIN(LEAST(consulta_prenatal_ultima_data::date)) AS dt_registro_producao_mais_antigo
+    FROM une_as_bases
+    GROUP BY 1, 2
+)
+, tabela_aux as (SELECT tb1.municipio_id_sus,
     concat(m.nome, ' - ', m.uf_sigla) AS municipio_uf,
     tb1.estabelecimento_cnes,
     tb1.estabelecimento_nome,
@@ -300,4 +309,12 @@ AS WITH dados_anonimizados_demo_vicosa AS (
    FROM une_as_bases tb1
      JOIN listas_de_codigos.municipios m ON tb1.municipio_id_sus::bpchar = m.id_sus
   WHERE tb1.gestante_consulta_prenatal_data_limite >= CURRENT_DATE
+  )
+SELECT
+    tabela_aux.*,
+    drp.dt_registro_producao_mais_recente
+FROM tabela_aux
+LEFT JOIN data_registro_producao drp 
+    ON drp.municipio_id_sus = tabela_aux.municipio_id_sus
+    AND drp.equipe_ine = tabela_aux.equipe_ine
 WITH DATA;
