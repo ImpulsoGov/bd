@@ -279,23 +279,23 @@ indicador_regras_de_negocio as (
 		tb2.data_ultimo_exame,
 		date_part('year', age(tb2.data_ultimo_exame ::timestamp with time zone, tb1.data_de_nascimento::timestamp with time zone))::integer as idade_realizou_ultimo_exame,
 		CASE
-			WHEN (CURRENT_DATE - tb2.data_ultimo_exame) <= 1095 and (date_part('year', age(tb2.data_ultimo_exame ::timestamp with time zone, tb1.data_de_nascimento::timestamp with time zone)))::integer between 25 and 64 THEN TRUE
+			WHEN CURRENT_DATE - INTERVAL '36 months' <= tb2.data_ultimo_exame and (date_part('year', age(tb2.data_ultimo_exame ::timestamp with time zone, tb1.data_de_nascimento::timestamp with time zone)))::integer between 25 and 64 THEN TRUE
 			ELSE FALSE
 		END AS realizou_exame_ultimos_36_meses,
-		(tb2.data_ultimo_exame + 1095) AS ultimo_exame_mais_36_meses,
+		(tb2.data_ultimo_exame + INTERVAL '36 months') AS ultimo_exame_mais_36_meses,
 		CASE
-			WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q1')
-			WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q2')
-			WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 9::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 12::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q3')
+			WHEN date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + INTERVAL '36 months')), '.Q1')
+			WHEN date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + INTERVAL '36 months')), '.Q2')
+			WHEN date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) >= 9::double precision AND date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) <= 12::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + INTERVAL '36 months')), '.Q3')
 			ELSE 'exame_nunca_realizado'
 		END AS quadrimestre_a_realizar_proximo_exame,
 		CASE
 			WHEN tb2.data_ultimo_exame IS NULL 
 			or (tb2.data_ultimo_exame + INTERVAL '36 months') < current_date 
 			or ((CASE
-						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q1')
-						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q2')
-						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 9::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 12::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q3')
+						WHEN date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + INTERVAL '36 months')), '.Q1')
+						WHEN date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + INTERVAL '36 months')), '.Q2')
+						WHEN date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) >= 9::double precision AND date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) <= 12::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + INTERVAL '36 months')), '.Q3')
 				  END ) = ( CASE
 								WHEN date_part('month', current_date) >= 1::double precision AND date_part('month', current_date) <= 4::double precision THEN concat(date_part('year', current_date), '.Q1')
 								WHEN date_part('month', current_date) >= 5::double precision AND date_part('month', current_date) <= 8::double precision THEN concat(date_part('year', current_date), '.Q2')
@@ -303,7 +303,7 @@ indicador_regras_de_negocio as (
 							end 
 			) 
 			)
-			or date_part('year', age(tb2.data_ultimo_exame ::timestamp with time zone, tb1.data_de_nascimento::timestamp with time zone)) < 25 and ((tb2.data_ultimo_exame + 1095)::date - current_date) > 0
+			or date_part('year', age(tb2.data_ultimo_exame ::timestamp with time zone, tb1.data_de_nascimento::timestamp with time zone)) < 25 and ((tb2.data_ultimo_exame + INTERVAL '36 months')::date - current_date) > 0
 			THEN (
 				CASE
 					WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat(date_part('year', CURRENT_DATE::date), '-04-30')::date
@@ -314,19 +314,19 @@ indicador_regras_de_negocio as (
 			ELSE (tb2.data_ultimo_exame + INTERVAL '36 months')::date
 		END AS data_limite_a_realizar_proximo_exame,
 		CASE
-			when date_part('year', age(tb2.data_ultimo_exame ::timestamp with time zone, tb1.data_de_nascimento::timestamp with time zone)) < 25 and ((tb2.data_ultimo_exame + 1095)::date - current_date) > 0 then 'exame_realizado_antes_dos_25'
+			when date_part('year', age(tb2.data_ultimo_exame ::timestamp with time zone, tb1.data_de_nascimento::timestamp with time zone)) < 25 and ((tb2.data_ultimo_exame + INTERVAL '36 months')::date - current_date) > 0 then 'exame_realizado_antes_dos_25'
 			WHEN (CASE
-						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q1')
-						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q2')
-						WHEN date_part('month', (tb2.data_ultimo_exame + 1095)) >= 9::double precision AND date_part('month', (tb2.data_ultimo_exame + 1095)) <= 12::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + 1095)), '.Q3')
+						WHEN date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) >= 1::double precision AND date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) <= 4::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + INTERVAL '36 months')), '.Q1')
+						WHEN date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) >= 5::double precision AND date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) <= 8::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + INTERVAL '36 months')), '.Q2')
+						WHEN date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) >= 9::double precision AND date_part('month', (tb2.data_ultimo_exame + INTERVAL '36 months')) <= 12::double precision THEN concat(date_part('year', (tb2.data_ultimo_exame + INTERVAL '36 months')), '.Q3')
 				  END ) = ( CASE
 								WHEN date_part('month', current_date) >= 1::double precision AND date_part('month', current_date) <= 4::double precision THEN concat(date_part('year', current_date), '.Q1')
 								WHEN date_part('month', current_date) >= 5::double precision AND date_part('month', current_date) <= 8::double precision THEN concat(date_part('year', current_date), '.Q2')
 								WHEN date_part('month', current_date) >= 9::double precision AND date_part('month', current_date) <= 12::double precision THEN concat(date_part('year', current_date), '.Q3')
 							end 
 			) THEN 'exame_vence_no_quadrimestre_atual'			
-			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) < 0 THEN 'exame_vencido'
-			WHEN ((tb2.data_ultimo_exame + 1095)::date - current_date) > 0 THEN 'exame_em_dia'
+			WHEN ((tb2.data_ultimo_exame + INTERVAL '36 months')::date - current_date) < 0 THEN 'exame_vencido'
+			WHEN ((tb2.data_ultimo_exame + INTERVAL '36 months')::date - current_date) > 0 THEN 'exame_em_dia'
 			when tb2.data_ultimo_exame is null then 'exame_nunca_realizado'
 			else 'status'
 		END as status_exame,
