@@ -8,6 +8,7 @@ AS WITH acs_info AS (
             tb.acs_cad_individual
            FROM impulso_previne_dados_nominais.eventos_pre_natal tb
         )
+, tabela_aux as ( 
  SELECT tb1.chave_gestacao AS chave_id_gestacao,
     tb1.chave_gestante AS chave_id_gestante,
     tb1.municipio_id_sus,
@@ -68,4 +69,21 @@ AS WITH acs_info AS (
    FROM impulso_previne_dados_nominais.lista_nominal_gestantes_unificada tb1
      LEFT JOIN listas_de_codigos.periodos p ON tb1.gestacao_quadrimestre = p.codigo::text
      LEFT JOIN acs_info acs ON acs.chave_gestante::text = tb1.chave_gestante::text
+) 
+, data_registro_producao AS (
+    SELECT 
+        municipio_id_sus,
+    	equipe_ine,
+        MAX(GREATEST(consulta_prenatal_ultima_data::date)) AS dt_registro_producao_mais_recente,
+        MIN(LEAST(consulta_prenatal_ultima_data::date)) AS dt_registro_producao_mais_antigo
+    FROM tabela_aux
+    GROUP BY 1, 2
+) 
+SELECT
+    tabela_aux.*,
+    drp.dt_registro_producao_mais_recente
+FROM tabela_aux
+LEFT JOIN data_registro_producao drp 
+    ON drp.municipio_id_sus = tabela_aux.municipio_id_sus
+    AND drp.equipe_ine = tabela_aux.equipe_ine
 WITH DATA;
