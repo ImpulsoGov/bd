@@ -531,5 +531,4 @@ AS WITH base_atendimentos_pre_natal AS (
     aux.atualizacao_data,
     aux.criacao_data
    FROM aux
-  WHERE aux.equipe_ine <> ALL (ARRAY['0000071722'::text, '0000071730'::text, '0001511912'::text, '0001846892'::text, '0001847236'::text, '0002275872'::text])
 WITH DATA;
