@@ -13,12 +13,12 @@ AS SELECT l.municipio_id_sus,
         END) AS gestantes_ativas,
     count(DISTINCT
         CASE
-            WHEN l.id_status_usuario = 10 AND l.consultas_prenatal_total <= 5 THEN l.chave_id_gestacao
+            WHEN l.id_status_usuario = 10 AND l.consultas_pre_natal_validas <= 5 THEN l.chave_id_gestacao
             ELSE NULL::text
         END) AS gestantes_ativas_abaixo6consultas,
     count(DISTINCT
         CASE
-            WHEN l.id_status_usuario = 10 AND l.gestacao_idade_gestacional_primeiro_atendimento >= 0 AND l.gestacao_idade_gestacional_primeiro_atendimento <= 12 AND l.consultas_prenatal_total <= 5 THEN l.chave_id_gestacao
+            WHEN l.id_status_usuario = 10 AND l.gestacao_idade_gestacional_primeiro_atendimento >= 0 AND l.gestacao_idade_gestacional_primeiro_atendimento <= 12 AND l.consultas_pre_natal_validas <= 5 THEN l.chave_id_gestacao
             ELSE NULL::text
         END) AS gestantes_ativas_abaixo6consultas_1consulta_em_12semanas,
     count(DISTINCT

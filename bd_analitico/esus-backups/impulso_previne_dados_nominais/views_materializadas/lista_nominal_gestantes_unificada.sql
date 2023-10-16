@@ -332,6 +332,18 @@ AS WITH base_atendimentos_pre_natal AS (
                 END) > 0 AS atendimento_odontologico_realizado,
             count(
                 CASE
+                    WHEN bag.ordem_gestacao = 'primeira_gestacao_identificada'::text 
+                        AND (odonto.profissional_nome_atendimento::text <> ALL (ARRAY['Não informado', 'PROFISSIONAL NÃO CADASTRADO']))
+                        AND odonto.data_registro >= bag.data_atendimento_com_primeira_dum_valida AND odonto.data_registro <= bag.data_fim_primeira_gestacao 
+                            THEN odonto.data_registro
+                    WHEN bag.ordem_gestacao = 'segunda_gestacao_identificada'::text 
+                        AND (odonto.profissional_nome_atendimento::text <> ALL (ARRAY['Não informado', 'PROFISSIONAL NÃO CADASTRADO']))
+                        AND odonto.data_registro >= bag.data_atendimento_com_primeira_dum_valida AND odonto.data_registro <= (bag.data_primeira_dum_valida + '294 days'::interval)::date 
+                            THEN odonto.data_registro
+                    ELSE NULL::date
+                END) > 0 AS atendimento_odontologico_realizado_valido,
+            count(
+                CASE
                     WHEN bag.ordem_gestacao = 'primeira_gestacao_identificada'::text AND hiv.data_registro >= bag.data_primeira_dum_valida AND hiv.data_registro <= bag.data_fim_primeira_gestacao THEN hiv.data_registro
                     WHEN bag.ordem_gestacao = 'segunda_gestacao_identificada'::text AND hiv.data_registro >= bag.data_primeira_dum_valida AND hiv.data_registro <= (bag.data_primeira_dum_valida + '294 days'::interval)::date THEN hiv.data_registro
                     WHEN bag.data_fim_primeira_gestacao IS NULL AND hiv.data_registro >= bag.data_primeiro_atendimento THEN hiv.data_registro
@@ -339,11 +351,35 @@ AS WITH base_atendimentos_pre_natal AS (
                 END) > 0 AS exame_hiv_realizado,
             count(
                 CASE
+                    WHEN bag.ordem_gestacao = 'primeira_gestacao_identificada'::TEXT
+                        AND (hiv.profissional_nome_atendimento::text <> ALL (ARRAY['Não informado', 'PROFISSIONAL NÃO CADASTRADO']))
+                        AND hiv.data_registro >= bag.data_atendimento_com_primeira_dum_valida AND hiv.data_registro <= bag.data_fim_primeira_gestacao 
+                                THEN hiv.data_registro
+                    WHEN bag.ordem_gestacao = 'segunda_gestacao_identificada'::text 
+                        AND (hiv.profissional_nome_atendimento::text <> ALL (ARRAY['Não informado', 'PROFISSIONAL NÃO CADASTRADO']))
+                        AND hiv.data_registro >= bag.data_atendimento_com_primeira_dum_valida AND hiv.data_registro <= (bag.data_primeira_dum_valida + '294 days'::interval)::date 
+                            THEN hiv.data_registro
+                    ELSE NULL::date
+                END) > 0 AS  exame_hiv_realizado_valido,
+            count(
+                CASE
                     WHEN bag.ordem_gestacao = 'primeira_gestacao_identificada'::text AND sifilis.data_registro >= bag.data_primeira_dum_valida AND sifilis.data_registro <= bag.data_fim_primeira_gestacao THEN sifilis.data_registro
                     WHEN bag.ordem_gestacao = 'segunda_gestacao_identificada'::text AND sifilis.data_registro >= bag.data_primeira_dum_valida AND sifilis.data_registro <= (bag.data_primeira_dum_valida + '294 days'::interval)::date THEN sifilis.data_registro
                     WHEN bag.data_fim_primeira_gestacao IS NULL AND sifilis.data_registro >= bag.data_primeiro_atendimento THEN sifilis.data_registro
                     ELSE NULL::date
                 END) > 0 AS exame_sifilis_realizado,
+            count(
+                CASE
+                    WHEN bag.ordem_gestacao = 'primeira_gestacao_identificada'::text 
+                        AND (sifilis.profissional_nome_atendimento::text <> ALL (ARRAY['Não informado', 'PROFISSIONAL NÃO CADASTRADO']))
+                        AND sifilis.data_registro >= bag.data_atendimento_com_primeira_dum_valida AND sifilis.data_registro <= bag.data_fim_primeira_gestacao 
+                            THEN sifilis.data_registro
+                    WHEN bag.ordem_gestacao = 'segunda_gestacao_identificada'::text 
+                        AND (sifilis.profissional_nome_atendimento::text <> ALL (ARRAY['Não informado', 'PROFISSIONAL NÃO CADASTRADO']))
+                        AND sifilis.data_registro >= bag.data_atendimento_com_primeira_dum_valida AND sifilis.data_registro <= (bag.data_primeira_dum_valida + '294 days'::interval)::date 
+                            THEN sifilis.data_registro
+                    ELSE NULL::date
+                END) > 0 AS exame_sifilis_realizado_valido,
                 CASE
                     WHEN count(
                     CASE
@@ -419,14 +455,21 @@ AS WITH base_atendimentos_pre_natal AS (
             base_final_gestacoes.consultas_prenatal_total,
             base_final_gestacoes.consultas_pre_natal_validas,
             base_final_gestacoes.atendimento_odontologico_realizado,
+            base_final_gestacoes.atendimento_odontologico_realizado_valido,
             base_final_gestacoes.exame_hiv_realizado,
+            base_final_gestacoes.exame_hiv_realizado_valido,
             base_final_gestacoes.exame_sifilis_realizado,
+            base_final_gestacoes.exame_sifilis_realizado_valido,
             base_final_gestacoes.possui_registro_aborto,
             base_final_gestacoes.possui_registro_parto,
                 CASE
                     WHEN base_final_gestacoes.exame_sifilis_realizado IS TRUE AND base_final_gestacoes.exame_hiv_realizado IS TRUE THEN true
                     ELSE false
                 END AS exame_sifilis_hiv_realizado,
+                CASE
+                    WHEN base_final_gestacoes.exame_sifilis_realizado_valido IS TRUE AND base_final_gestacoes.exame_hiv_realizado_valido IS TRUE THEN true
+                    ELSE false
+                END AS exame_sifilis_hiv_realizado_valido,
             now() AS atualizacao_data,
             base_final_gestacoes.criacao_data
            FROM base_final_gestacoes
@@ -476,13 +519,16 @@ AS WITH base_atendimentos_pre_natal AS (
     aux.consultas_prenatal_total,
     aux.consultas_pre_natal_validas,
     aux.atendimento_odontologico_realizado,
+    aux.atendimento_odontologico_realizado_valido,
     aux.exame_hiv_realizado,
+    aux.exame_hiv_realizado_valido,
     aux.exame_sifilis_realizado,
+    aux.exame_sifilis_realizado_valido,
     aux.possui_registro_aborto,
     aux.possui_registro_parto,
     aux.exame_sifilis_hiv_realizado,
+    aux.exame_sifilis_hiv_realizado_valido,
     aux.atualizacao_data,
     aux.criacao_data
    FROM aux
-  WHERE aux.equipe_ine <> ALL (ARRAY['0000071722'::text, '0000071730'::text, '0001511912'::text, '0001846892'::text, '0001847236'::text, '0002275872'::text])
 WITH DATA;
