@@ -511,4 +511,3 @@ WITH atendimentos_pre_natal AS (
      LEFT JOIN cadastro_individual_recente cir ON cir.chave_gestante = b.chave_gestante
      LEFT JOIN visita_domiciliar_recente vdr ON vdr.chave_gestante = b.chave_gestante
      LEFT JOIN cadastro_domiciliar_recente cdr ON cdr.chave_gestante = b.chave_gestante
-	where b.equipe_ine_atendimento not in ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872') 
