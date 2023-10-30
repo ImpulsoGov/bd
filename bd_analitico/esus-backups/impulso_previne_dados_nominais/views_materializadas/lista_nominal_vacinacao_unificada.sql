@@ -127,8 +127,14 @@ AS WITH sumarizacao_criancas AS (
             date_part('month'::text, age(polio3.data_3dose_polio::timestamp with time zone, h_1.dt_nascimento::timestamp with time zone)) AS idade_meses_3dose_polio,
             date(h_1.dt_nascimento + '2 mons'::interval) AS prazo_1dose_polio,
             date(h_1.dt_nascimento + '8 mons'::interval) AS prazo_limite_1dose_polio,
-            date(polio1.data_1dose_polio + '2 mons'::interval) AS prazo_2dose_polio,
-            date(polio2.data_2dose_polio + '2 mons'::interval) AS prazo_3dose_polio
+                CASE
+                    WHEN polio1.data_1dose_polio IS NULL THEN date(h_1.dt_nascimento + '4 mons'::interval)
+                    ELSE date(polio1.data_1dose_polio + '2 mons'::interval)
+                END AS prazo_2dose_polio,
+                CASE
+                    WHEN polio2.data_2dose_polio IS NULL THEN date(h_1.dt_nascimento + '6 mons'::interval)
+                    ELSE date(polio2.data_2dose_polio + '2 mons'::interval)
+                END AS prazo_3dose_polio
            FROM impulso_previne_dados_nominais.eventos_vacinacao h_1
              LEFT JOIN primeira_dose_polio polio1 ON h_1.chave_cidadao::text = polio1.chave_cidadao::text
              LEFT JOIN segunda_dose_polio polio2 ON h_1.chave_cidadao::text = polio2.chave_cidadao::text
@@ -234,8 +240,14 @@ AS WITH sumarizacao_criancas AS (
             date_part('month'::text, age(penta3.data_3dose_penta::timestamp with time zone, h_1.dt_nascimento::timestamp with time zone)) AS idade_meses_3dose_penta,
             date(h_1.dt_nascimento + '2 mons'::interval) AS prazo_1dose_penta,
             date(h_1.dt_nascimento + '8 mons'::interval) AS prazo_limite_1dose_penta,
-            date(penta1.data_1dose_penta + '2 mons'::interval) AS prazo_2dose_penta,
-            date(penta2.data_2dose_penta + '2 mons'::interval) AS prazo_3dose_penta
+                CASE
+                    WHEN penta1.data_1dose_penta IS NULL THEN date(h_1.dt_nascimento + '4 mons'::interval)
+                    ELSE date(penta1.data_1dose_penta + '2 mons'::interval)
+                END AS prazo_2dose_penta,
+                CASE
+                    WHEN penta2.data_2dose_penta IS NULL THEN date(h_1.dt_nascimento + '6 mons'::interval)
+                    ELSE date(penta2.data_2dose_penta + '2 mons'::interval)
+                END AS prazo_3dose_penta
            FROM impulso_previne_dados_nominais.eventos_vacinacao h_1
              LEFT JOIN primeira_dose_penta penta1 ON h_1.chave_cidadao::text = penta1.chave_cidadao::text
              LEFT JOIN segunda_dose_penta penta2 ON h_1.chave_cidadao::text = penta2.chave_cidadao::text
@@ -310,6 +322,6 @@ AS WITH sumarizacao_criancas AS (
      LEFT JOIN sumarizacao_polio polio ON polio.chave_cidadao::text = h.chave_cidadao::text
      LEFT JOIN sumarizacao_penta penta ON penta.chave_cidadao::text = h.chave_cidadao::text
      LEFT JOIN listas_de_codigos.periodos p ON p.data_inicio = h.inicio_quadri_completa_1_ano
-  WHERE p.tipo::text = 'Quadrimestral'::text AND (h.equipe_ine_cadastro::text <> ALL (ARRAY['0000071722'::character varying::text, '0000071730'::character varying::text, '0001511912'::character varying::text, '0001846892'::character varying::text, '0001847236'::character varying::text, '0002275872'::character varying::text])) OR (h.equipe_ine_atendimento::text <> ALL (ARRAY['0000071722'::character varying::text, '0000071730'::character varying::text, '0001511912'::character varying::text, '0001846892'::character varying::text, '0001847236'::character varying::text, '0002275872'::character varying::text]))
+  WHERE p.tipo::text = 'Quadrimestral'::text
   ORDER BY h.municipio_id_sus
 WITH DATA;
