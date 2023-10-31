@@ -4,7 +4,7 @@ CREATE MATERIALIZED VIEW impulso_previne_dados_nominais.painel_vacinacao_lista_n
 TABLESPACE pg_default
 AS WITH dados_anonimizados_demo_vicosa AS (
          SELECT res.chave_cidadao,
-            res.cidadao_nome,
+            upper(nomes.nome_ficticio) AS cidadao_nome,
             res.cidadao_cpf,
             res.cidadao_cns,
             res.dt_nascimento,
@@ -44,8 +44,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             res.equipe_ine_cadastro,
             res.equipe_nome_atendimento,
             res.equipe_nome_cadastro,
-            res.acs_nome_cadastro,
-            res.acs_nome_visita,
+            upper(nomes2.nome_ficticio) AS acs_nome_cadastro,
+            upper(nomes2.nome_ficticio) AS acs_nome_visita,
             res.data_ultimo_cadastro_individual,
             res.data_ultimo_atendimento_individual,
             res.data_ultima_vista_domiciliar,
@@ -54,8 +54,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
            FROM ( SELECT row_number() OVER (PARTITION BY 0::integer) AS seq,
                     lista_nominal_vacinacao.chave_cidadao,
                     lista_nominal_vacinacao.cidadao_nome,
-                    lista_nominal_vacinacao.cidadao_cpf,
-                    lista_nominal_vacinacao.cidadao_cns,
+                    concat(impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10, 99)::text) AS cidadao_cpf,
+                    concat('7', impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10000, 99999)::text) AS cidadao_cns,
                     lista_nominal_vacinacao.dt_nascimento,
                     lista_nominal_vacinacao.cidadao_idade_meses_atual,
                     lista_nominal_vacinacao.status_idade,
@@ -101,11 +101,11 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     lista_nominal_vacinacao.criacao_data
                    FROM impulso_previne_dados_nominais.lista_nominal_vacinacao_unificada lista_nominal_vacinacao
                   WHERE lista_nominal_vacinacao.municipio_id_sus::text = '317130'::text) res
-             JOIN configuracoes.nomes_ficticios_hipertensos nomes ON res.seq = nomes.seq
+             JOIN configuracoes.nomes_ficticios_vacinacao nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_diabeticos nomes2 ON res.seq = nomes2.seq
         ), dados_anonimizados_impulsolandia AS (
          SELECT res.chave_cidadao,
-            res.cidadao_nome,
+            upper(nomes.nome_ficticio) AS cidadao_nome,
             res.cidadao_cpf,
             res.cidadao_cns,
             res.dt_nascimento,
@@ -145,8 +145,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             res.equipe_ine_cadastro,
             res.equipe_nome_atendimento,
             res.equipe_nome_cadastro,
-            res.acs_nome_cadastro,
-            res.acs_nome_visita,
+            upper(nomes2.nome_ficticio) AS acs_nome_cadastro,
+            upper(nomes2.nome_ficticio) AS acs_nome_visita,
             res.data_ultimo_cadastro_individual,
             res.data_ultimo_atendimento_individual,
             res.data_ultima_vista_domiciliar,
@@ -155,8 +155,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
            FROM ( SELECT row_number() OVER (PARTITION BY 0::integer) AS seq,
                     lista_nominal_vacinacao.chave_cidadao,
                     lista_nominal_vacinacao.cidadao_nome,
-                    lista_nominal_vacinacao.cidadao_cpf,
-                    lista_nominal_vacinacao.cidadao_cns,
+                    concat(impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10, 99)::text) AS cidadao_cpf,
+                    concat('7', impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10000, 99999)::text) AS cidadao_cns,
                     lista_nominal_vacinacao.dt_nascimento,
                     lista_nominal_vacinacao.cidadao_idade_meses_atual,
                     lista_nominal_vacinacao.status_idade,
@@ -202,7 +202,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     lista_nominal_vacinacao.criacao_data
                    FROM impulso_previne_dados_nominais.lista_nominal_vacinacao_unificada lista_nominal_vacinacao
                   WHERE lista_nominal_vacinacao.municipio_id_sus::text = '317130'::text) res
-             JOIN configuracoes.nomes_ficticios_hipertensos nomes ON res.seq = nomes.seq
+             JOIN configuracoes.nomes_ficticios_vacinacao nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_diabeticos nomes2 ON res.seq = nomes2.seq
         ), dados_transmissoes_recentes AS (
          SELECT tb1_1.chave_cidadao,
@@ -415,7 +415,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
          SELECT tb1.municipio_id_sus,
             tb1.cidadao_nome,
             tb1.cidadao_nome_responsavel,
-            COALESCE(tb1.cidadao_cpf, tb1.dt_nascimento::text::character varying) AS cidadao_cpf_dt_nascimento,
+            COALESCE(tb1.cidadao_cpf, tb1.dt_nascimento::text::character varying::text) AS cidadao_cpf_dt_nascimento,
             tb1.cidadao_idade_meses_atual AS cidadao_idade_meses,
             tb1.quadrimestre_completa_1_ano,
                 CASE
