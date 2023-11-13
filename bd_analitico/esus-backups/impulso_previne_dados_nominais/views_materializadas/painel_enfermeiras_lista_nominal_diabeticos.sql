@@ -64,9 +64,14 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.se_mudou,
                     tb1_1.criacao_data,
                     tb1_1.atualizacao_data
+<<<<<<< HEAD
                    FROM impulso_previne_dados_nominais.lista_nominal_diabeticos_unificada tb1_1
                   WHERE tb1_1.municipio_id_sus::text = '317130'::text
                   and tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
+=======
+                   FROM dados_nominais_mg_vicosa.lista_nominal_diabeticos tb1_1
+                  where tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
+>>>>>>> eff8c8f (Aplica filtro para as equipes nulas da Demo-Viçosa no painel de diabeticos)
              JOIN configuracoes.nomes_ficticios_diabeticos nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_hipertensos nomes2 ON res.seq = nomes2.seq
         ), dados_anonimizados_impulsolandia AS (
@@ -132,9 +137,14 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.se_mudou,
                     tb1_1.criacao_data,
                     tb1_1.atualizacao_data
+<<<<<<< HEAD
                    FROM impulso_previne_dados_nominais.lista_nominal_diabeticos_unificada tb1_1
                   WHERE tb1_1.municipio_id_sus::text = '317130'::text
                   and tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
+=======
+                   FROM dados_nominais_mg_vicosa.lista_nominal_diabeticos tb1_1
+                   where tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
+>>>>>>> eff8c8f (Aplica filtro para as equipes nulas da Demo-Viçosa no painel de diabeticos)
              JOIN configuracoes.nomes_ficticios_diabeticos nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_hipertensos nomes2 ON res.seq = nomes2.seq
         ), dados_transmissoes_recentes AS (
