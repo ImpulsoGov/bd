@@ -61,7 +61,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     lista_nominal_gestantes.exame_sifilis_hiv_realizado_valido,
                     lista_nominal_gestantes.criacao_data
                    FROM impulso_previne_dados_nominais.lista_nominal_gestantes_unificada lista_nominal_gestantes
-                  WHERE lista_nominal_gestantes.municipio_id_sus::text = '317130'::text) res
+                  WHERE lista_nominal_gestantes.municipio_id_sus::text = '317130'::text
+                  and lista_nominal_gestantes.equipe_ine is not null) res
              JOIN configuracoes.nomes_ficticios_gestantes nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_diabeticos nomes2 ON res.seq = nomes2.seq
         ), dados_anonimizados_impulsolandia AS (
@@ -125,7 +126,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     lista_nominal_gestantes.exame_sifilis_hiv_realizado_valido,
                     lista_nominal_gestantes.criacao_data
                    FROM impulso_previne_dados_nominais.lista_nominal_gestantes_unificada lista_nominal_gestantes
-                  WHERE lista_nominal_gestantes.municipio_id_sus::text = '317130'::text) res
+                  WHERE lista_nominal_gestantes.municipio_id_sus::text = '317130'::text
+                  and lista_nominal_gestantes.equipe_ine is not null) res
              JOIN configuracoes.nomes_ficticios_gestantes nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_diabeticos nomes2 ON res.seq = nomes2.seq
         ), dados_transmissoes_recentes AS (
