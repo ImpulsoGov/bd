@@ -63,9 +63,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.se_faleceu,
                     tb1_1.se_mudou,
                     tb1_1.criacao_data
-                   FROM impulso_previne_dados_nominais.lista_nominal_hipertensos_unificada tb1_1
-                   where tb1_1.municipio_id_sus::text = '317130'::text
-                   and tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
+                   FROM dados_nominais_mg_vicosa.lista_nominal_hipertensos tb1_1) res
              JOIN configuracoes.nomes_ficticios_hipertensos nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_diabeticos nomes2 ON res.seq = nomes2.seq
         ), dados_anonimizados_impulsolandia AS (
@@ -130,9 +128,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.se_faleceu,
                     tb1_1.se_mudou,
                     tb1_1.criacao_data
-                   FROM impulso_previne_dados_nominais.lista_nominal_hipertensos_unificada tb1_1
-                   where tb1_1.municipio_id_sus::text = '317130'::text
-                   and tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
+                   FROM dados_nominais_mg_vicosa.lista_nominal_hipertensos tb1_1) res
              JOIN configuracoes.nomes_ficticios_hipertensos nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_diabeticos nomes2 ON res.seq = nomes2.seq
         ), dados_transmissoes_recentes AS (
