@@ -63,7 +63,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.se_faleceu,
                     tb1_1.se_mudou,
                     tb1_1.criacao_data
-                   FROM dados_nominais_mg_vicosa.lista_nominal_hipertensos tb1_1) res
+                   FROM dados_nominais_mg_vicosa.lista_nominal_hipertensos tb1_1
+                    where tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
              JOIN configuracoes.nomes_ficticios_hipertensos nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_diabeticos nomes2 ON res.seq = nomes2.seq
         ), dados_anonimizados_impulsolandia AS (
@@ -128,7 +129,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.se_faleceu,
                     tb1_1.se_mudou,
                     tb1_1.criacao_data
-                   FROM dados_nominais_mg_vicosa.lista_nominal_hipertensos tb1_1) res
+                   FROM dados_nominais_mg_vicosa.lista_nominal_hipertensos tb1_1
+                    where tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
              JOIN configuracoes.nomes_ficticios_hipertensos nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_diabeticos nomes2 ON res.seq = nomes2.seq
         ), dados_transmissoes_recentes AS (
@@ -259,109 +261,144 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_transmissoes_recentes.se_mudou,
             dados_transmissoes_recentes.criacao_data
            FROM dados_transmissoes_recentes
+        ), data_registro_producao AS (
+         SELECT une_as_bases.municipio_id_sus,
+            impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_cadastro, une_as_bases.equipe_ine_atendimento)) AS equipe_ine_cadastro,
+            max(GREATEST(une_as_bases.dt_afericao_pressao_mais_recente::date, une_as_bases.dt_consulta_mais_recente, une_as_bases.data_ultimo_cadastro, une_as_bases.dt_ultima_consulta)) AS dt_registro_producao_mais_recente,
+            min(LEAST(une_as_bases.dt_afericao_pressao_mais_recente::date, une_as_bases.dt_consulta_mais_recente, une_as_bases.data_ultimo_cadastro, une_as_bases.dt_ultima_consulta)) AS dt_registro_producao_mais_antigo
+           FROM une_as_bases
+          GROUP BY une_as_bases.municipio_id_sus, (impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_cadastro, une_as_bases.equipe_ine_atendimento)))
+        ), tabela_aux AS (
+         SELECT tb1.municipio_id_sus,
+            concat(tb2.nome, ' - ', tb2.uf_sigla) AS municipio_uf,
+            tb1.quadrimestre_atual,
+            tb1.realizou_afericao_ultimos_6_meses,
+            tb1.dt_afericao_pressao_mais_recente,
+            tb1.realizou_consulta_ultimos_6_meses,
+            tb1.dt_consulta_mais_recente,
+                CASE
+                    WHEN tb1.realizou_afericao_ultimos_6_meses THEN 'Em dia'::text
+                    ELSE impulso_previne_dados_nominais.prazo_proximo_dia()
+                END AS prazo_proxima_afericao_pa,
+                CASE
+                    WHEN tb1.realizou_consulta_ultimos_6_meses THEN 'Em dia'::text
+                    ELSE impulso_previne_dados_nominais.prazo_proximo_dia()
+                END AS prazo_proxima_consulta,
+                CASE
+                    WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses THEN 1
+                    ELSE 0
+                END AS consulta_e_afericao_em_dia,
+                CASE
+                    WHEN tb1.realizou_consulta_ultimos_6_meses IS FALSE OR tb1.realizou_afericao_ultimos_6_meses IS FALSE THEN 'Não está em dia'::text
+                    WHEN tb1.realizou_consulta_ultimos_6_meses AND tb1.realizou_afericao_ultimos_6_meses THEN 'Em dia'::text
+                    ELSE NULL::text
+                END AS status_em_dia,
+                CASE
+                    WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses THEN 'Em dia com consulta e aferição de PA'::text
+                    WHEN tb1.realizou_afericao_ultimos_6_meses IS FALSE AND tb1.realizou_consulta_ultimos_6_meses IS FALSE THEN 'Nada em dia'::text
+                    WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses IS FALSE THEN 'Apenas aferição de PA em dia'::text
+                    WHEN tb1.realizou_afericao_ultimos_6_meses IS FALSE AND tb1.realizou_consulta_ultimos_6_meses THEN 'Apenas consulta em dia'::text
+                    ELSE NULL::text
+                END AS status_usuario,
+                CASE
+                    WHEN tb1.possui_hipertensao_diagnosticada THEN 'Diagnóstico Clínico'::text
+                    WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS FALSE THEN 'Autorreferida'::text
+                    WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS NULL THEN 'Autorreferida'::text
+                    ELSE NULL::text
+                END AS identificacao_condicao_hipertensao,
+            tb1.cidadao_cpf,
+                CASE
+                    WHEN tb1.cidadao_cpf IS NULL THEN tb1.dt_nascimento::text::character varying::text
+                    ELSE tb1.cidadao_cpf
+                END AS cidadao_cpf_dt_nascimento,
+            tb1.cidadao_cns,
+            tb1.cidadao_nome,
+            tb1.cidadao_nome_social,
+            tb1.cidadao_sexo,
+            tb1.dt_nascimento,
+            date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone))::integer AS cidadao_idade,
+                CASE
+                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 40::double precision THEN '0 a 40 anos'::text
+                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 40::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 49::double precision THEN '41 a 49 anos'::text
+                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 49::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 59::double precision THEN '50 a 59 anos'::text
+                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 59::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 70::double precision THEN '60 a 70 anos'::text
+                    WHEN tb1.dt_nascimento IS NULL THEN NULL::text
+                    ELSE '70 anos ou mais'::text
+                END AS cidadao_faixa_etaria,
+            tb1.estabelecimento_cnes_atendimento,
+            tb1.estabelecimento_cnes_cadastro AS estabelecimento_cnes,
+            tb1.estabelecimento_nome_atendimento,
+            tb1.estabelecimento_nome_cadastro AS estabelecimento_nome,
+            tb1.equipe_ine_atendimento,
+            impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento)) AS equipe_ine_cadastro,
+            tb1.equipe_nome_atendimento,
+            impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento)) AS equipe_nome_cadastro,
+            tb1.acs_nome_cadastro,
+            tb1.acs_nome_visita,
+            tb1.possui_hipertensao_autorreferida,
+            tb1.possui_hipertensao_diagnosticada,
+                CASE
+                    WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS FALSE THEN 1
+                    WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS NULL THEN 1
+                    ELSE 0
+                END AS apenas_autorreferida,
+                CASE
+                    WHEN tb1.possui_hipertensao_diagnosticada THEN 1
+                    ELSE 0
+                END AS diagnostico_clinico,
+            tb1.data_ultimo_cadastro,
+            tb1.dt_ultima_consulta,
+            tb1.se_faleceu,
+            tb1.se_mudou,
+            tb1.criacao_data,
+            CURRENT_TIMESTAMP AS atualizacao_data
+           FROM une_as_bases tb1
+             LEFT JOIN listas_de_codigos.municipios tb2 ON tb1.municipio_id_sus::bpchar = tb2.id_sus
+          WHERE COALESCE(tb1.se_faleceu, 0) <> 1
         )
-, data_registro_producao AS (
-    SELECT 
-        municipio_id_sus,
-    	impulso_previne_dados_nominais.equipe_ine(municipio_id_sus::text, COALESCE(equipe_ine_cadastro, equipe_ine_atendimento)) AS equipe_ine_cadastro,
-        MAX(GREATEST(dt_afericao_pressao_mais_recente::date,dt_consulta_mais_recente::date,data_ultimo_cadastro::date,dt_ultima_consulta::date)) AS dt_registro_producao_mais_recente,
-        MIN(LEAST(dt_afericao_pressao_mais_recente::date,dt_consulta_mais_recente::date,data_ultimo_cadastro::date,dt_ultima_consulta::date)) AS dt_registro_producao_mais_antigo
-    FROM une_as_bases
-    GROUP BY 1, 2
-)
-, tabela_aux as ( 
- SELECT tb1.municipio_id_sus,
-    concat(tb2.nome, ' - ', tb2.uf_sigla) AS municipio_uf,
-    tb1.quadrimestre_atual,
-    tb1.realizou_afericao_ultimos_6_meses,
-    tb1.dt_afericao_pressao_mais_recente,
-    tb1.realizou_consulta_ultimos_6_meses,
-    tb1.dt_consulta_mais_recente,
-        CASE
-            WHEN tb1.realizou_afericao_ultimos_6_meses THEN 'Em dia'::text
-            ELSE impulso_previne_dados_nominais.prazo_proximo_dia()
-        END AS prazo_proxima_afericao_pa,
-        CASE
-            WHEN tb1.realizou_consulta_ultimos_6_meses THEN 'Em dia'::text
-            ELSE impulso_previne_dados_nominais.prazo_proximo_dia()
-        END AS prazo_proxima_consulta,
-        CASE
-            WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses THEN 1
-            ELSE 0
-        END AS consulta_e_afericao_em_dia,
-        CASE
-            WHEN tb1.realizou_consulta_ultimos_6_meses IS FALSE OR tb1.realizou_afericao_ultimos_6_meses IS FALSE THEN 'Não está em dia'::text
-            WHEN tb1.realizou_consulta_ultimos_6_meses AND tb1.realizou_afericao_ultimos_6_meses THEN 'Em dia'::text
-            ELSE NULL::text
-        END AS status_em_dia,
-        CASE
-            WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses THEN 'Em dia com consulta e aferição de PA'::text
-            WHEN tb1.realizou_afericao_ultimos_6_meses IS FALSE AND tb1.realizou_consulta_ultimos_6_meses IS FALSE THEN 'Nada em dia'::text
-            WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses IS FALSE THEN 'Apenas aferição de PA em dia'::text
-            WHEN tb1.realizou_afericao_ultimos_6_meses IS FALSE AND tb1.realizou_consulta_ultimos_6_meses THEN 'Apenas consulta em dia'::text
-            ELSE NULL::text
-        END AS status_usuario,
-        CASE
-            WHEN tb1.possui_hipertensao_diagnosticada THEN 'Diagnóstico Clínico'::text
-            WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS FALSE THEN 'Autorreferida'::text
-            WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS NULL THEN 'Autorreferida'::text
-            ELSE NULL::text
-        END AS identificacao_condicao_hipertensao,
-    tb1.cidadao_cpf,
-        CASE
-            WHEN tb1.cidadao_cpf IS NULL THEN tb1.dt_nascimento::text::character varying::text
-            ELSE tb1.cidadao_cpf
-        END AS cidadao_cpf_dt_nascimento,
-    tb1.cidadao_cns,
-    tb1.cidadao_nome,
-    tb1.cidadao_nome_social,
-    tb1.cidadao_sexo,
-    tb1.dt_nascimento,
-    date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone))::integer AS cidadao_idade,
-        CASE
-            WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 40::double precision THEN '0 a 40 anos'::text
-            WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 40::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 49::double precision THEN '41 a 49 anos'::text
-            WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 49::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 59::double precision THEN '50 a 59 anos'::text
-            WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 59::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 70::double precision THEN '60 a 70 anos'::text
-            WHEN tb1.dt_nascimento IS NULL THEN NULL::text
-            ELSE '70 anos ou mais'::text
-        END AS cidadao_faixa_etaria,
-    tb1.estabelecimento_cnes_atendimento,
-    tb1.estabelecimento_cnes_cadastro AS estabelecimento_cnes,
-    tb1.estabelecimento_nome_atendimento,
-    tb1.estabelecimento_nome_cadastro AS estabelecimento_nome,
-    tb1.equipe_ine_atendimento,
-    impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento)) AS equipe_ine_cadastro,
-    tb1.equipe_nome_atendimento,
-    impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento)) AS equipe_nome_cadastro,
-    tb1.acs_nome_cadastro,
-    tb1.acs_nome_visita,
-    tb1.possui_hipertensao_autorreferida,
-    tb1.possui_hipertensao_diagnosticada,
-        CASE
-            WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS FALSE THEN 1
-            WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS NULL THEN 1
-            ELSE 0
-        END AS apenas_autorreferida,
-        CASE
-            WHEN tb1.possui_hipertensao_diagnosticada THEN 1
-            ELSE 0
-        END AS diagnostico_clinico,
-    tb1.data_ultimo_cadastro,
-    tb1.dt_ultima_consulta,
-    tb1.se_faleceu,
-    tb1.se_mudou,
-    tb1.criacao_data,
-    CURRENT_TIMESTAMP AS atualizacao_data
-   FROM une_as_bases tb1
-     LEFT JOIN listas_de_codigos.municipios tb2 ON tb1.municipio_id_sus::bpchar = tb2.id_sus
-  WHERE COALESCE(tb1.se_faleceu, 0) <> 1
-) 
-SELECT
-    tabela_aux.*,
+ SELECT tabela_aux.municipio_id_sus,
+    tabela_aux.municipio_uf,
+    tabela_aux.quadrimestre_atual,
+    tabela_aux.realizou_afericao_ultimos_6_meses,
+    tabela_aux.dt_afericao_pressao_mais_recente,
+    tabela_aux.realizou_consulta_ultimos_6_meses,
+    tabela_aux.dt_consulta_mais_recente,
+    tabela_aux.prazo_proxima_afericao_pa,
+    tabela_aux.prazo_proxima_consulta,
+    tabela_aux.consulta_e_afericao_em_dia,
+    tabela_aux.status_em_dia,
+    tabela_aux.status_usuario,
+    tabela_aux.identificacao_condicao_hipertensao,
+    tabela_aux.cidadao_cpf,
+    tabela_aux.cidadao_cpf_dt_nascimento,
+    tabela_aux.cidadao_cns,
+    tabela_aux.cidadao_nome,
+    tabela_aux.cidadao_nome_social,
+    tabela_aux.cidadao_sexo,
+    tabela_aux.dt_nascimento,
+    tabela_aux.cidadao_idade,
+    tabela_aux.cidadao_faixa_etaria,
+    tabela_aux.estabelecimento_cnes_atendimento,
+    tabela_aux.estabelecimento_cnes,
+    tabela_aux.estabelecimento_nome_atendimento,
+    tabela_aux.estabelecimento_nome,
+    tabela_aux.equipe_ine_atendimento,
+    tabela_aux.equipe_ine_cadastro,
+    tabela_aux.equipe_nome_atendimento,
+    tabela_aux.equipe_nome_cadastro,
+    tabela_aux.acs_nome_cadastro,
+    tabela_aux.acs_nome_visita,
+    tabela_aux.possui_hipertensao_autorreferida,
+    tabela_aux.possui_hipertensao_diagnosticada,
+    tabela_aux.apenas_autorreferida,
+    tabela_aux.diagnostico_clinico,
+    tabela_aux.data_ultimo_cadastro,
+    tabela_aux.dt_ultima_consulta,
+    tabela_aux.se_faleceu,
+    tabela_aux.se_mudou,
+    tabela_aux.criacao_data,
+    tabela_aux.atualizacao_data,
     drp.dt_registro_producao_mais_recente
-FROM tabela_aux
-LEFT JOIN data_registro_producao drp 
-    ON drp.municipio_id_sus = tabela_aux.municipio_id_sus
-    AND drp.equipe_ine_cadastro = tabela_aux.equipe_ine_cadastro
+   FROM tabela_aux
+     LEFT JOIN data_registro_producao drp ON drp.municipio_id_sus::text = tabela_aux.municipio_id_sus::text AND drp.equipe_ine_cadastro = tabela_aux.equipe_ine_cadastro
 WITH DATA;
