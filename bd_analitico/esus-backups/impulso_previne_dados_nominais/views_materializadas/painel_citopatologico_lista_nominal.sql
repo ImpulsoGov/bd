@@ -300,7 +300,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             COALESCE(tb1.estabelecimento_nome_cadastro, tb1.estabelecimento_nome_ultimo_atendimento) AS estabelecimento_nome,
             COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_ultimo_atendimento) AS equipe_ine,
             impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_ultimo_atendimento)::text) AS ine_master,
-            impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_ultimo_atendimento)::text) AS equipe_nome,
+            COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_ultimo_atendimento, 'SEM EQUIPE'::character varying) AS equipe_nome,
                 CASE
                     WHEN tb1.status_exame::text = 'exame_em_dia'::text THEN 12
                     WHEN tb1.status_exame::text = 'exame_nunca_realizado'::text THEN 13
