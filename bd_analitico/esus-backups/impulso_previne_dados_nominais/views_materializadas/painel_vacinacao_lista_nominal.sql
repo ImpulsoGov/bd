@@ -415,6 +415,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
          SELECT tb1.municipio_id_sus,
             tb1.cidadao_nome,
             tb1.cidadao_nome_responsavel,
+            tb1.cidadao_cpf || tb1.municipio_id_sus || tb1.dt_nascimento as chave_cidadao,
             COALESCE(tb1.cidadao_cpf, tb1.dt_nascimento::text::character varying::text) AS cidadao_cpf_dt_nascimento,
             tb1.cidadao_idade_meses_atual AS cidadao_idade_meses,
             tb1.quadrimestre_completa_1_ano,
@@ -427,6 +428,9 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             tb1.data_1dose_polio,
             tb1.data_2dose_polio,
             tb1.data_3dose_polio,
+            tb1.data_1dose_penta,
+            tb1.data_2dose_penta,
+            tb1.data_3dose_penta,
             tb1.idade_meses_1dose_polio,
             tb1.idade_meses_2dose_polio,
             tb1.idade_meses_3dose_polio,
@@ -434,6 +438,9 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             tb1.prazo_limite_1dose_polio,
             tb1.prazo_2dose_polio,
             tb1.prazo_3dose_polio,
+            tb1.prazo_1dose_penta,
+            tb1.prazo_2dose_penta,
+            tb1.prazo_3dose_penta,
             COALESCE(tb1.data_1dose_polio, tb1.prazo_1dose_polio) AS data_ou_prazo_1dose_polio,
             COALESCE(tb1.data_2dose_polio, tb1.prazo_2dose_polio) AS data_ou_prazo_2dose_polio,
             COALESCE(tb1.data_3dose_polio, tb1.prazo_3dose_polio) AS data_ou_prazo_3dose_polio,
@@ -461,6 +468,69 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             tb1.criacao_data::date AS criacao_data
            FROM une_as_bases tb1
         )
+, cores as (
+select tb.municipio_id_sus,
+tb.cidadao_nome,
+tb.chave_cidadao,
+tb.cidadao_idade_meses,
+tb.data_1dose_polio,
+tb.data_2dose_polio,
+tb.data_3dose_polio,
+tb.prazo_1dose_polio,
+tb.prazo_2dose_polio,
+tb.prazo_3dose_polio,
+tb.id_status_polio,
+tb.data_ou_prazo_1dose_polio,
+case
+	when tb.id_status_polio = 4 and (tb.data_ou_prazo_1dose_polio >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
+	when tb.id_status_polio = 3 and (tb.data_ou_prazo_1dose_polio < current_date) and tb.data_1dose_polio is null then '1' --status em atraso e dose ainda não aplicada
+	when tb.data_ou_prazo_1dose_polio  =  tb.data_1dose_polio then '2' --dose aplicada
+	when tb.data_1dose_polio is null and tb.data_ou_prazo_1dose_polio < current_date then '3' --dose em atraso
+end as id_cor_1dose_polio,
+tb.data_ou_prazo_2dose_polio,
+case
+	when tb.id_status_polio = 4 and (tb.data_ou_prazo_2dose_polio >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
+	when tb.data_ou_prazo_2dose_polio  =  tb.data_2dose_polio then '2' --dose aplicada
+	when tb.data_2dose_polio is null and tb.data_ou_prazo_2dose_polio >= current_date then '1' -- aguardando dose
+	when tb.data_2dose_polio is null and tb.data_ou_prazo_2dose_polio < current_date then '3' --dose em atraso
+end as id_cor_2dose_polio,
+tb.data_ou_prazo_3dose_polio,
+case
+	when tb.id_status_polio = 4 and (tb.data_ou_prazo_3dose_polio >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
+	when tb.data_ou_prazo_3dose_polio  =  tb.data_3dose_polio then '2' --dose aplicada
+	when tb.data_3dose_polio is null and tb.data_ou_prazo_3dose_polio >= current_date then '1' -- aguardando dose
+	when tb.data_3dose_polio is null and tb.data_ou_prazo_3dose_polio < current_date then '3' --dose em atraso
+end as id_cor_3dose_polio,
+tb.data_1dose_penta,
+tb.data_2dose_penta,
+tb.data_3dose_penta,
+tb.prazo_1dose_penta,
+tb.prazo_2dose_penta,
+tb.prazo_3dose_penta,
+tb.id_status_penta,
+tb.data_ou_prazo_1dose_penta,
+case
+	when tb.id_status_penta = 4 and (tb.data_ou_prazo_1dose_penta >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
+	when tb.id_status_penta = 3 and (tb.data_ou_prazo_1dose_penta < current_date) and tb.data_1dose_penta is null then '1' --status em atraso e dose ainda não aplicada
+	when tb.data_ou_prazo_1dose_penta  =  tb.data_1dose_penta then '2' --dose aplicada
+	when tb.data_1dose_penta is null and tb.data_ou_prazo_1dose_penta < current_date then '3' --dose em atraso
+end as id_cor_1dose_penta,
+tb.data_ou_prazo_2dose_penta,
+case
+	when tb.id_status_penta = 4 and (tb.data_ou_prazo_2dose_penta >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
+	when tb.data_ou_prazo_2dose_penta  =  tb.data_2dose_penta then '2' --dose aplicada
+	when tb.data_2dose_penta is null and tb.data_ou_prazo_2dose_penta >= current_date then '1' -- aguardando dose
+	when tb.data_2dose_penta is null and tb.data_ou_prazo_2dose_penta < current_date then '3' --dose em atraso
+end as id_cor_2dose_penta,
+tb.data_ou_prazo_3dose_penta,
+case
+	when tb.id_status_penta = 4 and (tb.data_ou_prazo_3dose_penta >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
+	when tb.data_ou_prazo_3dose_penta  =  tb.data_3dose_penta then '2' --dose aplicada
+	when tb.data_3dose_penta is null and tb.data_ou_prazo_3dose_penta >= current_date then '1' -- aguardando dose
+	when tb.data_3dose_penta is null and tb.data_ou_prazo_3dose_penta < current_date then '3' --dose em atraso
+end as id_cor_3dose_penta
+FROM tabela_aux tb
+)
  SELECT tb.municipio_id_sus,
     concat(tb2.nome, ' - ', tb2.uf_sigla) AS municipio_uf,
     tb.cidadao_nome,
@@ -473,10 +543,16 @@ AS WITH dados_anonimizados_demo_vicosa AS (
     tb.data_ou_prazo_2dose_polio,
     tb.data_ou_prazo_3dose_polio,
     tb.id_status_polio,
+    c.id_cor_1dose_polio,
+    c.id_cor_2dose_polio,
+    c.id_cor_3dose_polio,
     tb.data_ou_prazo_1dose_penta,
     tb.data_ou_prazo_2dose_penta,
     tb.data_ou_prazo_3dose_penta,
     tb.id_status_penta,
+    c.id_cor_1dose_penta,
+    c.id_cor_2dose_penta,
+    c.id_cor_3dose_penta,
     tb.acs_nome,
     tb.equipe_ine,
     tb.equipe_nome,
@@ -485,5 +561,6 @@ AS WITH dados_anonimizados_demo_vicosa AS (
     drp.dt_registro_producao_mais_recente
    FROM tabela_aux tb
      LEFT JOIN data_registro_producao drp ON drp.municipio_id_sus::text = tb.municipio_id_sus::text AND drp.equipe_ine = tb.equipe_ine
+     left join cores c on c.chave_cidadao = tb.chave_cidadao
      LEFT JOIN listas_de_codigos.municipios tb2 ON tb.municipio_id_sus::bpchar = tb2.id_sus
 WITH DATA;
