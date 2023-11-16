@@ -66,7 +66,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.acs_nome_visita,
                     tb1_1.criacao_data
                    FROM impulso_previne_dados_nominais.lista_nominal_citopatologico_unificada tb1_1
-                   where tb1_1.municipio_id_sus::text = '317130'::text) res
+                  WHERE tb1_1.municipio_id_sus::text = '317130'::text
+                  and tb1_1.equipe_ine_ultimo_atendimento is not null and tb1_1.equipe_ine_cadastro is not null ) res
              JOIN configuracoes.nomes_ficticios_citopatologico nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_gestantes nomes2 ON res.seq = nomes2.seq
         ), dados_anonimizados_impulsolandia AS (
@@ -134,7 +135,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.acs_nome_visita,
                     tb1_1.criacao_data
                    FROM impulso_previne_dados_nominais.lista_nominal_citopatologico_unificada tb1_1
-                   where tb1_1.municipio_id_sus::text = '317130'::text) res
+                  WHERE tb1_1.municipio_id_sus::text = '317130'::text
+                  and tb1_1.equipe_ine_ultimo_atendimento is not null and tb1_1.equipe_ine_cadastro is not null ) res
              JOIN configuracoes.nomes_ficticios_citopatologico nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_gestantes nomes2 ON res.seq = nomes2.seq
         ), dados_transmissoes_recentes AS (
