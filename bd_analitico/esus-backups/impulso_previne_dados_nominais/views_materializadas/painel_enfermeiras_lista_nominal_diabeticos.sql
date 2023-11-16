@@ -65,7 +65,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.criacao_data,
                     tb1_1.atualizacao_data
                    FROM impulso_previne_dados_nominais.lista_nominal_diabeticos_unificada tb1_1
-                   where tb1_1.municipio_id_sus::text = '317130'::text) res
+                  WHERE tb1_1.municipio_id_sus::text = '317130'::text
+                  and tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
              JOIN configuracoes.nomes_ficticios_diabeticos nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_hipertensos nomes2 ON res.seq = nomes2.seq
         ), dados_anonimizados_impulsolandia AS (
@@ -132,7 +133,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.criacao_data,
                     tb1_1.atualizacao_data
                    FROM impulso_previne_dados_nominais.lista_nominal_diabeticos_unificada tb1_1
-                   where tb1_1.municipio_id_sus::text = '317130'::text) res
+                  WHERE tb1_1.municipio_id_sus::text = '317130'::text
+                  and tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
              JOIN configuracoes.nomes_ficticios_diabeticos nomes ON res.seq = nomes.seq
              JOIN configuracoes.nomes_ficticios_hipertensos nomes2 ON res.seq = nomes2.seq
         ), dados_transmissoes_recentes AS (
@@ -175,7 +177,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_anonimizados_demo_vicosa.dt_solicitacao_hemoglobina_glicada_mais_recente,
             dados_anonimizados_demo_vicosa.realizou_consulta_ultimos_6_meses,
             dados_anonimizados_demo_vicosa.dt_consulta_mais_recente,
-            dados_anonimizados_demo_vicosa.co_seq_fat_cidadao_pec::text AS co_seq_fat_cidadao_pec,
+            dados_anonimizados_demo_vicosa.co_seq_fat_cidadao_pec,
             dados_anonimizados_demo_vicosa.cidadao_cpf,
             dados_anonimizados_demo_vicosa.cidadao_cns,
             dados_anonimizados_demo_vicosa.cidadao_nome,
@@ -207,7 +209,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_anonimizados_impulsolandia.dt_solicitacao_hemoglobina_glicada_mais_recente,
             dados_anonimizados_impulsolandia.realizou_consulta_ultimos_6_meses,
             dados_anonimizados_impulsolandia.dt_consulta_mais_recente,
-            dados_anonimizados_impulsolandia.co_seq_fat_cidadao_pec::text AS co_seq_fat_cidadao_pec,
+            dados_anonimizados_impulsolandia.co_seq_fat_cidadao_pec,
             dados_anonimizados_impulsolandia.cidadao_cpf,
             dados_anonimizados_impulsolandia.cidadao_cns,
             dados_anonimizados_impulsolandia.cidadao_nome,
