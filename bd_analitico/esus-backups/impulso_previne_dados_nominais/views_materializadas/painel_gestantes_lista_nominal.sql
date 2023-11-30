@@ -301,10 +301,10 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     ELSE NULL::integer
                 END AS id_exame_hiv_sifilis,
                 CASE
-                    WHEN tb1.possui_registro_aborto = 'Sim'::text THEN 10
-                    WHEN tb1.gestacao_data_dpp > CURRENT_DATE THEN 8
-                    WHEN tb1.gestacao_data_dpp <= CURRENT_DATE THEN 9
-                    WHEN tb1.gestacao_data_dpp IS NULL THEN 11
+                    WHEN tb1.possui_registro_aborto = 'Sim'::text THEN 10 -- Gestantes com registro de aborto
+                    WHEN tb1.gestacao_data_dpp > CURRENT_DATE THEN 8 -- Gestantes ativas
+                    WHEN tb1.gestacao_data_dpp <= CURRENT_DATE THEN 9 -- Gestantes encerradas
+                    WHEN tb1.gestacao_data_dpp IS NULL THEN 11 -- Gestantes sem DUM 
                     ELSE NULL::integer
                 END AS id_status_usuario,
                 CASE
