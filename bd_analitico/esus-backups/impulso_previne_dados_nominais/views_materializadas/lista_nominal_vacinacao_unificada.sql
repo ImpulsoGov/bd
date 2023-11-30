@@ -1,3 +1,4 @@
+-- impulso_previne_dados_nominais.lista_nominal_vacinacao_unificada source
 
 CREATE MATERIALIZED VIEW impulso_previne_dados_nominais.lista_nominal_vacinacao_unificada
 TABLESPACE pg_default
@@ -132,8 +133,9 @@ AS WITH sumarizacao_criancas AS (
                     ELSE date(polio1.data_1dose_polio + '2 mons'::interval)
                 END AS prazo_2dose_polio,
                 CASE
-                    WHEN polio2.data_2dose_polio IS NULL THEN date(h_1.dt_nascimento + '6 mons'::interval)
-                    ELSE date(polio2.data_2dose_polio + '2 mons'::interval)
+                    WHEN polio1.data_1dose_polio IS NOT NULL AND polio2.data_2dose_polio IS NULL THEN date(polio1.data_1dose_polio + '4 mons'::interval)
+                    WHEN polio2.data_2dose_polio IS NOT NULL THEN date(polio2.data_2dose_polio + '2 mons'::interval)
+                    ELSE date(h_1.dt_nascimento + '6 mons'::interval)
                 END AS prazo_3dose_polio
            FROM impulso_previne_dados_nominais.eventos_vacinacao h_1
              LEFT JOIN primeira_dose_polio polio1 ON h_1.chave_cidadao::text = polio1.chave_cidadao::text
@@ -245,8 +247,9 @@ AS WITH sumarizacao_criancas AS (
                     ELSE date(penta1.data_1dose_penta + '2 mons'::interval)
                 END AS prazo_2dose_penta,
                 CASE
-                    WHEN penta2.data_2dose_penta IS NULL THEN date(h_1.dt_nascimento + '6 mons'::interval)
-                    ELSE date(penta2.data_2dose_penta + '2 mons'::interval)
+                    WHEN penta1.data_1dose_penta IS NOT NULL AND penta2.data_2dose_penta IS NULL THEN date(penta1.data_1dose_penta + '4 mons'::interval)
+                    WHEN penta2.data_2dose_penta IS NOT NULL THEN date(penta2.data_2dose_penta + '2 mons'::interval)
+                    ELSE date(h_1.dt_nascimento + '6 mons'::interval)
                 END AS prazo_3dose_penta
            FROM impulso_previne_dados_nominais.eventos_vacinacao h_1
              LEFT JOIN primeira_dose_penta penta1 ON h_1.chave_cidadao::text = penta1.chave_cidadao::text
@@ -267,7 +270,14 @@ AS WITH sumarizacao_criancas AS (
                     ELSE 0
                 END), (date_part('month'::text, age(penta1.data_1dose_penta::timestamp with time zone, h_1.dt_nascimento::timestamp with time zone))), (date_part('month'::text, age(penta2.data_2dose_penta::timestamp with time zone, h_1.dt_nascimento::timestamp with time zone))), (date_part('month'::text, age(penta3.data_3dose_penta::timestamp with time zone, h_1.dt_nascimento::timestamp with time zone)))
         )
- SELECT h.municipio_id_sus,
+ SELECT
+        CASE
+            WHEN date_part('month'::text, CURRENT_DATE) >= 1::double precision AND date_part('month'::text, CURRENT_DATE) <= 4::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '.Q1')
+            WHEN date_part('month'::text, CURRENT_DATE) >= 5::double precision AND date_part('month'::text, CURRENT_DATE) <= 8::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '.Q2')
+            WHEN date_part('month'::text, CURRENT_DATE) >= 9::double precision AND date_part('month'::text, CURRENT_DATE) <= 12::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '.Q3')
+            ELSE NULL::text
+        END AS quadrimestre_atual,
+    h.municipio_id_sus,
     h.chave_cidadao,
     h.cidadao_nome,
     h.cidadao_cpf,
