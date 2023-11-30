@@ -50,7 +50,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             res.data_ultimo_atendimento_individual,
             res.data_ultima_vista_domiciliar,
             res.criacao_data,
-            '100111'::character varying AS municipio_id_sus
+            '100111'::character varying AS municipio_id_sus,
+            res.quadrimestre_atual
            FROM ( SELECT row_number() OVER (PARTITION BY 0::integer) AS seq,
                     lista_nominal_vacinacao.chave_cidadao,
                     lista_nominal_vacinacao.cidadao_nome,
@@ -98,7 +99,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     lista_nominal_vacinacao.data_ultimo_cadastro_individual,
                     lista_nominal_vacinacao.data_ultimo_atendimento_individual,
                     lista_nominal_vacinacao.data_ultima_vista_domiciliar,
-                    lista_nominal_vacinacao.criacao_data
+                    lista_nominal_vacinacao.criacao_data,
+                    lista_nominal_vacinacao.quadrimestre_atual
                    FROM impulso_previne_dados_nominais.lista_nominal_vacinacao_unificada lista_nominal_vacinacao
                   WHERE lista_nominal_vacinacao.municipio_id_sus::text = '317130'::text) res
              JOIN configuracoes.nomes_ficticios_vacinacao nomes ON res.seq = nomes.seq
@@ -151,7 +153,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             res.data_ultimo_atendimento_individual,
             res.data_ultima_vista_domiciliar,
             res.criacao_data,
-            '111111'::character varying AS municipio_id_sus
+            '111111'::character varying AS municipio_id_sus,
+            res.quadrimestre_atual
            FROM ( SELECT row_number() OVER (PARTITION BY 0::integer) AS seq,
                     lista_nominal_vacinacao.chave_cidadao,
                     lista_nominal_vacinacao.cidadao_nome,
@@ -199,7 +202,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     lista_nominal_vacinacao.data_ultimo_cadastro_individual,
                     lista_nominal_vacinacao.data_ultimo_atendimento_individual,
                     lista_nominal_vacinacao.data_ultima_vista_domiciliar,
-                    lista_nominal_vacinacao.criacao_data
+                    lista_nominal_vacinacao.criacao_data,
+                    lista_nominal_vacinacao.quadrimestre_atual
                    FROM impulso_previne_dados_nominais.lista_nominal_vacinacao_unificada lista_nominal_vacinacao
                   WHERE lista_nominal_vacinacao.municipio_id_sus::text = '317130'::text) res
              JOIN configuracoes.nomes_ficticios_vacinacao nomes ON res.seq = nomes.seq
@@ -252,7 +256,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             tb1_1.data_ultimo_atendimento_individual,
             tb1_1.data_ultima_vista_domiciliar,
             tb1_1.criacao_data,
-            tb1_1.municipio_id_sus
+            tb1_1.municipio_id_sus,
+            tb1_1.quadrimestre_atual
            FROM impulso_previne_dados_nominais.lista_nominal_vacinacao_unificada tb1_1
         ), une_as_bases AS (
          SELECT dados_anonimizados_demo_vicosa.chave_cidadao,
@@ -302,7 +307,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_anonimizados_demo_vicosa.data_ultimo_atendimento_individual,
             dados_anonimizados_demo_vicosa.data_ultima_vista_domiciliar,
             dados_anonimizados_demo_vicosa.criacao_data,
-            dados_anonimizados_demo_vicosa.municipio_id_sus
+            dados_anonimizados_demo_vicosa.municipio_id_sus,
+            dados_anonimizados_demo_vicosa.quadrimestre_atual
            FROM dados_anonimizados_demo_vicosa
         UNION ALL
          SELECT dados_anonimizados_impulsolandia.chave_cidadao,
@@ -352,7 +358,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_anonimizados_impulsolandia.data_ultimo_atendimento_individual,
             dados_anonimizados_impulsolandia.data_ultima_vista_domiciliar,
             dados_anonimizados_impulsolandia.criacao_data,
-            dados_anonimizados_impulsolandia.municipio_id_sus
+            dados_anonimizados_impulsolandia.municipio_id_sus,
+            dados_anonimizados_impulsolandia.quadrimestre_atual
            FROM dados_anonimizados_impulsolandia
         UNION ALL
          SELECT dados_transmissoes_recentes.chave_cidadao,
@@ -402,7 +409,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_transmissoes_recentes.data_ultimo_atendimento_individual,
             dados_transmissoes_recentes.data_ultima_vista_domiciliar,
             dados_transmissoes_recentes.criacao_data,
-            dados_transmissoes_recentes.municipio_id_sus
+            dados_transmissoes_recentes.municipio_id_sus,
+            dados_transmissoes_recentes.quadrimestre_atual
            FROM dados_transmissoes_recentes
         ), data_registro_producao AS (
          SELECT une_as_bases.municipio_id_sus,
@@ -414,17 +422,18 @@ AS WITH dados_anonimizados_demo_vicosa AS (
         ), tabela_aux AS (
          SELECT tb1.municipio_id_sus,
             tb1.cidadao_nome,
-            tb1.cidadao_nome_responsavel,
-            tb1.cidadao_cpf || tb1.municipio_id_sus || tb1.dt_nascimento as chave_cidadao,
+            COALESCE(tb1.cidadao_nome_responsavel, 'RESPONSÁVEL NÃO IDENTIFICADO'::character varying) AS cidadao_nome_responsavel,
+            (tb1.cidadao_nome || tb1.municipio_id_sus::text) || tb1.dt_nascimento AS chave_cidadao,
             COALESCE(tb1.cidadao_cpf, tb1.dt_nascimento::text::character varying::text) AS cidadao_cpf_dt_nascimento,
             tb1.cidadao_idade_meses_atual AS cidadao_idade_meses,
             tb1.quadrimestre_completa_1_ano,
+            tb1.quadrimestre_atual,
                 CASE
-                    WHEN tb1.status_idade = 'vacinacao_nao_iniciada'::text THEN 1
-                    WHEN tb1.status_idade = 'vacinacao_em_andamento'::text THEN 2
-                    WHEN tb1.status_idade = 'periodo_vacinacao_encerrado'::text THEN 3
-                    ELSE NULL::integer
-                END AS id_faixa_etaria,
+                    WHEN split_part(tb1.quadrimestre_atual, '.'::text, 2) = 'Q1'::text AND split_part(tb1.quadrimestre_atual, '.'::text, 1) = date_part('year'::text, CURRENT_DATE)::text THEN concat(date_part('year'::text, CURRENT_DATE), '.Q2')
+                    WHEN split_part(tb1.quadrimestre_atual, '.'::text, 2) = 'Q2'::text AND split_part(tb1.quadrimestre_atual, '.'::text, 1) = date_part('year'::text, CURRENT_DATE)::text THEN concat(date_part('year'::text, CURRENT_DATE), '.Q3')
+                    WHEN split_part(tb1.quadrimestre_atual, '.'::text, 1) = date_part('year'::text, CURRENT_DATE)::text AND split_part(tb1.quadrimestre_atual, '.'::text, 2) = 'Q3'::text THEN concat(date_part('year'::text, CURRENT_DATE) + 1::double precision, '.Q1')
+                    ELSE NULL::text
+                END AS quadrimestre_futuro,
             tb1.data_1dose_polio,
             tb1.data_2dose_polio,
             tb1.data_3dose_polio,
@@ -446,7 +455,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             COALESCE(tb1.data_3dose_polio, tb1.prazo_3dose_polio) AS data_ou_prazo_3dose_polio,
                 CASE
                     WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.data_2dose_polio IS NOT NULL AND tb1.data_3dose_polio IS NOT NULL THEN 1
-                    WHEN (tb1.data_1dose_polio <= CURRENT_DATE OR tb1.data_2dose_polio <= CURRENT_DATE OR tb1.data_3dose_polio <= CURRENT_DATE) AND (tb1.prazo_1dose_polio >= CURRENT_DATE OR tb1.prazo_2dose_polio >= CURRENT_DATE OR tb1.prazo_3dose_polio >= CURRENT_DATE) THEN 2
+                    WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.prazo_2dose_polio >= CURRENT_DATE AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 2
+                    WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.data_2dose_polio IS NOT NULL AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 2
                     WHEN (tb1.data_1dose_polio IS NOT NULL OR tb1.data_2dose_polio IS NOT NULL OR tb1.data_3dose_polio IS NOT NULL OR tb1.data_1dose_polio IS NULL AND tb1.data_2dose_polio IS NULL AND tb1.data_3dose_polio IS NULL) AND (tb1.prazo_1dose_polio < CURRENT_DATE OR tb1.prazo_2dose_polio < CURRENT_DATE OR tb1.prazo_3dose_polio < CURRENT_DATE) THEN 3
                     WHEN tb1.data_1dose_polio IS NULL AND tb1.data_2dose_polio IS NULL AND tb1.data_3dose_polio IS NULL AND tb1.prazo_1dose_polio >= CURRENT_DATE AND tb1.prazo_2dose_polio >= CURRENT_DATE AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 4
                     ELSE NULL::integer
@@ -456,81 +466,85 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             COALESCE(tb1.data_3dose_penta, tb1.prazo_3dose_penta) AS data_ou_prazo_3dose_penta,
                 CASE
                     WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.data_2dose_penta IS NOT NULL AND tb1.data_3dose_penta IS NOT NULL THEN 1
-                    WHEN (tb1.data_1dose_penta <= CURRENT_DATE OR tb1.data_2dose_penta <= CURRENT_DATE OR tb1.data_3dose_penta <= CURRENT_DATE) AND (tb1.prazo_1dose_penta >= CURRENT_DATE OR tb1.prazo_2dose_penta >= CURRENT_DATE OR tb1.prazo_3dose_penta >= CURRENT_DATE) THEN 2
+                    WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.prazo_2dose_penta >= CURRENT_DATE AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 2
+                    WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.data_2dose_penta IS NOT NULL AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 2
                     WHEN (tb1.data_1dose_penta IS NOT NULL OR tb1.data_2dose_penta IS NOT NULL OR tb1.data_3dose_penta IS NOT NULL OR tb1.data_1dose_penta IS NULL AND tb1.data_2dose_penta IS NULL AND tb1.data_3dose_penta IS NULL) AND (tb1.prazo_1dose_penta < CURRENT_DATE OR tb1.prazo_2dose_penta < CURRENT_DATE OR tb1.prazo_3dose_penta < CURRENT_DATE) THEN 3
                     WHEN tb1.data_1dose_penta IS NULL AND tb1.data_2dose_penta IS NULL AND tb1.data_3dose_penta IS NULL AND tb1.prazo_1dose_penta >= CURRENT_DATE AND tb1.prazo_2dose_penta >= CURRENT_DATE AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 4
                     ELSE NULL::integer
                 END AS id_status_penta,
             tb1.acs_nome_cadastro AS acs_nome,
             impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento)::text) AS equipe_ine,
-            impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento)::text) AS equipe_nome,
+            COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento, 'SEM EQUIPE'::character varying) AS equipe_nome,
             CURRENT_DATE AS atualizacao_data,
             tb1.criacao_data::date AS criacao_data
            FROM une_as_bases tb1
+        ), cores AS (
+         SELECT tb_1.municipio_id_sus,
+            tb_1.cidadao_nome,
+            tb_1.chave_cidadao,
+            tb_1.cidadao_idade_meses,
+            tb_1.data_1dose_polio,
+            tb_1.data_2dose_polio,
+            tb_1.data_3dose_polio,
+            tb_1.prazo_1dose_polio,
+            tb_1.prazo_2dose_polio,
+            tb_1.prazo_3dose_polio,
+            tb_1.id_status_polio,
+            tb_1.data_ou_prazo_1dose_polio,
+                CASE
+                    WHEN tb_1.data_ou_prazo_1dose_polio = tb_1.data_1dose_polio THEN 2
+                    WHEN tb_1.id_status_polio = 4 AND tb_1.data_ou_prazo_1dose_polio >= CURRENT_DATE THEN 1
+                    WHEN tb_1.id_status_polio = 3 AND tb_1.data_ou_prazo_1dose_polio < CURRENT_DATE OR tb_1.data_1dose_polio IS NULL AND tb_1.data_ou_prazo_1dose_polio < CURRENT_DATE THEN 3
+                    ELSE NULL::integer
+                END AS id_cor_1dose_polio,
+            tb_1.data_ou_prazo_2dose_polio,
+                CASE
+                    WHEN tb_1.data_ou_prazo_2dose_polio = tb_1.data_2dose_polio THEN 2
+                    WHEN tb_1.id_status_polio = 4 AND tb_1.data_ou_prazo_2dose_polio >= CURRENT_DATE THEN 1
+                    WHEN tb_1.data_2dose_polio IS NULL AND tb_1.data_ou_prazo_2dose_polio >= CURRENT_DATE THEN 1
+                    WHEN tb_1.data_2dose_polio IS NULL AND tb_1.data_ou_prazo_2dose_polio < CURRENT_DATE THEN 3
+                    ELSE NULL::integer
+                END AS id_cor_2dose_polio,
+            tb_1.data_ou_prazo_3dose_polio,
+                CASE
+                    WHEN tb_1.data_ou_prazo_3dose_polio = tb_1.data_3dose_polio THEN 2
+                    WHEN tb_1.id_status_polio = 4 AND tb_1.data_ou_prazo_3dose_polio >= CURRENT_DATE THEN 1
+                    WHEN tb_1.data_3dose_polio IS NULL AND tb_1.data_ou_prazo_3dose_polio >= CURRENT_DATE THEN 1
+                    WHEN tb_1.data_3dose_polio IS NULL AND tb_1.data_ou_prazo_3dose_polio < CURRENT_DATE THEN 3
+                    ELSE NULL::integer
+                END AS id_cor_3dose_polio,
+            tb_1.data_1dose_penta,
+            tb_1.data_2dose_penta,
+            tb_1.data_3dose_penta,
+            tb_1.prazo_1dose_penta,
+            tb_1.prazo_2dose_penta,
+            tb_1.prazo_3dose_penta,
+            tb_1.id_status_penta,
+            tb_1.data_ou_prazo_1dose_penta,
+                CASE
+                    WHEN tb_1.data_ou_prazo_1dose_penta = tb_1.data_1dose_penta THEN 2
+                    WHEN tb_1.id_status_penta = 4 AND tb_1.data_ou_prazo_1dose_penta >= CURRENT_DATE THEN 1
+                    WHEN tb_1.id_status_penta = 3 AND tb_1.data_ou_prazo_1dose_penta < CURRENT_DATE OR tb_1.data_1dose_penta IS NULL AND tb_1.data_ou_prazo_1dose_penta < CURRENT_DATE THEN 3
+                    ELSE NULL::integer
+                END AS id_cor_1dose_penta,
+            tb_1.data_ou_prazo_2dose_penta,
+                CASE
+                    WHEN tb_1.data_ou_prazo_2dose_penta = tb_1.data_2dose_penta THEN 2
+                    WHEN tb_1.id_status_penta = 4 AND tb_1.data_ou_prazo_2dose_penta >= CURRENT_DATE THEN 1
+                    WHEN tb_1.data_2dose_penta IS NULL AND tb_1.data_ou_prazo_2dose_penta >= CURRENT_DATE THEN 1
+                    WHEN tb_1.data_2dose_penta IS NULL AND tb_1.data_ou_prazo_2dose_penta < CURRENT_DATE THEN 3
+                    ELSE NULL::integer
+                END AS id_cor_2dose_penta,
+            tb_1.data_ou_prazo_3dose_penta,
+                CASE
+                    WHEN tb_1.data_ou_prazo_3dose_penta = tb_1.data_3dose_penta THEN 2
+                    WHEN tb_1.id_status_penta = 4 AND tb_1.data_ou_prazo_3dose_penta >= CURRENT_DATE THEN 1
+                    WHEN tb_1.data_3dose_penta IS NULL AND tb_1.data_ou_prazo_3dose_penta >= CURRENT_DATE THEN 1
+                    WHEN tb_1.data_3dose_penta IS NULL AND tb_1.data_ou_prazo_3dose_penta < CURRENT_DATE THEN 3
+                    ELSE NULL::integer
+                END AS id_cor_3dose_penta
+           FROM tabela_aux tb_1
         )
-, cores as (
-select tb.municipio_id_sus,
-tb.cidadao_nome,
-tb.chave_cidadao,
-tb.cidadao_idade_meses,
-tb.data_1dose_polio,
-tb.data_2dose_polio,
-tb.data_3dose_polio,
-tb.prazo_1dose_polio,
-tb.prazo_2dose_polio,
-tb.prazo_3dose_polio,
-tb.id_status_polio,
-tb.data_ou_prazo_1dose_polio,
-case
-	when tb.id_status_polio = 4 and (tb.data_ou_prazo_1dose_polio >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
-	when tb.id_status_polio = 3 and (tb.data_ou_prazo_1dose_polio < current_date) and tb.data_1dose_polio is null then '1' --status em atraso e dose ainda não aplicada
-	when tb.data_ou_prazo_1dose_polio  =  tb.data_1dose_polio then '2' --dose aplicada
-	when tb.data_1dose_polio is null and tb.data_ou_prazo_1dose_polio < current_date then '3' --dose em atraso
-end as id_cor_1dose_polio,
-tb.data_ou_prazo_2dose_polio,
-case
-	when tb.id_status_polio = 4 and (tb.data_ou_prazo_2dose_polio >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
-	when tb.data_ou_prazo_2dose_polio  =  tb.data_2dose_polio then '2' --dose aplicada
-	when tb.data_2dose_polio is null and tb.data_ou_prazo_2dose_polio >= current_date then '1' -- aguardando dose
-	when tb.data_2dose_polio is null and tb.data_ou_prazo_2dose_polio < current_date then '3' --dose em atraso
-end as id_cor_2dose_polio,
-tb.data_ou_prazo_3dose_polio,
-case
-	when tb.id_status_polio = 4 and (tb.data_ou_prazo_3dose_polio >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
-	when tb.data_ou_prazo_3dose_polio  =  tb.data_3dose_polio then '2' --dose aplicada
-	when tb.data_3dose_polio is null and tb.data_ou_prazo_3dose_polio >= current_date then '1' -- aguardando dose
-	when tb.data_3dose_polio is null and tb.data_ou_prazo_3dose_polio < current_date then '3' --dose em atraso
-end as id_cor_3dose_polio,
-tb.data_1dose_penta,
-tb.data_2dose_penta,
-tb.data_3dose_penta,
-tb.prazo_1dose_penta,
-tb.prazo_2dose_penta,
-tb.prazo_3dose_penta,
-tb.id_status_penta,
-tb.data_ou_prazo_1dose_penta,
-case
-	when tb.id_status_penta = 4 and (tb.data_ou_prazo_1dose_penta >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
-	when tb.id_status_penta = 3 and (tb.data_ou_prazo_1dose_penta < current_date) and tb.data_1dose_penta is null then '1' --status em atraso e dose ainda não aplicada
-	when tb.data_ou_prazo_1dose_penta  =  tb.data_1dose_penta then '2' --dose aplicada
-	when tb.data_1dose_penta is null and tb.data_ou_prazo_1dose_penta < current_date then '3' --dose em atraso
-end as id_cor_1dose_penta,
-tb.data_ou_prazo_2dose_penta,
-case
-	when tb.id_status_penta = 4 and (tb.data_ou_prazo_2dose_penta >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
-	when tb.data_ou_prazo_2dose_penta  =  tb.data_2dose_penta then '2' --dose aplicada
-	when tb.data_2dose_penta is null and tb.data_ou_prazo_2dose_penta >= current_date then '1' -- aguardando dose
-	when tb.data_2dose_penta is null and tb.data_ou_prazo_2dose_penta < current_date then '3' --dose em atraso
-end as id_cor_2dose_penta,
-tb.data_ou_prazo_3dose_penta,
-case
-	when tb.id_status_penta = 4 and (tb.data_ou_prazo_3dose_penta >= current_date) then '1' --status não iniciado e data_ou_prazo no futuro
-	when tb.data_ou_prazo_3dose_penta  =  tb.data_3dose_penta then '2' --dose aplicada
-	when tb.data_3dose_penta is null and tb.data_ou_prazo_3dose_penta >= current_date then '1' -- aguardando dose
-	when tb.data_3dose_penta is null and tb.data_ou_prazo_3dose_penta < current_date then '3' --dose em atraso
-end as id_cor_3dose_penta
-FROM tabela_aux tb
-)
  SELECT tb.municipio_id_sus,
     concat(tb2.nome, ' - ', tb2.uf_sigla) AS municipio_uf,
     tb.cidadao_nome,
@@ -538,7 +552,11 @@ FROM tabela_aux tb
     tb.cidadao_cpf_dt_nascimento,
     tb.cidadao_idade_meses,
     tb.quadrimestre_completa_1_ano,
-    tb.id_faixa_etaria,
+        CASE
+            WHEN tb.quadrimestre_completa_1_ano::text = tb.quadrimestre_atual THEN 1
+            WHEN tb.quadrimestre_completa_1_ano::text = tb.quadrimestre_futuro THEN 2
+            ELSE 3
+        END AS id_status_quadrimestre,
     tb.data_ou_prazo_1dose_polio,
     tb.data_ou_prazo_2dose_polio,
     tb.data_ou_prazo_3dose_polio,
@@ -561,6 +579,9 @@ FROM tabela_aux tb
     drp.dt_registro_producao_mais_recente
    FROM tabela_aux tb
      LEFT JOIN data_registro_producao drp ON drp.municipio_id_sus::text = tb.municipio_id_sus::text AND drp.equipe_ine = tb.equipe_ine
-     left join cores c on c.chave_cidadao = tb.chave_cidadao
+     LEFT JOIN cores c ON c.chave_cidadao = tb.chave_cidadao
      LEFT JOIN listas_de_codigos.municipios tb2 ON tb.municipio_id_sus::bpchar = tb2.id_sus
+     LEFT JOIN listas_de_codigos.periodos p ON tb.quadrimestre_completa_1_ano::text = p.codigo::text
+  WHERE p.data_fim >= CURRENT_DATE
+  ORDER BY tb.municipio_id_sus
 WITH DATA;
