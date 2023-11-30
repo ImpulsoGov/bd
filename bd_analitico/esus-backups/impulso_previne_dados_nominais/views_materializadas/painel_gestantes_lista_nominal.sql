@@ -302,8 +302,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                 END AS id_exame_hiv_sifilis,
                 CASE
                     WHEN tb1.possui_registro_aborto = 'Sim'::text THEN 10
-                    WHEN tb1.gestacao_data_dpp <= CURRENT_DATE THEN 8
-                    WHEN tb1.gestacao_data_dpp > CURRENT_DATE THEN 9
+                    WHEN tb1.gestacao_data_dpp > CURRENT_DATE THEN 8
+                    WHEN tb1.gestacao_data_dpp <= CURRENT_DATE THEN 9
                     WHEN tb1.gestacao_data_dpp IS NULL THEN 11
                     ELSE NULL::integer
                 END AS id_status_usuario,
