@@ -343,12 +343,21 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     WHEN tb1.gestacao_data_dpp > CURRENT_DATE THEN 8 -- Gestantes ativas
                     WHEN tb1.gestacao_data_dpp <= CURRENT_DATE THEN 9 -- Gestantes encerradas
                     WHEN tb1.gestacao_data_dpp IS NULL THEN 11 -- Gestantes sem DUM 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> e244211 (Update painel_gestantes_lista_nominal.sql)
 =======
                     WHEN tb1.possui_registro_aborto = 'Sim'::text THEN 10
                     WHEN tb1.gestacao_data_dpp > CURRENT_DATE THEN 8
                     WHEN tb1.gestacao_data_dpp <= CURRENT_DATE THEN 9
                     WHEN tb1.gestacao_data_dpp IS NULL THEN 11
 >>>>>>> 76955f5 (Update painel_gestantes_lista_nominal.sql)
+<<<<<<< HEAD
+=======
+>>>>>>> 859100e (Update painel_gestantes_lista_nominal.sql)
+>>>>>>> e244211 (Update painel_gestantes_lista_nominal.sql)
                     ELSE NULL::integer
                 END AS id_status_usuario,
                 CASE
