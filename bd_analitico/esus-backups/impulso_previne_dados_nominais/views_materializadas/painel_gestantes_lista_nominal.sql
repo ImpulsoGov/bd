@@ -331,8 +331,6 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     ELSE NULL::integer
                 END AS id_exame_hiv_sifilis,
                 CASE
-<<<<<<< HEAD
-<<<<<<< HEAD
                     WHEN tb1.possui_registro_aborto = 'Sim'::text THEN 10 -- Gestantes com registro de aborto
                     WHEN tb1.gestacao_data_dpp IS NULL
                         OR tb1.gestacao_data_dpp < (CASE -- Ou DPP é menor que a data de início do quadrimestre anterior
