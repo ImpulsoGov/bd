@@ -331,6 +331,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     ELSE NULL::integer
                 END AS id_exame_hiv_sifilis,
                 CASE
+<<<<<<< HEAD
                     WHEN tb1.possui_registro_aborto = 'Sim'::text THEN 10 -- Gestantes com registro de aborto
                     WHEN tb1.gestacao_data_dpp IS NULL
                         OR tb1.gestacao_data_dpp < (CASE -- Ou DPP é menor que a data de início do quadrimestre anterior
@@ -341,6 +342,13 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                          THEN 11 -- Gestantes sem DUM 
                     WHEN tb1.gestacao_data_dpp > CURRENT_DATE THEN 8 -- Gestantes ativas
                     WHEN tb1.gestacao_data_dpp <= CURRENT_DATE THEN 9 -- Gestantes encerradas
+                    WHEN tb1.gestacao_data_dpp IS NULL THEN 11 -- Gestantes sem DUM 
+=======
+                    WHEN tb1.possui_registro_aborto = 'Sim'::text THEN 10
+                    WHEN tb1.gestacao_data_dpp > CURRENT_DATE THEN 8
+                    WHEN tb1.gestacao_data_dpp <= CURRENT_DATE THEN 9
+                    WHEN tb1.gestacao_data_dpp IS NULL THEN 11
+>>>>>>> 76955f5 (Update painel_gestantes_lista_nominal.sql)
                     ELSE NULL::integer
                 END AS id_status_usuario,
                 CASE
