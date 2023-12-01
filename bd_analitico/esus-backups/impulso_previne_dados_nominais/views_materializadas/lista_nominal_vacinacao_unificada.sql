@@ -331,7 +331,5 @@ AS WITH sumarizacao_criancas AS (
    FROM sumarizacao_criancas h
      LEFT JOIN sumarizacao_polio polio ON polio.chave_cidadao::text = h.chave_cidadao::text
      LEFT JOIN sumarizacao_penta penta ON penta.chave_cidadao::text = h.chave_cidadao::text
-     LEFT JOIN listas_de_codigos.periodos p ON p.data_inicio = h.inicio_quadri_completa_1_ano
-  WHERE p.tipo::text = 'Quadrimestral'::text
-  ORDER BY h.municipio_id_sus
+     LEFT JOIN listas_de_codigos.periodos p ON p.data_inicio = h.inicio_quadri_completa_1_ano AND p.tipo::text = 'Quadrimestral'::text
 WITH DATA;
