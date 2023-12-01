@@ -414,11 +414,11 @@ AS WITH dados_anonimizados_demo_vicosa AS (
            FROM dados_transmissoes_recentes
         ), data_registro_producao AS (
          SELECT une_as_bases.municipio_id_sus,
-            impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_atendimento, une_as_bases.equipe_ine_cadastro)::text) AS equipe_ine,
+            impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_cadastro,une_as_bases.equipe_ine_atendimento))::text AS equipe_ine,
             max(GREATEST(une_as_bases.data_1dose_polio, une_as_bases.data_2dose_polio, une_as_bases.data_3dose_polio, une_as_bases.data_1dose_penta, une_as_bases.data_2dose_penta, une_as_bases.data_3dose_penta)) AS dt_registro_producao_mais_recente,
             min(LEAST(une_as_bases.data_1dose_polio, une_as_bases.data_2dose_polio, une_as_bases.data_3dose_polio, une_as_bases.data_1dose_penta, une_as_bases.data_2dose_penta, une_as_bases.data_3dose_penta)) AS dt_registro_producao_mais_antigo
            FROM une_as_bases
-          GROUP BY une_as_bases.municipio_id_sus, (impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_atendimento, une_as_bases.equipe_ine_cadastro)::text))
+          GROUP BY une_as_bases.municipio_id_sus, (impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE( une_as_bases.equipe_ine_cadastro,une_as_bases.equipe_ine_atendimento)::text))
         ), tabela_aux AS (
          SELECT tb1.municipio_id_sus,
             tb1.cidadao_nome,
@@ -457,7 +457,8 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.data_2dose_polio IS NOT NULL AND tb1.data_3dose_polio IS NOT NULL THEN 1 -- Esquema completo: Caso todos os campos que registram a data de aplicação das vacinas estejam preenchidos.
                     WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.prazo_2dose_polio >= CURRENT_DATE AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 2 -- Em andamento: Se a D1 não for nula (dose aplicada) e o prazo_D2 e prazo_D3 estiverem no futuro
                     WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.data_2dose_polio IS NOT NULL AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 2 -- Em andamento: Se a D1 e D2 não forem nulas (ambas doses aplicadas) e o prazo_D3 estiver no futuro
-                    WHEN (tb1.data_1dose_polio IS NOT NULL OR tb1.data_2dose_polio IS NOT NULL OR tb1.data_3dose_polio IS NOT NULL OR tb1.data_1dose_polio IS NULL AND tb1.data_2dose_polio IS NULL AND tb1.data_3dose_polio IS NULL) AND (tb1.prazo_1dose_polio < CURRENT_DATE OR tb1.prazo_2dose_polio < CURRENT_DATE OR tb1.prazo_3dose_polio < CURRENT_DATE) THEN 3 -- Em atraso: Caso algum dos campos que registra a data de aplicação da vacina esteja preenchido E pelo menos um dos campos de aprazamento seja menor do que a data de hoje (passado)
+                    --WHEN (tb1.data_1dose_polio IS NOT NULL OR tb1.data_2dose_polio IS NOT NULL OR tb1.data_3dose_polio IS NOT NULL OR tb1.data_1dose_polio IS NULL AND tb1.data_2dose_polio IS NULL AND tb1.data_3dose_polio IS NULL) AND (tb1.prazo_1dose_polio < CURRENT_DATE OR tb1.prazo_2dose_polio < CURRENT_DATE OR tb1.prazo_3dose_polio < CURRENT_DATE) THEN 3 -- Em atraso: Caso algum dos campos que registra a data de aplicação da vacina esteja preenchido E pelo menos um dos campos de aprazamento seja menor do que a data de hoje (passado)
+                    when (tb1.prazo_1dose_polio < CURRENT_DATE OR tb1.prazo_2dose_polio < CURRENT_DATE OR tb1.prazo_3dose_polio < CURRENT_DATE) then 3
                     WHEN tb1.data_1dose_polio IS NULL AND tb1.data_2dose_polio IS NULL AND tb1.data_3dose_polio IS NULL AND tb1.prazo_1dose_polio >= CURRENT_DATE AND tb1.prazo_2dose_polio >= CURRENT_DATE AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 4 --Não iniciado: Caso nenhum dos campos que registre a data de aplicação esteja preenchido E todos os campos de aprazamento sejam maiores que a data de hoje (futuro)
                     ELSE NULL::integer
                 END AS id_status_polio,
@@ -583,5 +584,4 @@ AS WITH dados_anonimizados_demo_vicosa AS (
      LEFT JOIN listas_de_codigos.municipios tb2 ON tb.municipio_id_sus::bpchar = tb2.id_sus
      LEFT JOIN listas_de_codigos.periodos p ON tb.quadrimestre_completa_1_ano::text = p.codigo::text
   WHERE p.data_fim >= CURRENT_DATE
-  ORDER BY tb.municipio_id_sus
 WITH DATA;
