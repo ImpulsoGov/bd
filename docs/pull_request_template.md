@@ -24,6 +24,7 @@ Exemplo de validações quantitativas
 Próximos passos: 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 - [] Comunicar ajustes importantes nos canais próprios de cada lista nominal
 =======
 - [] Comunicar ajustes importantes no canais próprios de cada lista nominal
@@ -31,4 +32,7 @@ Próximos passos:
 =======
 - [] Comunicar ajustes importantes nos canais próprios de cada lista nominal
 >>>>>>> 902530b (Update pull_request_template.md)
+=======
+- [] Comunicar ajustes importantes no canais próprios de cada lista nominal
+>>>>>>> afd7524 (Update pull_request_template.md)
 - [] Atualizar documentação de regras de negócio no [Notion](https://www.notion.so/impulsogov/Documenta-o-Listas-Nominais-8e919b380bc04783a02f2a74df9e81ce)  
