@@ -296,6 +296,4 @@ LEFT JOIN cadastro_domiciliar_recente cdr
 LEFT JOIN atendimento_recente ar 
         ON ar.chave_paciente = dh.chave_paciente
         AND ar.ultimo_atendimento IS TRUE 
--- retirar equipes de Palmeiras / nao e municipio parceiro
-WHERE cir.equipe_ine_cadastro NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
-        AND ar.equipe_ine_atendimento NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
+

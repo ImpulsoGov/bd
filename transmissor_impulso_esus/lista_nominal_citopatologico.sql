@@ -392,6 +392,3 @@ lista_citopatologico as (
 		 from indicador_regras_de_negocio irn
 		 left join infos_mulheres_atendimento_individual_recente atr on irn.chave_mulher = atr.chave_mulher
 )select * from lista_citopatologico
--- retirar equipes de Palmeiras / nao e municipio parceiro
-WHERE equipe_ine_cadastro NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
-	AND equipe_ine_ultimo_atendimento NOT IN ('0000071722', '0000071730', '0001511912', '0001846892', '0001847236', '0002275872')
