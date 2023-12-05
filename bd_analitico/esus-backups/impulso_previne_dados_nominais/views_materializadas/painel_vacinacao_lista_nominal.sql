@@ -457,7 +457,6 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.data_2dose_polio IS NOT NULL AND tb1.data_3dose_polio IS NOT NULL THEN 1 -- Esquema completo: Caso todos os campos que registram a data de aplicação das vacinas estejam preenchidos.
                     WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.prazo_2dose_polio >= CURRENT_DATE AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 2 -- Em andamento: Se a D1 não for nula (dose aplicada) e o prazo_D2 e prazo_D3 estiverem no futuro
                     WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.data_2dose_polio IS NOT NULL AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 2 -- Em andamento: Se a D1 e D2 não forem nulas (ambas doses aplicadas) e o prazo_D3 estiver no futuro
-                    --WHEN (tb1.data_1dose_polio IS NOT NULL OR tb1.data_2dose_polio IS NOT NULL OR tb1.data_3dose_polio IS NOT NULL OR tb1.data_1dose_polio IS NULL AND tb1.data_2dose_polio IS NULL AND tb1.data_3dose_polio IS NULL) AND (tb1.prazo_1dose_polio < CURRENT_DATE OR tb1.prazo_2dose_polio < CURRENT_DATE OR tb1.prazo_3dose_polio < CURRENT_DATE) THEN 3 -- Em atraso: Caso algum dos campos que registra a data de aplicação da vacina esteja preenchido E pelo menos um dos campos de aprazamento seja menor do que a data de hoje (passado)
                     when (tb1.prazo_1dose_polio < CURRENT_DATE OR tb1.prazo_2dose_polio < CURRENT_DATE OR tb1.prazo_3dose_polio < CURRENT_DATE) then 3
                     WHEN tb1.data_1dose_polio IS NULL AND tb1.data_2dose_polio IS NULL AND tb1.data_3dose_polio IS NULL AND tb1.prazo_1dose_polio >= CURRENT_DATE AND tb1.prazo_2dose_polio >= CURRENT_DATE AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 4 --Não iniciado: Caso nenhum dos campos que registre a data de aplicação esteja preenchido E todos os campos de aprazamento sejam maiores que a data de hoje (futuro)
                     ELSE NULL::integer
@@ -469,7 +468,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.data_2dose_penta IS NOT NULL AND tb1.data_3dose_penta IS NOT NULL THEN 1
                     WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.prazo_2dose_penta >= CURRENT_DATE AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 2
                     WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.data_2dose_penta IS NOT NULL AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 2
-                    WHEN (tb1.data_1dose_penta IS NOT NULL OR tb1.data_2dose_penta IS NOT NULL OR tb1.data_3dose_penta IS NOT NULL OR tb1.data_1dose_penta IS NULL AND tb1.data_2dose_penta IS NULL AND tb1.data_3dose_penta IS NULL) AND (tb1.prazo_1dose_penta < CURRENT_DATE OR tb1.prazo_2dose_penta < CURRENT_DATE OR tb1.prazo_3dose_penta < CURRENT_DATE) THEN 3
+                    when (tb1.prazo_1dose_penta < CURRENT_DATE OR tb1.prazo_2dose_penta < CURRENT_DATE OR tb1.prazo_3dose_penta < CURRENT_DATE) then 3
                     WHEN tb1.data_1dose_penta IS NULL AND tb1.data_2dose_penta IS NULL AND tb1.data_3dose_penta IS NULL AND tb1.prazo_1dose_penta >= CURRENT_DATE AND tb1.prazo_2dose_penta >= CURRENT_DATE AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 4
                     ELSE NULL::integer
                 END AS id_status_penta,
