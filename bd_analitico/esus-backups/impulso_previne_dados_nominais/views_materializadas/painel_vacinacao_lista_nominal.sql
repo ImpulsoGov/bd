@@ -412,14 +412,14 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_transmissoes_recentes.municipio_id_sus,
             dados_transmissoes_recentes.quadrimestre_atual
            FROM dados_transmissoes_recentes
-        ), data_registro_producao AS (
+        ), data_registro_producao AS ( -- Seleciona data de produção mais recente com base nas datas de registro das vacinas polio e penta
          SELECT une_as_bases.municipio_id_sus,
             impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_cadastro,une_as_bases.equipe_ine_atendimento))::text AS equipe_ine,
             max(GREATEST(une_as_bases.data_1dose_polio, une_as_bases.data_2dose_polio, une_as_bases.data_3dose_polio, une_as_bases.data_1dose_penta, une_as_bases.data_2dose_penta, une_as_bases.data_3dose_penta)) AS dt_registro_producao_mais_recente,
             min(LEAST(une_as_bases.data_1dose_polio, une_as_bases.data_2dose_polio, une_as_bases.data_3dose_polio, une_as_bases.data_1dose_penta, une_as_bases.data_2dose_penta, une_as_bases.data_3dose_penta)) AS dt_registro_producao_mais_antigo
            FROM une_as_bases
           GROUP BY une_as_bases.municipio_id_sus, (impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE( une_as_bases.equipe_ine_cadastro,une_as_bases.equipe_ine_atendimento)::text))
-        ), tabela_aux AS (
+        ), tabela_aux AS ( 
          SELECT tb1.municipio_id_sus,
             tb1.cidadao_nome,
             COALESCE(tb1.cidadao_nome_responsavel, 'RESPONSÁVEL NÃO IDENTIFICADO'::character varying) AS cidadao_nome_responsavel,
@@ -457,7 +457,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.data_2dose_polio IS NOT NULL AND tb1.data_3dose_polio IS NOT NULL THEN 1 -- Esquema completo: Caso todos os campos que registram a data de aplicação das vacinas estejam preenchidos.
                     WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.prazo_2dose_polio >= CURRENT_DATE AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 2 -- Em andamento: Se a D1 não for nula (dose aplicada) e o prazo_D2 e prazo_D3 estiverem no futuro
                     WHEN tb1.data_1dose_polio IS NOT NULL AND tb1.data_2dose_polio IS NOT NULL AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 2 -- Em andamento: Se a D1 e D2 não forem nulas (ambas doses aplicadas) e o prazo_D3 estiver no futuro
-                    when (tb1.prazo_1dose_polio < CURRENT_DATE OR tb1.prazo_2dose_polio < CURRENT_DATE OR tb1.prazo_3dose_polio < CURRENT_DATE) then 3
+                    when (tb1.prazo_1dose_polio < CURRENT_DATE OR tb1.prazo_2dose_polio < CURRENT_DATE OR tb1.prazo_3dose_polio < CURRENT_DATE) then 3 -- Em atraso: Se algum prazo estiver no passado
                     WHEN tb1.data_1dose_polio IS NULL AND tb1.data_2dose_polio IS NULL AND tb1.data_3dose_polio IS NULL AND tb1.prazo_1dose_polio >= CURRENT_DATE AND tb1.prazo_2dose_polio >= CURRENT_DATE AND tb1.prazo_3dose_polio >= CURRENT_DATE THEN 4 --Não iniciado: Caso nenhum dos campos que registre a data de aplicação esteja preenchido E todos os campos de aprazamento sejam maiores que a data de hoje (futuro)
                     ELSE NULL::integer
                 END AS id_status_polio,
@@ -465,14 +465,14 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             COALESCE(tb1.data_2dose_penta, tb1.prazo_2dose_penta) AS data_ou_prazo_2dose_penta,
             COALESCE(tb1.data_3dose_penta, tb1.prazo_3dose_penta) AS data_ou_prazo_3dose_penta,
                 CASE
-                    WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.data_2dose_penta IS NOT NULL AND tb1.data_3dose_penta IS NOT NULL THEN 1
-                    WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.prazo_2dose_penta >= CURRENT_DATE AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 2
-                    WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.data_2dose_penta IS NOT NULL AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 2
-                    when (tb1.prazo_1dose_penta < CURRENT_DATE OR tb1.prazo_2dose_penta < CURRENT_DATE OR tb1.prazo_3dose_penta < CURRENT_DATE) then 3
-                    WHEN tb1.data_1dose_penta IS NULL AND tb1.data_2dose_penta IS NULL AND tb1.data_3dose_penta IS NULL AND tb1.prazo_1dose_penta >= CURRENT_DATE AND tb1.prazo_2dose_penta >= CURRENT_DATE AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 4
+                    WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.data_2dose_penta IS NOT NULL AND tb1.data_3dose_penta IS NOT NULL THEN 1 -- Esquema completo: Caso todos os campos que registram a data de aplicação das vacinas estejam preenchidos.
+                    WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.prazo_2dose_penta >= CURRENT_DATE AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 2 -- Em andamento: Se a D1 não for nula (dose aplicada) e o prazo_D2 e prazo_D3 estiverem no futuro
+                    WHEN tb1.data_1dose_penta IS NOT NULL AND tb1.data_2dose_penta IS NOT NULL AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 2 -- Em andamento: Se a D1 e D2 não forem nulas (ambas doses aplicadas) e o prazo_D3 estiver no futuro
+                    when (tb1.prazo_1dose_penta < CURRENT_DATE OR tb1.prazo_2dose_penta < CURRENT_DATE OR tb1.prazo_3dose_penta < CURRENT_DATE) then 3 -- Em atraso: Se algum prazo estiver no passado
+                    WHEN tb1.data_1dose_penta IS NULL AND tb1.data_2dose_penta IS NULL AND tb1.data_3dose_penta IS NULL AND tb1.prazo_1dose_penta >= CURRENT_DATE AND tb1.prazo_2dose_penta >= CURRENT_DATE AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 4 --Não iniciado: Caso nenhum dos campos que registre a data de aplicação esteja preenchido E todos os campos de aprazamento sejam maiores que a data de hoje (futuro)
                     ELSE NULL::integer
                 END AS id_status_penta,
-            tb1.acs_nome_cadastro AS acs_nome,
+            coalesce(tb1.acs_nome_cadastro, tb1.acs_nome_visita) AS acs_nome,
             impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento)::text) AS equipe_ine,
             COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento, 'SEM EQUIPE'::character varying) AS equipe_nome,
             CURRENT_DATE AS atualizacao_data,
@@ -507,10 +507,10 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                 END AS id_cor_2dose_polio,
             tb_1.data_ou_prazo_3dose_polio,
                 CASE
-                    WHEN tb_1.data_ou_prazo_3dose_polio = tb_1.data_3dose_polio THEN 2
-                    WHEN tb_1.id_status_polio = 4 AND tb_1.data_ou_prazo_3dose_polio >= CURRENT_DATE THEN 1
-                    WHEN tb_1.data_3dose_polio IS NULL AND tb_1.data_ou_prazo_3dose_polio >= CURRENT_DATE THEN 1
-                    WHEN tb_1.data_3dose_polio IS NULL AND tb_1.data_ou_prazo_3dose_polio < CURRENT_DATE THEN 3
+                    WHEN tb_1.data_ou_prazo_3dose_polio = tb_1.data_3dose_polio THEN 2 --quando a data de aplicação registrada for igual ao data_ou_prazo = verde
+                    WHEN tb_1.id_status_polio = 4 AND tb_1.data_ou_prazo_3dose_polio >= CURRENT_DATE THEN 1 --quando o status for "não iniciado" e prazo estiver no futuro = cinza
+                    WHEN tb_1.data_3dose_polio IS NULL AND tb_1.data_ou_prazo_3dose_polio >= CURRENT_DATE THEN 1 -- quando a data de aplicação registrada for nula e o prazo estiver no futuro = cinza
+                    WHEN tb_1.data_3dose_polio IS NULL AND tb_1.data_ou_prazo_3dose_polio < CURRENT_DATE THEN 3 -- quando a data de aplicação for nula e o prazo estiver no passado = vermelho
                     ELSE NULL::integer
                 END AS id_cor_3dose_polio,
             tb_1.data_1dose_penta,
@@ -553,9 +553,9 @@ AS WITH dados_anonimizados_demo_vicosa AS (
     tb.cidadao_idade_meses,
     tb.quadrimestre_completa_1_ano,
         CASE
-            WHEN tb.quadrimestre_completa_1_ano::text = tb.quadrimestre_atual THEN 1
-            WHEN tb.quadrimestre_completa_1_ano::text = tb.quadrimestre_futuro THEN 2
-            ELSE 3
+            WHEN tb.quadrimestre_completa_1_ano::text = tb.quadrimestre_atual THEN 1 -- quadrimestre atual
+            WHEN tb.quadrimestre_completa_1_ano::text = tb.quadrimestre_futuro THEN 2 -- próximo quadrimestre
+            ELSE 3 -- quadrimestres futuros
         END AS id_status_quadrimestre,
     tb.data_ou_prazo_1dose_polio,
     tb.data_ou_prazo_2dose_polio,
