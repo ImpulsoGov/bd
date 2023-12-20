@@ -58,8 +58,9 @@ AS SELECT res.periodo_codigo,
      LEFT JOIN listas_de_codigos.municipios m ON res.municipio_id_sus::bpchar = m.id_sus
   WHERE (res.periodo_codigo::text IN ( SELECT pe.periodo_codigo
            FROM dados_publicos.sisab_cadastros_municipios_equipe_todas pe
+           left join listas_de_codigos.periodos p on p.id = pe.periodo_id
           WHERE pe.periodo_codigo::text >= '2022.M5'::text
-          ORDER BY pe.periodo_codigo DESC
+          ORDER BY p.data_inicio  DESC
          LIMIT 1))
 WITH DATA;
 
