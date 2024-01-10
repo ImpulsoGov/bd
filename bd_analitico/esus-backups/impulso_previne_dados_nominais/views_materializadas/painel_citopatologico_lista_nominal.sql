@@ -67,7 +67,7 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.acs_nome_visita,
                     tb1_1.criacao_data
                    FROM impulso_previne_dados_nominais.lista_nominal_citopatologico_unificada tb1_1
-                  WHERE tb1_1.municipio_id_sus::text = '317130'::text AND tb1_1.equipe_ine_ultimo_atendimento IS NOT NULL AND tb1_1.equipe_ine_ultimo_atendimento::text <> '-'::text AND tb1_1.equipe_ine_cadastro IS NOT NULL AND tb1_1.equipe_ine_cadastro::text <> '-'::text AND tb1_1.equipe_nome_ultimo_atendimento IS NOT NULL AND (tb1_1.equipe_nome_ultimo_atendimento::text <> ALL (ARRAY['EMAD'::character varying, 'EAPP DE SAUDE VICOSA'::character varying, 'ESF BOM JESUS III'::character varying, 'EMULTI SAO JOSE CIDADE NOVA BA'::character varying, 'EMAD'::character varying, 'EMULTI SAO JOSE DO TRIUNFO'::character varying, 'EMULTI BOM JESUS'::character varying]::text[])) AND tb1_1.equipe_nome_cadastro IS NOT NULL AND tb1_1.equipe_nome_cadastro::text <> 'EMAD'::text) res
+                  WHERE tb1_1.municipio_id_sus::text = '317130'::text AND tb1_1.equipe_ine_ultimo_atendimento IS NOT NULL AND tb1_1.equipe_ine_ultimo_atendimento::text <> '-'::text AND tb1_1.equipe_ine_cadastro IS NOT NULL AND tb1_1.equipe_ine_cadastro::text <> '-'::text AND tb1_1.equipe_nome_ultimo_atendimento IS NOT NULL AND (tb1_1.equipe_nome_ultimo_atendimento::text <> ALL (ARRAY['EMAD'::character varying::text, 'EAPP DE SAUDE VICOSA'::character varying::text, 'ESF BOM JESUS III'::character varying::text, 'EMULTI SAO JOSE CIDADE NOVA BA'::character varying::text, 'EMAD'::character varying::text, 'EMULTI SAO JOSE DO TRIUNFO'::character varying::text, 'EMULTI BOM JESUS'::character varying::text])) AND tb1_1.equipe_nome_cadastro IS NOT NULL AND tb1_1.equipe_nome_cadastro::text <> 'EMAD'::text) res
              LEFT JOIN configuracoes.nomes_ficticios_citopatologico nomes ON res.seq = nomes.seq
              LEFT JOIN configuracoes.nomes_ficticios_hipertensos nomes2 ON res.seq = nomes2.seq
         ), dados_anonimizados_impulsolandia AS (
@@ -135,9 +135,9 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.acs_nome_visita,
                     tb1_1.criacao_data
                    FROM impulso_previne_dados_nominais.lista_nominal_citopatologico_unificada tb1_1
-                  WHERE tb1_1.municipio_id_sus::text = '317130'::text) res
-             JOIN configuracoes.nomes_ficticios_citopatologico nomes ON res.seq = nomes.seq
-             JOIN configuracoes.nomes_ficticios_gestantes nomes2 ON res.seq = nomes2.seq
+                  WHERE tb1_1.municipio_id_sus::text = '317130'::text AND tb1_1.equipe_ine_ultimo_atendimento IS NOT NULL AND tb1_1.equipe_ine_ultimo_atendimento::text <> '-'::text AND tb1_1.equipe_ine_cadastro IS NOT NULL AND tb1_1.equipe_nome_ultimo_atendimento IS NOT NULL AND (tb1_1.equipe_nome_ultimo_atendimento::text <> ALL (ARRAY['EMAD'::character varying::text, 'EAPP DE SAUDE VICOSA'::character varying::text, 'ESF BOM JESUS III'::character varying::text, 'EMULTI SAO JOSE CIDADE NOVA BA'::character varying::text, 'EMAD'::character varying::text, 'EMULTI SAO JOSE DO TRIUNFO'::character varying::text, 'EMULTI BOM JESUS'::character varying::text])) AND tb1_1.equipe_nome_cadastro IS NOT NULL AND tb1_1.equipe_nome_cadastro::text <> 'EMAD'::text) res
+             LEFT JOIN configuracoes.nomes_ficticios_citopatologico nomes ON res.seq = nomes.seq
+             LEFT JOIN configuracoes.nomes_ficticios_hipertensos nomes2 ON res.seq = nomes2.seq
         ), dados_transmissoes_recentes AS (
          SELECT tb1_1.municipio_id_sus,
             tb1_1.quadrimestre_atual,
