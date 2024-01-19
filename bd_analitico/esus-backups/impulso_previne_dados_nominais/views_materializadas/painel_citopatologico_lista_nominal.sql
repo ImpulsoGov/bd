@@ -1,3 +1,4 @@
+-- impulso_previne_dados_nominais.painel_citopatologico_lista_nominal source
 
 CREATE MATERIALIZED VIEW impulso_previne_dados_nominais.painel_citopatologico_lista_nominal
 TABLESPACE pg_default
@@ -65,9 +66,10 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.acs_nome_ultimo_atendimento,
                     tb1_1.acs_nome_visita,
                     tb1_1.criacao_data
-                   FROM dados_nominais_mg_vicosa.lista_nominal_citopatologico tb1_1) res
-             JOIN configuracoes.nomes_ficticios_citopatologico nomes ON res.seq = nomes.seq
-             JOIN configuracoes.nomes_ficticios_gestantes nomes2 ON res.seq = nomes2.seq
+                   FROM impulso_previne_dados_nominais.lista_nominal_citopatologico_unificada tb1_1
+                  WHERE tb1_1.municipio_id_sus::text = '317130'::text AND tb1_1.equipe_ine_ultimo_atendimento IS NOT NULL AND tb1_1.equipe_ine_ultimo_atendimento::text <> '-'::text AND tb1_1.equipe_ine_cadastro IS NOT NULL AND tb1_1.equipe_ine_cadastro::text <> '-'::text AND tb1_1.equipe_nome_ultimo_atendimento IS NOT NULL AND (tb1_1.equipe_nome_ultimo_atendimento::text <> ALL (ARRAY['EMAD'::character varying::text, 'EAPP DE SAUDE VICOSA'::character varying::text, 'ESF BOM JESUS III'::character varying::text, 'EMULTI SAO JOSE CIDADE NOVA BA'::character varying::text, 'EMAD'::character varying::text, 'EMULTI SAO JOSE DO TRIUNFO'::character varying::text, 'EMULTI BOM JESUS'::character varying::text])) AND tb1_1.equipe_nome_cadastro IS NOT NULL AND tb1_1.equipe_nome_cadastro::text <> 'EMAD'::text) res
+             LEFT JOIN configuracoes.nomes_ficticios_citopatologico nomes ON res.seq = nomes.seq
+             LEFT JOIN configuracoes.nomes_ficticios_hipertensos nomes2 ON res.seq = nomes2.seq
         ), dados_anonimizados_impulsolandia AS (
          SELECT '111111'::character varying AS municipio_id_sus,
             res.quadrimestre_atual,
@@ -132,9 +134,10 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     tb1_1.acs_nome_ultimo_atendimento,
                     tb1_1.acs_nome_visita,
                     tb1_1.criacao_data
-                   FROM dados_nominais_mg_vicosa.lista_nominal_citopatologico tb1_1) res
-             JOIN configuracoes.nomes_ficticios_citopatologico nomes ON res.seq = nomes.seq
-             JOIN configuracoes.nomes_ficticios_gestantes nomes2 ON res.seq = nomes2.seq
+                   FROM impulso_previne_dados_nominais.lista_nominal_citopatologico_unificada tb1_1
+                  WHERE tb1_1.municipio_id_sus::text = '317130'::text AND tb1_1.equipe_ine_ultimo_atendimento IS NOT NULL AND tb1_1.equipe_ine_ultimo_atendimento::text <> '-'::text AND tb1_1.equipe_ine_cadastro IS NOT NULL AND tb1_1.equipe_nome_ultimo_atendimento IS NOT NULL AND (tb1_1.equipe_nome_ultimo_atendimento::text <> ALL (ARRAY['EMAD'::character varying::text, 'EAPP DE SAUDE VICOSA'::character varying::text, 'ESF BOM JESUS III'::character varying::text, 'EMULTI SAO JOSE CIDADE NOVA BA'::character varying::text, 'EMAD'::character varying::text, 'EMULTI SAO JOSE DO TRIUNFO'::character varying::text, 'EMULTI BOM JESUS'::character varying::text])) AND tb1_1.equipe_nome_cadastro IS NOT NULL AND tb1_1.equipe_nome_cadastro::text <> 'EMAD'::text) res
+             LEFT JOIN configuracoes.nomes_ficticios_citopatologico nomes ON res.seq = nomes.seq
+             LEFT JOIN configuracoes.nomes_ficticios_hipertensos nomes2 ON res.seq = nomes2.seq
         ), dados_transmissoes_recentes AS (
          SELECT tb1_1.municipio_id_sus,
             tb1_1.quadrimestre_atual,
@@ -267,62 +270,73 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             dados_transmissoes_recentes.acs_nome_visita,
             dados_transmissoes_recentes.criacao_data
            FROM dados_transmissoes_recentes
+        ), data_registro_producao AS (
+         SELECT une_as_bases.municipio_id_sus,
+            impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_cadastro, une_as_bases.equipe_ine_ultimo_atendimento)::text) AS ine_master,
+            max(GREATEST(une_as_bases.dt_ultimo_exame, une_as_bases.dt_ultimo_atendimento, une_as_bases.dt_ultimo_cadastro)) AS dt_registro_producao_mais_recente,
+            min(LEAST(une_as_bases.dt_ultimo_exame, une_as_bases.dt_ultimo_atendimento, une_as_bases.dt_ultimo_cadastro)) AS dt_registro_producao_mais_antigo
+           FROM une_as_bases
+          GROUP BY une_as_bases.municipio_id_sus, (impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_cadastro, une_as_bases.equipe_ine_ultimo_atendimento)::text))
+        ), tabela_aux AS (
+         SELECT tb1.municipio_id_sus,
+            concat(tb2.nome, ' - ', tb2.uf_sigla) AS municipio_uf,
+            tb1.paciente_nome,
+                CASE
+                    WHEN tb1.cidadao_cpf IS NULL THEN to_char(tb1.dt_nascimento::timestamp with time zone, 'DD/MM/YYYY'::text)
+                    ELSE concat("substring"(tb1.cidadao_cpf, 1, 3), '.', "substring"(tb1.cidadao_cpf, 4, 3), '.', "substring"(tb1.cidadao_cpf, 7, 3), '-', "substring"(tb1.cidadao_cpf, 10, 2))
+                END AS cidadao_cpf_dt_nascimento,
+                CASE
+                    WHEN tb1.status_exame::text = ANY (ARRAY['exame_realizado_antes_dos_25'::character varying::text, 'exame_nunca_realizado'::character varying::text]) THEN '-'::text
+                    ELSE to_char(tb1.data_projetada_proximo_exame::timestamp with time zone, 'DD/MM/YYYY'::text)
+                END AS vencimento_da_coleta,
+                CASE
+                    WHEN tb1.status_exame::text = 'exame_em_dia'::text THEN 'Em dia'::text
+                    ELSE to_char(tb1.data_limite_a_realizar_proximo_exame::timestamp with time zone, 'DD/MM/YYYY'::text)
+                END AS prazo_proxima_coleta,
+            tb1.paciente_idade_atual AS idade,
+            COALESCE(tb1.acs_nome_visita, tb1.acs_nome_cadastro) AS acs_nome,
+            COALESCE(tb1.estabelecimento_cnes_cadastro, tb1.estabelecimento_cnes_ultimo_atendimento) AS estabelecimento_cnes,
+            COALESCE(tb1.estabelecimento_nome_cadastro, tb1.estabelecimento_nome_ultimo_atendimento) AS estabelecimento_nome,
+            COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_ultimo_atendimento) AS equipe_ine,
+            impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_ultimo_atendimento)::text) AS ine_master,
+            COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_ultimo_atendimento, 'SEM EQUIPE'::character varying) AS equipe_nome,
+                CASE
+                    WHEN tb1.status_exame::text = 'exame_em_dia'::text THEN 12
+                    WHEN tb1.status_exame::text = 'exame_nunca_realizado'::text THEN 13
+                    WHEN tb1.status_exame::text = 'exame_realizado_antes_dos_25'::text THEN 14
+                    WHEN tb1.status_exame::text = 'exame_vence_no_quadrimestre_atual'::text THEN 15
+                    WHEN tb1.status_exame::text = 'exame_vencido'::text THEN 16
+                    ELSE NULL::integer
+                END AS id_status_usuario,
+                CASE
+                    WHEN tb1.paciente_idade_atual <= 39 THEN 6
+                    WHEN tb1.paciente_idade_atual >= 40 AND tb1.paciente_idade_atual <= 49 THEN 7
+                    WHEN tb1.paciente_idade_atual >= 50 AND tb1.paciente_idade_atual <= 64 THEN 8
+                    ELSE NULL::integer
+                END AS id_faixa_etaria,
+            tb1.criacao_data,
+            CURRENT_TIMESTAMP AS atualizacao_data
+           FROM une_as_bases tb1
+             LEFT JOIN listas_de_codigos.municipios tb2 ON tb1.municipio_id_sus::bpchar = tb2.id_sus
         )
-, data_registro_producao AS (
-    SELECT 
-        municipio_id_sus,
-        impulso_previne_dados_nominais.equipe_ine(municipio_id_sus::text, COALESCE(equipe_ine_cadastro, equipe_ine_ultimo_atendimento)::text) AS ine_master,
-        MAX(GREATEST(dt_ultimo_exame,dt_ultimo_atendimento,dt_ultimo_cadastro)) AS dt_registro_producao_mais_recente,
-        MIN(LEAST(dt_ultimo_exame,dt_ultimo_atendimento,dt_ultimo_cadastro)) AS dt_registro_producao_mais_antigo
-    FROM une_as_bases
-    GROUP BY 1, 2
-)
-, tabela_aux AS (
- SELECT tb1.municipio_id_sus,
-    concat(tb2.nome, ' - ', tb2.uf_sigla) AS municipio_uf,
-    tb1.paciente_nome,
-        CASE
-            WHEN tb1.cidadao_cpf IS NULL THEN to_char(tb1.dt_nascimento::timestamp with time zone, 'DD/MM/YYYY'::text)
-            ELSE concat("substring"(tb1.cidadao_cpf, 1, 3), '.', "substring"(tb1.cidadao_cpf, 4, 3), '.', "substring"(tb1.cidadao_cpf, 7, 3), '-', "substring"(tb1.cidadao_cpf, 10, 2))
-        END AS cidadao_cpf_dt_nascimento,
-        CASE
-            WHEN tb1.status_exame::text = ANY (ARRAY['exame_realizado_antes_dos_25'::character varying::text, 'exame_nunca_realizado'::character varying::text]) THEN '-'::text
-            ELSE to_char(tb1.data_projetada_proximo_exame::timestamp with time zone, 'DD/MM/YYYY'::text)
-        END AS vencimento_da_coleta,
-        CASE
-            WHEN tb1.status_exame::text = 'exame_em_dia'::text THEN 'Em dia'::text
-            ELSE to_char(tb1.data_limite_a_realizar_proximo_exame::timestamp with time zone, 'DD/MM/YYYY'::text)
-        END AS prazo_proxima_coleta,
-    tb1.paciente_idade_atual AS idade,
-    COALESCE(tb1.acs_nome_visita, tb1.acs_nome_cadastro) AS acs_nome,
-    COALESCE(tb1.estabelecimento_cnes_cadastro, tb1.estabelecimento_cnes_ultimo_atendimento) AS estabelecimento_cnes,
-    COALESCE(tb1.estabelecimento_nome_cadastro, tb1.estabelecimento_nome_ultimo_atendimento) AS estabelecimento_nome,
-    COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_ultimo_atendimento) AS equipe_ine,
-    impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_ultimo_atendimento)::text) AS ine_master,
-    impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_ultimo_atendimento)::text) AS equipe_nome,
-        CASE
-            WHEN tb1.status_exame::text = 'exame_em_dia'::text THEN 12
-            WHEN tb1.status_exame::text = 'exame_nunca_realizado'::text THEN 13
-            WHEN tb1.status_exame::text = 'exame_realizado_antes_dos_25'::text THEN 14
-            WHEN tb1.status_exame::text = 'exame_vence_no_quadrimestre_atual'::text THEN 15
-            WHEN tb1.status_exame::text = 'exame_vencido'::text THEN 16
-            ELSE NULL::integer
-        END AS id_status_usuario,
-        CASE
-            WHEN tb1.paciente_idade_atual <= 39 THEN 6
-            WHEN tb1.paciente_idade_atual >= 40 AND tb1.paciente_idade_atual <= 49 THEN 7
-            WHEN tb1.paciente_idade_atual >= 50 AND tb1.paciente_idade_atual <= 64 THEN 8
-            ELSE NULL::integer
-        END AS id_faixa_etaria,
-    tb1.criacao_data,
-    CURRENT_TIMESTAMP AS atualizacao_data
-   FROM une_as_bases tb1
-     LEFT JOIN listas_de_codigos.municipios tb2 ON tb1.municipio_id_sus::bpchar = tb2.id_sus
-) SELECT
-    tabela_aux.*,
+ SELECT tabela_aux.municipio_id_sus,
+    tabela_aux.municipio_uf,
+    tabela_aux.paciente_nome,
+    tabela_aux.cidadao_cpf_dt_nascimento,
+    tabela_aux.vencimento_da_coleta,
+    tabela_aux.prazo_proxima_coleta,
+    tabela_aux.idade,
+    tabela_aux.acs_nome,
+    tabela_aux.estabelecimento_cnes,
+    tabela_aux.estabelecimento_nome,
+    tabela_aux.equipe_ine,
+    tabela_aux.ine_master,
+    tabela_aux.equipe_nome,
+    tabela_aux.id_status_usuario,
+    tabela_aux.id_faixa_etaria,
+    tabela_aux.criacao_data,
+    tabela_aux.atualizacao_data,
     drp.dt_registro_producao_mais_recente
-FROM tabela_aux
-LEFT JOIN data_registro_producao drp 
-    ON drp.municipio_id_sus = tabela_aux.municipio_id_sus
-    AND drp.ine_master = tabela_aux.ine_master
+   FROM tabela_aux
+     LEFT JOIN data_registro_producao drp ON drp.municipio_id_sus::text = tabela_aux.municipio_id_sus::text AND drp.ine_master = tabela_aux.ine_master
 WITH DATA;
