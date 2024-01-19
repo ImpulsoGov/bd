@@ -8,9 +8,10 @@ AS WITH rel_cadastros_equipes_todas AS (
             count(DISTINCT tb1_1.equipe_id_ine) AS equipe_total
            FROM dados_publicos.sisab_cadastros_municipios_equipe_todas tb1_1
           WHERE (tb1_1.periodo_codigo::text IN ( SELECT pe.periodo_codigo
-                   FROM dados_publicos.sisab_cadastros_municipios_equipe_todas pe
-                  WHERE pe.periodo_codigo::text >= '2022.M5'::text
-                  ORDER BY pe.periodo_codigo DESC
+           FROM dados_publicos.sisab_cadastros_municipios_equipe_todas pe
+             LEFT JOIN listas_de_codigos.periodos p ON p.id = pe.periodo_id
+          WHERE pe.periodo_codigo::text >= '2022.M5'::text
+          ORDER BY p.data_inicio DESC
                  LIMIT 1))
           GROUP BY tb1_1.municipio_id_sus, tb1_1.periodo_codigo
         ), rel_cadastros_equipes_validas AS (
@@ -19,10 +20,11 @@ AS WITH rel_cadastros_equipes_todas AS (
             sum(tb2_1.quantidade) FILTER (WHERE tb2_1.criterio_pontuacao = false) AS cadastros_equipes_validas,
             sum(tb2_1.quantidade) FILTER (WHERE tb2_1.criterio_pontuacao = true) AS cadastros_equipes_validas_com_ponderacao
            FROM dados_publicos.sisab_cadastros_municipios_equipe_validas tb2_1
-          WHERE (tb2_1.periodo_codigo::text IN ( SELECT pe.periodo_codigo
-                   FROM dados_publicos.sisab_cadastros_municipios_equipe_validas pe
-                  WHERE pe.periodo_codigo::text >= '2022.M5'::text
-                  ORDER BY pe.periodo_codigo DESC
+          WHERE (tb2_1.periodo_codigo::text IN (SELECT pe.periodo_codigo
+           FROM dados_publicos.sisab_cadastros_municipios_equipe_todas pe
+             LEFT JOIN listas_de_codigos.periodos p ON p.id = pe.periodo_id
+          WHERE pe.periodo_codigo::text >= '2022.M5'::text
+          ORDER BY p.data_inicio DESC
                  LIMIT 1))
           GROUP BY tb2_1.municipio_id_sus, tb2_1.periodo_codigo
         ), rel_parametro_equipes_validas AS (
@@ -31,9 +33,10 @@ AS WITH rel_cadastros_equipes_todas AS (
             tb3_1.parametro
            FROM dados_publicos.sisab_cadastros_parametro_municipios_equipes_validas tb3_1
           WHERE (tb3_1.periodo_codigo::text IN ( SELECT pe.periodo_codigo
-                   FROM dados_publicos.sisab_cadastros_parametro_municipios_equipes_validas pe
-                  WHERE pe.periodo_codigo::text >= '2022.M5'::text
-                  ORDER BY pe.periodo_codigo DESC
+           FROM dados_publicos.sisab_cadastros_municipios_equipe_todas pe
+             LEFT JOIN listas_de_codigos.periodos p ON p.id = pe.periodo_id
+          WHERE pe.periodo_codigo::text >= '2022.M5'::text
+          ORDER BY p.data_inicio DESC
                  LIMIT 1))
         )
  SELECT tb1.periodo_codigo,
@@ -53,6 +56,7 @@ AS WITH rel_cadastros_equipes_todas AS (
      LEFT JOIN rel_cadastros_equipes_validas tb2 ON tb4.id_sus = tb2.municipio_id_sus::bpchar
      LEFT JOIN rel_parametro_equipes_validas tb3 ON tb4.id_sus = tb3.municipio_id_sus::bpchar
 WITH DATA;
+
 
 -- View indexes:
 CREATE INDEX caracterizacao_municipal_resumo_municipio_uf_idx ON impulso_previne.caracterizacao_municipal_resumo USING btree (municipio_uf);
