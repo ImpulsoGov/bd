@@ -27,8 +27,6 @@ Próximos passos:
 - [] Comunicar ajustes importantes nos canais próprios de cada lista nominal
 =======
 - [] Comunicar ajustes importantes no canais próprios de cada lista nominal
->>>>>>> 47386ab (Update pull_request_template.md)
 =======
 - [] Comunicar ajustes importantes nos canais próprios de cada lista nominal
->>>>>>> 902530b (Update pull_request_template.md)
 - [] Atualizar documentação de regras de negócio no [Notion](https://www.notion.so/impulsogov/Documenta-o-Listas-Nominais-8e919b380bc04783a02f2a74df9e81ce)  
