@@ -1,3 +1,5 @@
+-- impulso_previne_dados_nominais.painel_gestantes_lista_nominal source
+
 CREATE MATERIALIZED VIEW impulso_previne_dados_nominais.painel_gestantes_lista_nominal
 TABLESPACE pg_default
 AS WITH dados_anonimizados_demo_vicosa AS (
@@ -268,80 +270,79 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             COALESCE(tb1.gestante_documento_cpf, tb1.gestante_data_de_nascimento::text) AS cidadao_cpf_dt_nascimento,
             tb1.gestacao_data_dpp,
                 CASE
-                    WHEN date_part('month', tb1.gestacao_data_dpp) >= 1 AND date_part('month', tb1.gestacao_data_dpp) <= 4 THEN concat(date_part('year', tb1.gestacao_data_dpp), '.Q1')
-                    WHEN date_part('month', tb1.gestacao_data_dpp) >= 5 AND date_part('month', tb1.gestacao_data_dpp) <= 8 THEN concat(date_part('year', tb1.gestacao_data_dpp), '.Q2')
-                    WHEN date_part('month', tb1.gestacao_data_dpp) >= 9 AND date_part('month', tb1.gestacao_data_dpp) <= 12 THEN concat(date_part('year', tb1.gestacao_data_dpp), '.Q3')
-                    ELSE 'sem DUM'
+                    WHEN date_part('month'::text, tb1.gestacao_data_dpp) >= 1::double precision AND date_part('month'::text, tb1.gestacao_data_dpp) <= 4::double precision THEN concat(date_part('year'::text, tb1.gestacao_data_dpp), '.Q1')
+                    WHEN date_part('month'::text, tb1.gestacao_data_dpp) >= 5::double precision AND date_part('month'::text, tb1.gestacao_data_dpp) <= 8::double precision THEN concat(date_part('year'::text, tb1.gestacao_data_dpp), '.Q2')
+                    WHEN date_part('month'::text, tb1.gestacao_data_dpp) >= 9::double precision AND date_part('month'::text, tb1.gestacao_data_dpp) <= 12::double precision THEN concat(date_part('year'::text, tb1.gestacao_data_dpp), '.Q3')
+                    ELSE 'sem DUM'::text
                 END AS gestacao_quadrimestre,
                 CASE
-                    WHEN tb1.gestacao_data_dum IS NULL 
-                        OR tb1.gestacao_data_dpp < (CASE -- Ou DPP é menor que a data de início do quadrimestre anterior
-                            WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat((date_part('year', CURRENT_DATE) - 1), '-09-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE), '-01-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN concat(date_part('year', CURRENT_DATE), '-05-01')::DATE
-                         END)
-                        THEN NULL::integer
+                    WHEN tb1.gestacao_data_dum IS NULL OR tb1.gestacao_data_dpp <
+                    CASE
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 1::double precision AND date_part('month'::text, CURRENT_DATE) <= 4::double precision THEN concat(date_part('year'::text, CURRENT_DATE) - 1::double precision, '-09-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 5::double precision AND date_part('month'::text, CURRENT_DATE) <= 8::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-01-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 9::double precision AND date_part('month'::text, CURRENT_DATE) <= 12::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-05-01')::date
+                        ELSE NULL::date
+                    END THEN NULL::integer
                     ELSE tb1.gestacao_idade_gestacional_atual
                 END AS gestacao_idade_gestacional_atual,
                 CASE
-                    WHEN tb1.gestacao_data_dum IS NULL 
-                        OR tb1.gestacao_data_dpp < (CASE -- Ou DPP é menor que a data de início do quadrimestre anterior
-                            WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat((date_part('year', CURRENT_DATE) - 1), '-09-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE), '-01-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN concat(date_part('year', CURRENT_DATE), '-05-01')::DATE
-                         END)                        
-                        THEN NULL::integer
+                    WHEN tb1.gestacao_data_dum IS NULL OR tb1.gestacao_data_dpp <
+                    CASE
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 1::double precision AND date_part('month'::text, CURRENT_DATE) <= 4::double precision THEN concat(date_part('year'::text, CURRENT_DATE) - 1::double precision, '-09-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 5::double precision AND date_part('month'::text, CURRENT_DATE) <= 8::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-01-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 9::double precision AND date_part('month'::text, CURRENT_DATE) <= 12::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-05-01')::date
+                        ELSE NULL::date
+                    END THEN NULL::integer
                     ELSE tb1.gestacao_idade_gestacional_primeiro_atendimento
                 END AS gestacao_idade_gestacional_primeiro_atendimento,
             tb1.consulta_prenatal_ultima_data,
                 CASE
-                    WHEN tb1.gestacao_data_dum IS NULL 
-                        OR tb1.gestacao_data_dpp < (CASE -- Ou DPP é menor que a data de início do quadrimestre anterior
-                            WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat((date_part('year', CURRENT_DATE) - 1), '-09-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE), '-01-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN concat(date_part('year', CURRENT_DATE), '-05-01')::DATE
-                         END)     
-                        THEN NULL::bigint
+                    WHEN tb1.gestacao_data_dum IS NULL OR tb1.gestacao_data_dpp <
+                    CASE
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 1::double precision AND date_part('month'::text, CURRENT_DATE) <= 4::double precision THEN concat(date_part('year'::text, CURRENT_DATE) - 1::double precision, '-09-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 5::double precision AND date_part('month'::text, CURRENT_DATE) <= 8::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-01-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 9::double precision AND date_part('month'::text, CURRENT_DATE) <= 12::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-05-01')::date
+                        ELSE NULL::date
+                    END THEN NULL::bigint
                     ELSE tb1.consultas_pre_natal_validas
                 END AS consultas_pre_natal_validas,
                 CASE
-                    WHEN tb1.gestacao_data_dum IS NULL 
-                        OR tb1.gestacao_data_dpp < (CASE -- Ou DPP é menor que a data de início do quadrimestre anterior
-                            WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat((date_part('year', CURRENT_DATE) - 1), '-09-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE), '-01-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN concat(date_part('year', CURRENT_DATE), '-05-01')::DATE
-                         END) 
-                         THEN 3 -- Retona '-' para gestantes sem DUM
-                    WHEN tb1.atendimento_odontologico_realizado_valido THEN 1 -- Atend. odontológico identificado
-                    WHEN tb1.atendimento_odontologico_realizado_valido IS FALSE THEN 2  -- Atend. odontológico não identificado
+                    WHEN tb1.gestacao_data_dum IS NULL OR tb1.gestacao_data_dpp <
+                    CASE
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 1::double precision AND date_part('month'::text, CURRENT_DATE) <= 4::double precision THEN concat(date_part('year'::text, CURRENT_DATE) - 1::double precision, '-09-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 5::double precision AND date_part('month'::text, CURRENT_DATE) <= 8::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-01-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 9::double precision AND date_part('month'::text, CURRENT_DATE) <= 12::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-05-01')::date
+                        ELSE NULL::date
+                    END THEN 3
+                    WHEN tb1.atendimento_odontologico_realizado_valido THEN 1
+                    WHEN tb1.atendimento_odontologico_realizado_valido IS FALSE THEN 2
                     ELSE 0
                 END AS id_atendimento_odontologico,
                 CASE
-                    WHEN tb1.gestacao_data_dum IS NULL 
-                        OR tb1.gestacao_data_dpp < (CASE -- Ou DPP é menor que a data de início do quadrimestre anterior
-                            WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat((date_part('year', CURRENT_DATE) - 1), '-09-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE), '-01-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN concat(date_part('year', CURRENT_DATE), '-05-01')::DATE
-                         END) 
-                         THEN 5 -- Retona '-' para gestantes sem DUM
-                    WHEN tb1.exame_hiv_realizado_valido AND tb1.exame_sifilis_realizado_valido IS FALSE THEN 1 -- Apenas Ex. de HIV realizados
-                    WHEN tb1.exame_sifilis_realizado_valido AND tb1.exame_hiv_realizado_valido IS FALSE THEN 2 -- Apenas Ex. de Sífilis realizados
-                    WHEN tb1.exame_sifilis_realizado_valido IS FALSE AND tb1.exame_hiv_realizado_valido IS FALSE THEN 3 -- Nenhum exame realizado
-                    WHEN tb1.exame_sifilis_realizado_valido AND tb1.exame_hiv_realizado_valido THEN 4 -- Os dois exames realizados
+                    WHEN tb1.gestacao_data_dum IS NULL OR tb1.gestacao_data_dpp <
+                    CASE
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 1::double precision AND date_part('month'::text, CURRENT_DATE) <= 4::double precision THEN concat(date_part('year'::text, CURRENT_DATE) - 1::double precision, '-09-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 5::double precision AND date_part('month'::text, CURRENT_DATE) <= 8::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-01-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 9::double precision AND date_part('month'::text, CURRENT_DATE) <= 12::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-05-01')::date
+                        ELSE NULL::date
+                    END THEN 5
+                    WHEN tb1.exame_hiv_realizado_valido AND tb1.exame_sifilis_realizado_valido IS FALSE THEN 1
+                    WHEN tb1.exame_sifilis_realizado_valido AND tb1.exame_hiv_realizado_valido IS FALSE THEN 2
+                    WHEN tb1.exame_sifilis_realizado_valido IS FALSE AND tb1.exame_hiv_realizado_valido IS FALSE THEN 3
+                    WHEN tb1.exame_sifilis_realizado_valido AND tb1.exame_hiv_realizado_valido THEN 4
                     ELSE NULL::integer
                 END AS id_exame_hiv_sifilis,
                 CASE
-                    WHEN tb1.possui_registro_aborto = 'Sim'::text THEN 10 -- Gestantes com registro de aborto
-                    WHEN tb1.gestacao_data_dpp IS NULL
-                        OR tb1.gestacao_data_dpp < (CASE -- Ou DPP é menor que a data de início do quadrimestre anterior
-                            WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat((date_part('year', CURRENT_DATE) - 1), '-09-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN concat(date_part('year', CURRENT_DATE), '-01-01')::DATE
-                            WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN concat(date_part('year', CURRENT_DATE), '-05-01')::DATE
-                         END) 
-                         THEN 11 -- Gestantes sem DUM 
-                    WHEN tb1.gestacao_data_dpp > CURRENT_DATE THEN 8 -- Gestantes ativas
-                    WHEN tb1.gestacao_data_dpp <= CURRENT_DATE THEN 9 -- Gestantes encerradas
-                    WHEN tb1.gestacao_data_dpp IS NULL THEN 11 -- Gestantes sem DUM 
+                    WHEN tb1.possui_registro_aborto = 'Sim'::text THEN 10
+                    WHEN tb1.gestacao_data_dpp IS NULL OR tb1.gestacao_data_dpp <
+                    CASE
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 1::double precision AND date_part('month'::text, CURRENT_DATE) <= 4::double precision THEN concat(date_part('year'::text, CURRENT_DATE) - 1::double precision, '-09-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 5::double precision AND date_part('month'::text, CURRENT_DATE) <= 8::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-01-01')::date
+                        WHEN date_part('month'::text, CURRENT_DATE) >= 9::double precision AND date_part('month'::text, CURRENT_DATE) <= 12::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-05-01')::date
+                        ELSE NULL::date
+                    END THEN 11
+                    WHEN tb1.gestacao_data_dpp > CURRENT_DATE THEN 8
+                    WHEN tb1.gestacao_data_dpp <= CURRENT_DATE THEN 9
                     ELSE NULL::integer
                 END AS id_status_usuario,
                 CASE
@@ -386,6 +387,3 @@ AS WITH dados_anonimizados_demo_vicosa AS (
      LEFT JOIN data_registro_producao drp ON drp.municipio_id_sus::text = tabela_aux.municipio_id_sus::text AND drp.equipe_ine = tabela_aux.equipe_ine
      LEFT JOIN listas_de_codigos.municipios tb2 ON tabela_aux.municipio_id_sus::bpchar = tb2.id_sus
 WITH DATA;
-
--- View indexes:
-CREATE INDEX painel_gestantes_lista_nominal_chave_id_gestacao_idx ON impulso_previne_dados_nominais.painel_gestantes_lista_nominal USING btree (chave_id_gestacao);
