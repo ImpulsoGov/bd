@@ -70,9 +70,14 @@ WITH possui_diabetes_autoreferida AS (
 )
 -- NUMERADOR
 , hemoglobina_glicada AS (
+WITH ultima_ficha_procedimento AS (
 	SELECT 
 		dd.chave_paciente,
-		MAX(tempo.dt_registro) AS dt_solicitacao_hemoglobina_glicada_mais_recente
+		tempo.dt_registro AS dt_solicitacao_hemoglobina_glicada_mais_recente,
+		eq.nu_ine AS equipe_ine_procedimento,
+		eq.no_equipe AS equipe_nome_procedimento,
+		prof.no_profissional AS profissional_nome_procedimento,
+		ROW_NUMBER() OVER (PARTITION BY dd.chave_paciente ORDER BY tempo.dt_registro DESC, tfaip.co_dim_procedimento_solicitado DESC) = 1 AS ultimo_procedimento
 	FROM tb_fat_atd_ind_procedimentos tfaip
 	JOIN tb_fat_cidadao_pec tfcp 
 		ON tfaip.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
@@ -84,11 +89,19 @@ WITH possui_diabetes_autoreferida AS (
 		ON cbo.co_seq_dim_cbo = tfaip.co_dim_cbo_1
 	JOIN tb_dim_tempo tempo 
 		ON tempo.co_seq_dim_tempo = tfaip.co_dim_tempo
+	LEFT JOIN tb_dim_equipe eq
+		ON eq.co_seq_dim_equipe = tfaip.co_dim_equipe_1
+	LEFT JOIN tb_dim_profissional prof
+		ON prof.co_seq_dim_profissional = tfaip.co_dim_profissional_1
 	WHERE (cbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text])) 
 		AND (tdp.co_proced::text = ANY (ARRAY['0202010503'::text, 'ABEX008'::text])) 
 		AND tempo.dt_registro <= current_date
 		AND tempo.nu_ano <> 3000 
-	GROUP BY 1
+	)
+	SELECT 
+		*
+	FROM ultima_ficha_procedimento
+	WHERE ultimo_procedimento IS TRUE 
 )
 , consulta_diabetes AS (
 	SELECT 
@@ -117,33 +130,33 @@ WITH possui_diabetes_autoreferida AS (
 )
 -- Informações de vinculação
 , cadastro_individual_recente AS (
--- Dados do cadastro individual (dados para vinculação de equipe e ACS da mulher)
-		SELECT 
-			dd.chave_paciente,
-			tdt.dt_registro AS data_ultimo_cadastro,
-			tfci.nu_micro_area AS micro_area_cad_individual,
-			NULLIF(uns.nu_cnes::text, '-'::text) AS estabelecimento_cnes_cadastro,
-			NULLIF(uns.no_unidade_saude::text, 'Não informado'::text) AS estabelecimento_nome_cadastro,
-			NULLIF(eq.nu_ine::text, '-'::text) AS equipe_ine_cadastro,
-			NULLIF(eq.no_equipe::text, 'SEM EQUIPE'::text) AS equipe_nome_cadastro,
-			NULLIF(acs.no_profissional::text, 'SEM EQUIPE'::text) AS acs_nome_cadastro,
-			COALESCE(cidadaoterritoriorecente.st_mudou_se,0) AS se_mudou,
-			row_number() OVER (PARTITION BY dd.chave_paciente ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_individual
-		FROM tb_fat_cad_individual tfci
-		JOIN tb_fat_cidadao_pec tfcp
-			ON tfcp.co_seq_fat_cidadao_pec = tfci.co_fat_cidadao_pec
-		JOIN denominador_diabeticos dd 
-			ON dd.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
-		LEFT JOIN tb_dim_tempo tdt 
-			ON tdt.co_seq_dim_tempo = tfci.co_dim_tempo
-		LEFT JOIN tb_dim_equipe eq
-			ON eq.co_seq_dim_equipe = tfci.co_dim_equipe
-		LEFT JOIN tb_dim_profissional acs
-			ON acs.co_seq_dim_profissional = tfci.co_dim_profissional
-		LEFT JOIN tb_dim_unidade_saude uns
-			ON uns.co_seq_dim_unidade_saude = tfci.co_dim_unidade_saude 
-		LEFT JOIN tb_fat_cidadao_territorio cidadaoterritoriorecente 
-			ON cidadaoterritoriorecente.co_fat_cad_individual = tfci.co_seq_fat_cad_individual
+-- Dados do cadastro individual (dados para vinculação de equipe e ACS do cidadao)
+				SELECT 
+						dd.chave_paciente,
+						tdt.dt_registro AS data_ultimo_cadastro,
+						tfci.nu_micro_area AS micro_area_cad_individual,
+						uns.nu_cnes AS estabelecimento_cnes_cadastro,
+						uns.no_unidade_saude AS estabelecimento_nome_cadastro,
+						eq.nu_ine AS equipe_ine_cadastro,
+						eq.no_equipe AS equipe_nome_cadastro,
+						acs.no_profissional AS acs_nome_cadastro,
+						COALESCE(cidadaoterritoriorecente.st_mudou_se,0) AS se_mudou,
+						ROW_NUMBER() OVER (PARTITION BY dd.chave_paciente ORDER BY tfci.co_seq_fat_cad_individual DESC) = 1 AS ultimo_cadastro_individual
+				FROM tb_fat_cad_individual tfci
+				JOIN tb_fat_cidadao_pec tfcp
+						ON tfcp.co_seq_fat_cidadao_pec = tfci.co_fat_cidadao_pec
+				JOIN denominador_diabeticos dd  
+						ON dd.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+				LEFT JOIN tb_dim_tempo tdt 
+						ON tdt.co_seq_dim_tempo = tfci.co_dim_tempo
+				LEFT JOIN tb_dim_equipe eq
+						ON eq.co_seq_dim_equipe = tfci.co_dim_equipe
+				LEFT JOIN tb_dim_profissional acs
+						ON acs.co_seq_dim_profissional = tfci.co_dim_profissional
+				LEFT JOIN tb_dim_unidade_saude uns
+						ON uns.co_seq_dim_unidade_saude = tfci.co_dim_unidade_saude 
+				LEFT JOIN tb_fat_cidadao_territorio cidadaoterritoriorecente 
+						ON cidadaoterritoriorecente.co_fat_cad_individual = tfci.co_seq_fat_cad_individual
 ) 
 , visita_domiciliar_recente AS (
 -- Dados das visitas domiciliares realizadas pelos ACS (dados para vinculação de ACS da mulher)
@@ -151,7 +164,7 @@ WITH possui_diabetes_autoreferida AS (
 			dd.chave_paciente,
 			tfcp.co_seq_fat_cidadao_pec,
 			tdt.dt_registro AS data_visita_acs,
-			NULLIF(acs.no_profissional::text, 'SEM EQUIPE'::text) AS acs_nome_visita,
+			acs.no_profissional AS acs_nome_visita,
 			row_number() OVER (PARTITION BY dd.chave_paciente ORDER BY tdt.dt_registro DESC) = 1 AS ultima_visita_domiciliar
 		FROM tb_fat_visita_domiciliar visitadomiciliar
 		JOIN tb_fat_cidadao_pec tfcp
@@ -196,11 +209,12 @@ WITH possui_diabetes_autoreferida AS (
 	SELECT 
 		dd.chave_paciente,
 		tdt.dt_registro AS dt_ultima_consulta,
-		NULLIF(unidadeatendimentorecente.nu_cnes::text, '-'::text) AS estabelecimento_cnes_atendimento,
-		NULLIF(unidadeatendimentorecente.no_unidade_saude::text, 'Não informado'::text) AS estabelecimento_nome_atendimento,
-		NULLIF(equipeatendimentorecente.nu_ine::text, '-'::text) AS equipe_ine_atendimento,
-		NULLIF(equipeatendimentorecente.no_equipe::text, 'SEM EQUIPE'::text) AS equipe_nome_atendimento,
-		row_number() OVER (PARTITION BY dd.chave_paciente ORDER BY tdt.dt_registro DESC) = 1  AS ultimo_atendimento
+		unidadeatendimentorecente.nu_cnes AS estabelecimento_cnes_atendimento,
+		unidadeatendimentorecente.no_unidade_saude AS estabelecimento_nome_atendimento,
+		equipeatendimentorecente.nu_ine AS equipe_ine_atendimento,
+		equipeatendimentorecente.no_equipe AS equipe_nome_atendimento,
+		prof.no_profissional AS profissional_nome_atendimento,
+		ROW_NUMBER() OVER (PARTITION BY dd.chave_paciente ORDER BY tdt.dt_registro DESC) = 1  AS ultimo_atendimento
 	FROM tb_fat_atendimento_individual atendimento  
 	JOIN tb_dim_tempo tdt 
 		ON atendimento.co_dim_tempo = tdt.co_seq_dim_tempo
@@ -211,7 +225,9 @@ WITH possui_diabetes_autoreferida AS (
 	LEFT JOIN tb_dim_equipe equipeatendimentorecente 
 		ON equipeatendimentorecente.co_seq_dim_equipe = atendimento.co_dim_equipe_1
 	LEFT JOIN tb_dim_unidade_saude unidadeatendimentorecente 
-		ON unidadeatendimentorecente.co_seq_dim_unidade_saude = atendimento.co_dim_unidade_saude_1                             
+		ON unidadeatendimentorecente.co_seq_dim_unidade_saude = atendimento.co_dim_unidade_saude_1
+	LEFT JOIN tb_dim_profissional prof
+		ON prof.co_seq_dim_profissional = atendimento.co_dim_profissional_1
 )
 	SELECT 
 		CASE
@@ -267,10 +283,14 @@ WITH possui_diabetes_autoreferida AS (
 	cir.estabelecimento_nome_cadastro,
 	ar.equipe_ine_atendimento,
 	cir.equipe_ine_cadastro,
+	hg.equipe_ine_procedimento,
 	ar.equipe_nome_atendimento,
 	cir.equipe_nome_cadastro,
+	hg.equipe_nome_procedimento,
 	cir.acs_nome_cadastro,
 	vdr.acs_nome_visita,
+	ar.profissional_nome_atendimento,
+	hg.profissional_nome_procedimento,
 	dd.possui_diabetes_autoreferida,
 	dd.possui_diabetes_diagnosticada,
 	cir.data_ultimo_cadastro,
@@ -295,4 +315,3 @@ LEFT JOIN cadastro_domiciliar_recente cdr
 LEFT JOIN atendimento_recente ar 
 	ON ar.chave_paciente = dd.chave_paciente
 	AND ar.ultimo_atendimento IS TRUE 
-

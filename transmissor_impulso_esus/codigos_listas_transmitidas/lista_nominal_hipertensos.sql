@@ -70,9 +70,14 @@ WITH possui_hipertensao_autorreferida AS (
 )
 -- NUMERADOR
 , afericao_pressao AS (
+    WITH ultima_ficha_procedimento AS (
         SELECT 
                 dh.chave_paciente,
-                MAX(tempo.dt_registro) AS dt_afericao_pressao_mais_recente
+                tempo.dt_registro AS dt_afericao_pressao_mais_recente,
+                eq.nu_ine AS equipe_ine_procedimento,
+                eq.no_equipe AS equipe_nome_procedimento,
+                prof.no_profissional AS profissional_nome_procedimento,
+                ROW_NUMBER() OVER (PARTITION BY dh.chave_paciente ORDER BY tempo.dt_registro DESC, fichaproced.co_seq_fat_proced_atend_proced DESC) = 1 AS ultimo_procedimento
         FROM tb_fat_proced_atend_proced fichaproced
         JOIN tb_fat_cidadao_pec tfcp 
                 ON fichaproced.co_fat_cidadao_pec = tfcp.co_seq_fat_cidadao_pec 
@@ -84,11 +89,19 @@ WITH possui_hipertensao_autorreferida AS (
                 ON fichaproced.co_dim_tempo = tempo.co_seq_dim_tempo
         JOIN tb_dim_cbo cbo 
                 ON fichaproced.co_dim_cbo = cbo.co_seq_dim_cbo 
+        LEFT JOIN tb_dim_equipe eq
+                ON eq.co_seq_dim_equipe = fichaproced.co_dim_equipe
+        LEFT JOIN tb_dim_profissional prof
+                ON prof.co_seq_dim_profissional = fichaproced.co_dim_profissional
         WHERE  (proced.co_proced::text = ANY (ARRAY['0301100039'::character varying::text, 'ABPG033'::character varying::text])) 
                 AND (cbo.nu_cbo::text ~~ ANY (ARRAY['2251%'::text, '2252%'::text, '2253%'::text, '2231%'::text, '2235%'::text, '3222%'::text]))
                 AND tempo.dt_registro <= current_date
                 AND tempo.nu_ano <> 3000 
-        GROUP BY 1
+    )
+    SELECT 
+        *
+    FROM ultima_ficha_procedimento
+    WHERE ultimo_procedimento IS TRUE 
 )
 , consulta_hipertensao AS (
         SELECT 
@@ -118,16 +131,16 @@ WITH possui_hipertensao_autorreferida AS (
 )
 -- Informações de vinculação
 , cadastro_individual_recente AS (
--- Dados do cadastro individual (dados para vinculação de equipe e ACS da mulher)
+-- Dados do cadastro individual (dados para vinculação de equipe e ACS do cidadao)
                 SELECT 
                         dh.chave_paciente,
                         tdt.dt_registro AS data_ultimo_cadastro,
                         tfci.nu_micro_area AS micro_area_cad_individual,
-                        NULLIF(uns.nu_cnes::text, '-'::text) AS estabelecimento_cnes_cadastro,
-            NULLIF(uns.no_unidade_saude::text, 'Não informado'::text) AS estabelecimento_nome_cadastro,
-            NULLIF(eq.nu_ine::text, '-'::text) AS equipe_ine_cadastro,
-            NULLIF(eq.no_equipe::text, 'SEM EQUIPE'::text) AS equipe_nome_cadastro,
-            NULLIF(acs.no_profissional::text, 'SEM EQUIPE'::text) AS acs_nome_cadastro,
+                        uns.nu_cnes AS estabelecimento_cnes_cadastro,
+                        uns.no_unidade_saude AS estabelecimento_nome_cadastro,
+                        eq.nu_ine AS equipe_ine_cadastro,
+                        eq.no_equipe AS equipe_nome_cadastro,
+                        acs.no_profissional AS acs_nome_cadastro,
                         COALESCE(cidadaoterritoriorecente.st_mudou_se,0) AS se_mudou,
                         ROW_NUMBER() OVER (PARTITION BY dh.chave_paciente ORDER BY tfci.co_seq_fat_cad_individual DESC) = 1 AS ultimo_cadastro_individual
                 FROM tb_fat_cad_individual tfci
@@ -150,9 +163,9 @@ WITH possui_hipertensao_autorreferida AS (
 -- Dados das visitas domiciliares realizadas pelos ACS (dados para vinculação de ACS da mulher)
                 SELECT 
                         dh.chave_paciente,
-                    tfcp.co_seq_fat_cidadao_pec,
+                        tfcp.co_seq_fat_cidadao_pec,
                         tdt.dt_registro AS data_visita_acs,
-                        NULLIF(acs.no_profissional::text, 'SEM EQUIPE'::text) AS acs_nome_visita,
+                        acs.no_profissional AS acs_nome_visita,
                         ROW_NUMBER() OVER (PARTITION BY dh.chave_paciente ORDER BY tdt.dt_registro DESC) = 1 AS ultima_visita_domiciliar
                 FROM tb_fat_visita_domiciliar visitadomiciliar
                 JOIN tb_fat_cidadao_pec tfcp
@@ -197,10 +210,11 @@ WITH possui_hipertensao_autorreferida AS (
         SELECT 
                 dh.chave_paciente,
                 tdt.dt_registro AS dt_ultima_consulta,
-                NULLIF(unidadeatendimentorecente.nu_cnes::text, '-'::text) AS estabelecimento_cnes_atendimento,
-            NULLIF(unidadeatendimentorecente.no_unidade_saude::text, 'Não informado'::text) AS estabelecimento_nome_atendimento,
-            NULLIF(equipeatendimentorecente.nu_ine::text, '-'::text) AS equipe_ine_atendimento,
-            NULLIF(equipeatendimentorecente.no_equipe::text, 'SEM EQUIPE'::text) AS equipe_nome_atendimento,
+                unidadeatendimentorecente.nu_cnes AS estabelecimento_cnes_atendimento,
+                unidadeatendimentorecente.no_unidade_saude AS estabelecimento_nome_atendimento,
+                equipeatendimentorecente.nu_ine AS equipe_ine_atendimento,
+                equipeatendimentorecente.no_equipe AS equipe_nome_atendimento,
+                prof.no_profissional AS profissional_nome_atendimento,
                 ROW_NUMBER() OVER (PARTITION BY dh.chave_paciente ORDER BY tdt.dt_registro DESC) = 1  AS ultimo_atendimento
         FROM tb_fat_atendimento_individual atendimento  
         JOIN tb_dim_tempo tdt 
@@ -211,6 +225,8 @@ WITH possui_hipertensao_autorreferida AS (
                 ON dh.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
         LEFT JOIN tb_dim_equipe equipeatendimentorecente 
                 ON equipeatendimentorecente.co_seq_dim_equipe = atendimento.co_dim_equipe_1
+        LEFT JOIN tb_dim_profissional prof
+                ON prof.co_seq_dim_profissional = atendimento.co_dim_profissional_1
         LEFT JOIN tb_dim_unidade_saude unidadeatendimentorecente 
                 ON unidadeatendimentorecente.co_seq_dim_unidade_saude = atendimento.co_dim_unidade_saude_1                             
 )
@@ -268,10 +284,14 @@ WITH possui_hipertensao_autorreferida AS (
     cir.estabelecimento_nome_cadastro,
     ar.equipe_ine_atendimento,
     cir.equipe_ine_cadastro,
+    ap.equipe_ine_procedimento,
     ar.equipe_nome_atendimento,
     cir.equipe_nome_cadastro,
+    ap.equipe_nome_procedimento,
     cir.acs_nome_cadastro,
     vdr.acs_nome_visita,
+    ar.profissional_nome_atendimento,
+    ap.profissional_nome_procedimento,
     dh.possui_hipertensao_autorreferida,
     dh.possui_hipertensao_diagnosticada,
     cir.data_ultimo_cadastro,
@@ -296,4 +316,3 @@ LEFT JOIN cadastro_domiciliar_recente cdr
 LEFT JOIN atendimento_recente ar 
         ON ar.chave_paciente = dh.chave_paciente
         AND ar.ultimo_atendimento IS TRUE 
-
