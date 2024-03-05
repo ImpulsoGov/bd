@@ -38,6 +38,7 @@ CREATE TABLE dados_ip_impulsolandia.lista_nominal_vacinacao (
 	estabelecimento_nome_atendimento varchar(500) NULL,
 	equipe_ine_atendimento varchar(20) NULL,
 	equipe_nome_atendimento varchar(255) NULL,
+	profissional_nome_atendimento varchar(255) NULL,
 	data_ultimo_atendimento_individual date NULL,
 	data_ultima_vista_domiciliar date NULL,
 	acs_nome_visita varchar(255) NULL,
