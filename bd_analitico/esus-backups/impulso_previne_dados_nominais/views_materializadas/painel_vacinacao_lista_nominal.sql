@@ -415,10 +415,28 @@ AS WITH dados_anonimizados_demo_vicosa AS (
         ), data_registro_producao AS (
          SELECT une_as_bases.municipio_id_sus,
             impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_cadastro, une_as_bases.equipe_ine_atendimento)::text) AS equipe_ine,
-            max(GREATEST(une_as_bases.data_1dose_polio, une_as_bases.data_2dose_polio, une_as_bases.data_3dose_polio, une_as_bases.data_1dose_penta, une_as_bases.data_2dose_penta, une_as_bases.data_3dose_penta)) AS dt_registro_producao_mais_recente,
-            min(LEAST(une_as_bases.data_1dose_polio, une_as_bases.data_2dose_polio, une_as_bases.data_3dose_polio, une_as_bases.data_1dose_penta, une_as_bases.data_2dose_penta, une_as_bases.data_3dose_penta)) AS dt_registro_producao_mais_antigo
+            max(GREATEST(une_as_bases.data_1dose_polio, 
+			            une_as_bases.data_2dose_polio, 
+			            une_as_bases.data_3dose_polio, 
+			            une_as_bases.data_1dose_penta, 
+			            une_as_bases.data_2dose_penta, 
+			            une_as_bases.data_3dose_penta, 
+			            une_as_bases.data_ultimo_cadastro_individual,
+			            une_as_bases.data_ultimo_atendimento_individual,
+			            une_as_bases.data_ultima_vista_domiciliar
+			            )) AS dt_registro_producao_mais_recente,
+            min(LEAST(une_as_bases.data_1dose_polio, 
+			            une_as_bases.data_2dose_polio, 
+			            une_as_bases.data_3dose_polio, 
+			            une_as_bases.data_1dose_penta, 
+			            une_as_bases.data_2dose_penta, 
+			            une_as_bases.data_3dose_penta, 
+			            une_as_bases.data_ultimo_cadastro_individual,
+			            une_as_bases.data_ultimo_atendimento_individual,
+			            une_as_bases.data_ultima_vista_domiciliar
+			            )) AS dt_registro_producao_mais_antigo
            FROM une_as_bases
-          GROUP BY une_as_bases.municipio_id_sus, (impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_cadastro, une_as_bases.equipe_ine_atendimento)::text))
+          GROUP BY 1,2
         ), tabela_aux AS (
          SELECT tb1.municipio_id_sus,
             tb1.cidadao_nome,
@@ -472,9 +490,9 @@ AS WITH dados_anonimizados_demo_vicosa AS (
                     WHEN tb1.data_1dose_penta IS NULL AND tb1.data_2dose_penta IS NULL AND tb1.data_3dose_penta IS NULL AND tb1.prazo_1dose_penta >= CURRENT_DATE AND tb1.prazo_2dose_penta >= CURRENT_DATE AND tb1.prazo_3dose_penta >= CURRENT_DATE THEN 4
                     ELSE NULL::integer
                 END AS id_status_penta,
-            COALESCE(tb1.acs_nome_visita, tb1.acs_nome_cadastro, 'SEM VISITA OU CADASTRO'::text) AS acs_nome,
+            COALESCE(tb1.acs_nome_visita, tb1.acs_nome_cadastro, '(SEM VISITA OU CADASTRO)'::text) AS acs_nome,
             impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento)::text) AS equipe_ine,
-            COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento, 'SEM EQUIPE'::character varying) AS equipe_nome,
+            COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento, '(SEM EQUIPE)'::character varying) AS equipe_nome,
             CURRENT_DATE AS atualizacao_data,
             tb1.criacao_data::date AS criacao_data
            FROM une_as_bases tb1
