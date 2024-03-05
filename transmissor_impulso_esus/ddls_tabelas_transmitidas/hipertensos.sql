@@ -24,11 +24,11 @@ CREATE TABLE dados_ip_impulsolandia.lista_nominal_hipertensos (
 	equipe_ine_procedimento text NULL,
 	equipe_nome_atendimento text NULL,
 	equipe_nome_cadastro text NULL,
-	equipe_nome_procedimento
+	equipe_nome_procedimento NULL, 
 	acs_nome_cadastro text NULL,
 	acs_nome_visita text NULL,
 	profissional_nome_atendimento text NULL,
-    profissional_nome_procedimento text NULL,
+    	profissional_nome_procedimento text NULL,
 	possui_hipertensao_autorreferida bool NULL,
 	possui_hipertensao_diagnosticada bool NULL,
 	data_ultimo_cadastro date NULL,
