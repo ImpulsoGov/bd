@@ -23,14 +23,14 @@ AS WITH dados_transmissoes_recentes AS (
                 ELSE TRIM(tb1_1.ine_equipe_exame)
             END AS ine_equipe_exame,
             CASE 
-                WHEN tb1_1.nome_equipe_exame = ' ' OR tb1_1.nome_equipe_exame LIKE '%SEM EQUIPE%' 
+                WHEN tb1_1.nome_equipe_exame = ' ' OR tb1_1.nome_equipe_exame IS NULL OR tb1_1.nome_equipe_exame LIKE '%SEM EQUIPE%' 
                     THEN NULL 
                 ELSE TRIM(tb1_1.nome_equipe_exame)
             END AS nome_equipe_exame,
             CASE 
                 WHEN UPPER(tb1_1.nome_profissional_exame) LIKE '%PROFISSIONAL NÃO CADASTRADO%'
                     THEN 'ERRO CADASTRO PROFISSIONAL'
-                WHEN tb1_1.nome_profissional_exame = ' '  or UPPER(tb1_1.nome_profissional_exame) LIKE '%NÃO INFORMADO%'
+                WHEN tb1_1.nome_profissional_exame = ' ' OR tb1_1.nome_profissional_exame IS NULL OR UPPER(tb1_1.nome_profissional_exame) LIKE '%NÃO INFORMADO%'
                     THEN NULL 
                 ELSE TRIM(UPPER(tb1_1.nome_profissional_exame))
             END AS nome_profissional_exame,
@@ -43,14 +43,14 @@ AS WITH dados_transmissoes_recentes AS (
                 ELSE TRIM(tb1_1.equipe_ine_cadastro)
             END AS equipe_ine_cadastro,
             CASE 
-                WHEN tb1_1.equipe_nome_cadastro = ' ' OR tb1_1.equipe_nome_cadastro LIKE '%SEM EQUIPE%' 
+                WHEN tb1_1.equipe_nome_cadastro = ' ' OR tb1_1.equipe_nome_cadastro IS NULL OR tb1_1.equipe_nome_cadastro LIKE '%SEM EQUIPE%' 
                     THEN NULL 
                 ELSE TRIM(tb1_1.equipe_nome_cadastro)
             END AS equipe_nome_cadastro,
             CASE 
                 WHEN UPPER(tb1_1.acs_nome_cadastro) LIKE '%PROFISSIONAL NÃO CADASTRADO%'
                     THEN 'ERRO CADASTRO PROFISSIONAL'
-                WHEN tb1_1.acs_nome_cadastro = ' '  or UPPER(tb1_1.acs_nome_cadastro) LIKE '%NÃO INFORMADO%'
+                WHEN tb1_1.acs_nome_cadastro = ' ' OR tb1_1.acs_nome_cadastro IS NULL OR UPPER(tb1_1.acs_nome_cadastro) LIKE '%NÃO INFORMADO%'
                     THEN NULL 
                 ELSE TRIM(UPPER(tb1_1.acs_nome_cadastro))
             END AS acs_nome_cadastro,
@@ -63,21 +63,21 @@ AS WITH dados_transmissoes_recentes AS (
                 ELSE TRIM(tb1_1.equipe_ine_ultimo_atendimento)
             END AS equipe_ine_ultimo_atendimento,
             CASE 
-                WHEN tb1_1.equipe_nome_ultimo_atendimento = ' ' OR tb1_1.equipe_nome_ultimo_atendimento LIKE '%SEM EQUIPE%' 
+                WHEN tb1_1.equipe_nome_ultimo_atendimento = ' ' OR tb1_1.equipe_nome_ultimo_atendimento IS NULL OR tb1_1.equipe_nome_ultimo_atendimento LIKE '%SEM EQUIPE%' 
                     THEN NULL 
                 ELSE TRIM(tb1_1.equipe_nome_ultimo_atendimento)
             END AS equipe_nome_ultimo_atendimento,
             CASE 
                 WHEN UPPER(tb1_1.acs_nome_ultimo_atendimento) LIKE '%PROFISSIONAL NÃO CADASTRADO%'
                     THEN 'ERRO CADASTRO PROFISSIONAL'
-                WHEN tb1_1.acs_nome_ultimo_atendimento = ' '  or UPPER(tb1_1.acs_nome_ultimo_atendimento) LIKE '%NÃO INFORMADO%'
+                WHEN tb1_1.acs_nome_ultimo_atendimento = ' '  OR tb1_1.acs_nome_ultimo_atendimento IS NULL OR UPPER(tb1_1.acs_nome_ultimo_atendimento) LIKE '%NÃO INFORMADO%'
                     THEN NULL 
                 ELSE TRIM(UPPER(tb1_1.acs_nome_ultimo_atendimento))
             END AS acs_nome_ultimo_atendimento,
             CASE 
                 WHEN UPPER(tb1_1.acs_nome_visita) LIKE '%PROFISSIONAL NÃO CADASTRADO%'
                     THEN 'ERRO CADASTRO PROFISSIONAL'
-                WHEN tb1_1.acs_nome_visita = ' '  or UPPER(tb1_1.acs_nome_visita) LIKE '%NÃO INFORMADO%'
+                WHEN tb1_1.acs_nome_visita = ' '  OR tb1_1.acs_nome_visita IS NULL OR UPPER(tb1_1.acs_nome_visita) LIKE '%NÃO INFORMADO%'
                     THEN NULL 
                 ELSE TRIM(UPPER(tb1_1.acs_nome_visita))
             END AS acs_nome_visita,
