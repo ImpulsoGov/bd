@@ -162,7 +162,7 @@ AS WITH dados_transmissoes_recentes AS (
             AND drp.ine_master = tabela_aux.ine_master
     ) , dados_demo_vicosa AS (
         SELECT 
-            '100111' AS municipio_id_sus,
+            '111111' AS municipio_id_sus,
             'Demo - Viçosa - MG' AS municipio_uf,
             upper(nomes.nome_ficticio) AS paciente_nome,
             concat(impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10, 99)::text) AS cidadao_cpf_dt_nascimento,
@@ -185,8 +185,7 @@ AS WITH dados_transmissoes_recentes AS (
             ON tf.seq_demo_viscosa = nomes.seq
         LEFT JOIN configuracoes.nomes_ficticios_hipertensos nomes2 
             ON tf.seq_demo_viscosa = nomes2.seq
-        WHERE municipio_id_sus = '317130' 
-            AND tf.equipe_nome != 'SEM EQUIPE RESPONSÁVEL'
+        WHERE municipio_id_sus = '140015' -- BONFIM - RR
 )
     SELECT 
         ddv.municipio_id_sus,
