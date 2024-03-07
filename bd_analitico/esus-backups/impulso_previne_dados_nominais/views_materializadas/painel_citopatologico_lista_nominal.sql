@@ -18,7 +18,7 @@ AS WITH dados_transmissoes_recentes AS (
             tb1_1.cnes_estabelecimento_exame,
             tb1_1.nome_estabelecimento_exame,
             CASE 
-                WHEN TRIM(tb1_1.ine_equipe_exame) = '-' OR tb1_1.ine_equipe_exame = ' ' 
+                WHEN TRIM(tb1_1.ine_equipe_exame) = '-' OR tb1_1.ine_equipe_exame = ' ' OR tb1_1.ine_equipe_exame IS NULL 
                     THEN NULL
                 ELSE TRIM(tb1_1.ine_equipe_exame)
             END AS ine_equipe_exame,
@@ -38,7 +38,7 @@ AS WITH dados_transmissoes_recentes AS (
             tb1_1.estabelecimento_nome_cadastro,
             tb1_1.estabelecimento_cnes_cadastro,
             CASE 
-                WHEN TRIM(tb1_1.equipe_ine_cadastro) = '-' OR tb1_1.equipe_ine_cadastro = ' ' 
+                WHEN TRIM(tb1_1.equipe_ine_cadastro) = '-' OR tb1_1.equipe_ine_cadastro = ' ' OR tb1_1.equipe_ine_cadastro IS NULL
                     THEN NULL
                 ELSE TRIM(tb1_1.equipe_ine_cadastro)
             END AS equipe_ine_cadastro,
@@ -58,7 +58,7 @@ AS WITH dados_transmissoes_recentes AS (
             tb1_1.estabelecimento_nome_ultimo_atendimento,
             tb1_1.estabelecimento_cnes_ultimo_atendimento,
             CASE 
-                WHEN TRIM(tb1_1.equipe_ine_ultimo_atendimento) = '-' OR tb1_1.equipe_ine_ultimo_atendimento = ' ' 
+                WHEN TRIM(tb1_1.equipe_ine_ultimo_atendimento) = '-' OR tb1_1.equipe_ine_ultimo_atendimento = ' ' OR tb1_1.equipe_ine_ultimo_atendimento IS NULL
                     THEN NULL
                 ELSE TRIM(tb1_1.equipe_ine_ultimo_atendimento)
             END AS equipe_ine_ultimo_atendimento,
