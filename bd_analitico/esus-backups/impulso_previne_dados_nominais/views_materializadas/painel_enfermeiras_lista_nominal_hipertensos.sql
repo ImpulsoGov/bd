@@ -1,141 +1,7 @@
 
 CREATE MATERIALIZED VIEW impulso_previne_dados_nominais.painel_enfermeiras_lista_nominal_hipertensos
 TABLESPACE pg_default
-AS WITH dados_anonimizados_demo_vicosa AS (
-         SELECT '100111'::character varying AS municipio_id_sus,
-            res.quadrimestre_atual,
-            res.realizou_afericao_ultimos_6_meses,
-            res.dt_afericao_pressao_mais_recente,
-            res.realizou_consulta_ultimos_6_meses,
-            res.dt_consulta_mais_recente,
-            res.co_seq_fat_cidadao_pec,
-            res.cidadao_cpf,
-            res.cidadao_cns,
-            upper(nomes.nome_ficticio) AS cidadao_nome,
-            res.cidadao_nome_social,
-            res.cidadao_sexo,
-            res.dt_nascimento,
-            res.estabelecimento_cnes_atendimento,
-            res.estabelecimento_cnes_cadastro,
-            res.estabelecimento_nome_atendimento,
-            res.estabelecimento_nome_cadastro,
-            res.equipe_ine_atendimento,
-            res.equipe_ine_cadastro,
-            res.equipe_nome_atendimento,
-            res.equipe_nome_cadastro,
-            upper(nomes2.nome_ficticio) AS acs_nome_cadastro,
-            upper(nomes2.nome_ficticio) AS acs_nome_visita,
-            res.possui_hipertensao_autorreferida,
-            res.possui_hipertensao_diagnosticada,
-            res.data_ultimo_cadastro,
-            res.dt_ultima_consulta,
-            res.se_faleceu,
-            res.se_mudou,
-            res.criacao_data
-           FROM ( SELECT tb1_1.municipio_id_sus,
-                    tb1_1.quadrimestre_atual,
-                    tb1_1.realizou_afericao_ultimos_6_meses,
-                    tb1_1.dt_afericao_pressao_mais_recente,
-                    tb1_1.realizou_consulta_ultimos_6_meses,
-                    tb1_1.dt_consulta_mais_recente,
-                    tb1_1.co_seq_fat_cidadao_pec,
-                    concat(impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10, 99)::text) AS cidadao_cpf,
-                    concat('7', impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10000, 99999)::text) AS cidadao_cns,
-                    tb1_1.cidadao_nome,
-                    row_number() OVER (PARTITION BY 0::integer) AS seq,
-                    tb1_1.cidadao_nome_social,
-                    tb1_1.cidadao_sexo,
-                    tb1_1.dt_nascimento,
-                    tb1_1.estabelecimento_cnes_atendimento,
-                    tb1_1.estabelecimento_cnes_cadastro,
-                    tb1_1.estabelecimento_nome_atendimento,
-                    tb1_1.estabelecimento_nome_cadastro,
-                    tb1_1.equipe_ine_atendimento,
-                    tb1_1.equipe_ine_cadastro,
-                    tb1_1.equipe_nome_atendimento,
-                    tb1_1.equipe_nome_cadastro,
-                    tb1_1.acs_nome_cadastro,
-                    tb1_1.acs_nome_visita,
-                    tb1_1.possui_hipertensao_autorreferida,
-                    tb1_1.possui_hipertensao_diagnosticada,
-                    tb1_1.data_ultimo_cadastro,
-                    tb1_1.dt_ultima_consulta,
-                    tb1_1.se_faleceu,
-                    tb1_1.se_mudou,
-                    tb1_1.criacao_data
-                   FROM impulso_previne_dados_nominais.lista_nominal_hipertensos_unificada tb1_1
-                   where tb1_1.municipio_id_sus::text = '317130'::text
-                   and tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
-             JOIN configuracoes.nomes_ficticios_hipertensos nomes ON res.seq = nomes.seq
-             JOIN configuracoes.nomes_ficticios_diabeticos nomes2 ON res.seq = nomes2.seq
-        ), dados_anonimizados_impulsolandia AS (
-         SELECT '111111'::character varying AS municipio_id_sus,
-            res.quadrimestre_atual,
-            res.realizou_afericao_ultimos_6_meses,
-            res.dt_afericao_pressao_mais_recente,
-            res.realizou_consulta_ultimos_6_meses,
-            res.dt_consulta_mais_recente,
-            res.co_seq_fat_cidadao_pec,
-            res.cidadao_cpf,
-            res.cidadao_cns,
-            upper(nomes.nome_ficticio) AS cidadao_nome,
-            res.cidadao_nome_social,
-            res.cidadao_sexo,
-            res.dt_nascimento,
-            res.estabelecimento_cnes_atendimento,
-            res.estabelecimento_cnes_cadastro,
-            res.estabelecimento_nome_atendimento,
-            res.estabelecimento_nome_cadastro,
-            res.equipe_ine_atendimento,
-            res.equipe_ine_cadastro,
-            res.equipe_nome_atendimento,
-            res.equipe_nome_cadastro,
-            upper(nomes2.nome_ficticio) AS acs_nome_cadastro,
-            upper(nomes2.nome_ficticio) AS acs_nome_visita,
-            res.possui_hipertensao_autorreferida,
-            res.possui_hipertensao_diagnosticada,
-            res.data_ultimo_cadastro,
-            res.dt_ultima_consulta,
-            res.se_faleceu,
-            res.se_mudou,
-            res.criacao_data
-           FROM ( SELECT tb1_1.municipio_id_sus,
-                    tb1_1.quadrimestre_atual,
-                    tb1_1.realizou_afericao_ultimos_6_meses,
-                    tb1_1.dt_afericao_pressao_mais_recente,
-                    tb1_1.realizou_consulta_ultimos_6_meses,
-                    tb1_1.dt_consulta_mais_recente,
-                    tb1_1.co_seq_fat_cidadao_pec,
-                    concat(impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10, 99)::text) AS cidadao_cpf,
-                    concat('7', impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10000, 99999)::text) AS cidadao_cns,
-                    tb1_1.cidadao_nome,
-                    row_number() OVER (PARTITION BY 0::integer) AS seq,
-                    tb1_1.cidadao_nome_social,
-                    tb1_1.cidadao_sexo,
-                    tb1_1.dt_nascimento,
-                    tb1_1.estabelecimento_cnes_atendimento,
-                    tb1_1.estabelecimento_cnes_cadastro,
-                    tb1_1.estabelecimento_nome_atendimento,
-                    tb1_1.estabelecimento_nome_cadastro,
-                    tb1_1.equipe_ine_atendimento,
-                    tb1_1.equipe_ine_cadastro,
-                    tb1_1.equipe_nome_atendimento,
-                    tb1_1.equipe_nome_cadastro,
-                    tb1_1.acs_nome_cadastro,
-                    tb1_1.acs_nome_visita,
-                    tb1_1.possui_hipertensao_autorreferida,
-                    tb1_1.possui_hipertensao_diagnosticada,
-                    tb1_1.data_ultimo_cadastro,
-                    tb1_1.dt_ultima_consulta,
-                    tb1_1.se_faleceu,
-                    tb1_1.se_mudou,
-                    tb1_1.criacao_data
-                   FROM impulso_previne_dados_nominais.lista_nominal_hipertensos_unificada tb1_1
-                   where tb1_1.municipio_id_sus::text = '317130'::text
-                   and tb1_1.equipe_ine_atendimento is not null and tb1_1.equipe_ine_cadastro is not null) res
-             JOIN configuracoes.nomes_ficticios_hipertensos nomes ON res.seq = nomes.seq
-             JOIN configuracoes.nomes_ficticios_diabeticos nomes2 ON res.seq = nomes2.seq
-        ), dados_transmissoes_recentes AS (
+AS WITH dados_transmissoes_recentes AS (
          SELECT tb1_1.municipio_id_sus,
             tb1_1.quadrimestre_atual,
             tb1_1.realizou_afericao_ultimos_6_meses,
@@ -153,12 +19,64 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             tb1_1.estabelecimento_cnes_cadastro,
             tb1_1.estabelecimento_nome_atendimento,
             tb1_1.estabelecimento_nome_cadastro,
-            tb1_1.equipe_ine_atendimento,
-            tb1_1.equipe_ine_cadastro,
-            tb1_1.equipe_nome_atendimento,
-            tb1_1.equipe_nome_cadastro,
-            tb1_1.acs_nome_cadastro,
-            tb1_1.acs_nome_visita,
+            CASE 
+                WHEN TRIM(tb1_1.equipe_ine_atendimento) = '-' OR tb1_1.equipe_ine_atendimento = ' ' OR tb1_1.equipe_ine_atendimento IS NULL 
+                    THEN NULL
+                ELSE TRIM(tb1_1.equipe_ine_atendimento)
+            END AS equipe_ine_atendimento,
+            CASE 
+                WHEN TRIM(tb1_1.equipe_ine_cadastro) = '-' OR tb1_1.equipe_ine_cadastro = ' ' OR tb1_1.equipe_ine_cadastro IS NULL 
+                    THEN NULL
+                ELSE TRIM(tb1_1.equipe_ine_cadastro)
+            END AS equipe_ine_cadastro,
+            CASE 
+                WHEN TRIM(tb1_1.equipe_ine_procedimento) = '-' OR tb1_1.equipe_ine_procedimento = ' ' OR tb1_1.equipe_ine_procedimento IS NULL 
+                    THEN NULL
+                ELSE TRIM(tb1_1.equipe_ine_procedimento)
+            END AS equipe_ine_procedimento,
+            CASE 
+                WHEN tb1_1.equipe_nome_atendimento = ' ' OR tb1_1.equipe_nome_atendimento IS NULL OR tb1_1.equipe_nome_atendimento LIKE '%SEM EQUIPE%' 
+                    THEN NULL 
+                ELSE TRIM(tb1_1.equipe_nome_atendimento)
+            END AS equipe_nome_atendimento,
+            CASE 
+                WHEN tb1_1.equipe_nome_cadastro = ' ' OR tb1_1.equipe_nome_cadastro IS NULL OR tb1_1.equipe_nome_cadastro LIKE '%SEM EQUIPE%' 
+                    THEN NULL 
+                ELSE TRIM(tb1_1.equipe_nome_cadastro)
+            END AS equipe_nome_cadastro,
+            CASE 
+                WHEN tb1_1.equipe_nome_procedimento = ' ' OR tb1_1.equipe_nome_procedimento IS NULL OR tb1_1.equipe_nome_procedimento LIKE '%SEM EQUIPE%' 
+                    THEN NULL 
+                ELSE TRIM(tb1_1.equipe_nome_procedimento)
+            END AS equipe_nome_procedimento,
+            CASE 
+                WHEN UPPER(tb1_1.acs_nome_cadastro) LIKE '%PROFISSIONAL NÃO CADASTRADO%'
+                    THEN 'ERRO CADASTRO PROFISSIONAL'
+                WHEN tb1_1.acs_nome_cadastro = ' ' OR tb1_1.acs_nome_cadastro IS NULL OR UPPER(tb1_1.acs_nome_cadastro) LIKE '%NÃO INFORMADO%'
+                    THEN NULL 
+                ELSE TRIM(UPPER(tb1_1.acs_nome_cadastro))
+            END AS acs_nome_cadastro,
+            CASE 
+                WHEN UPPER(tb1_1.acs_nome_visita) LIKE '%PROFISSIONAL NÃO CADASTRADO%'
+                    THEN 'ERRO CADASTRO PROFISSIONAL'
+                WHEN tb1_1.acs_nome_visita = ' ' OR tb1_1.acs_nome_visita IS NULL OR UPPER(tb1_1.acs_nome_visita) LIKE '%NÃO INFORMADO%'
+                    THEN NULL 
+                ELSE TRIM(UPPER(tb1_1.acs_nome_visita))
+            END AS acs_nome_visita,
+            CASE 
+                WHEN UPPER(tb1_1.profissional_nome_atendimento) LIKE '%PROFISSIONAL NÃO CADASTRADO%'
+                    THEN 'ERRO CADASTRO PROFISSIONAL'
+                WHEN tb1_1.profissional_nome_atendimento = ' ' OR tb1_1.profissional_nome_atendimento IS NULL OR UPPER(tb1_1.profissional_nome_atendimento) LIKE '%NÃO INFORMADO%'
+                    THEN NULL 
+                ELSE TRIM(UPPER(tb1_1.profissional_nome_atendimento))
+            END AS profissional_nome_atendimento,
+            CASE 
+                WHEN UPPER(tb1_1.profissional_nome_procedimento) LIKE '%PROFISSIONAL NÃO CADASTRADO%'
+                    THEN 'ERRO CADASTRO PROFISSIONAL'
+                WHEN tb1_1.profissional_nome_procedimento = ' ' OR tb1_1.profissional_nome_procedimento IS NULL OR UPPER(tb1_1.profissional_nome_procedimento) LIKE '%NÃO INFORMADO%'
+                    THEN NULL 
+                ELSE TRIM(UPPER(tb1_1.profissional_nome_procedimento))
+            END AS profissional_nome_procedimento,
             tb1_1.possui_hipertensao_autorreferida,
             tb1_1.possui_hipertensao_diagnosticada,
             tb1_1.data_ultimo_cadastro,
@@ -167,109 +85,13 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             tb1_1.se_mudou,
             tb1_1.criacao_data
            FROM impulso_previne_dados_nominais.lista_nominal_hipertensos_unificada tb1_1
-        ), une_as_bases AS (
-         SELECT dados_anonimizados_demo_vicosa.municipio_id_sus,
-            dados_anonimizados_demo_vicosa.quadrimestre_atual,
-            dados_anonimizados_demo_vicosa.realizou_afericao_ultimos_6_meses,
-            dados_anonimizados_demo_vicosa.dt_afericao_pressao_mais_recente,
-            dados_anonimizados_demo_vicosa.realizou_consulta_ultimos_6_meses,
-            dados_anonimizados_demo_vicosa.dt_consulta_mais_recente,
-            dados_anonimizados_demo_vicosa.co_seq_fat_cidadao_pec::text AS co_seq_fat_cidadao_pec,
-            dados_anonimizados_demo_vicosa.cidadao_cpf,
-            dados_anonimizados_demo_vicosa.cidadao_cns,
-            dados_anonimizados_demo_vicosa.cidadao_nome,
-            dados_anonimizados_demo_vicosa.cidadao_nome_social,
-            dados_anonimizados_demo_vicosa.cidadao_sexo,
-            dados_anonimizados_demo_vicosa.dt_nascimento,
-            dados_anonimizados_demo_vicosa.estabelecimento_cnes_atendimento,
-            dados_anonimizados_demo_vicosa.estabelecimento_cnes_cadastro,
-            dados_anonimizados_demo_vicosa.estabelecimento_nome_atendimento,
-            dados_anonimizados_demo_vicosa.estabelecimento_nome_cadastro,
-            dados_anonimizados_demo_vicosa.equipe_ine_atendimento,
-            dados_anonimizados_demo_vicosa.equipe_ine_cadastro,
-            dados_anonimizados_demo_vicosa.equipe_nome_atendimento,
-            dados_anonimizados_demo_vicosa.equipe_nome_cadastro,
-            dados_anonimizados_demo_vicosa.acs_nome_cadastro,
-            dados_anonimizados_demo_vicosa.acs_nome_visita,
-            dados_anonimizados_demo_vicosa.possui_hipertensao_autorreferida,
-            dados_anonimizados_demo_vicosa.possui_hipertensao_diagnosticada,
-            dados_anonimizados_demo_vicosa.data_ultimo_cadastro,
-            dados_anonimizados_demo_vicosa.dt_ultima_consulta,
-            dados_anonimizados_demo_vicosa.se_faleceu,
-            dados_anonimizados_demo_vicosa.se_mudou,
-            dados_anonimizados_demo_vicosa.criacao_data
-           FROM dados_anonimizados_demo_vicosa
-        UNION ALL
-         SELECT dados_anonimizados_impulsolandia.municipio_id_sus,
-            dados_anonimizados_impulsolandia.quadrimestre_atual,
-            dados_anonimizados_impulsolandia.realizou_afericao_ultimos_6_meses,
-            dados_anonimizados_impulsolandia.dt_afericao_pressao_mais_recente,
-            dados_anonimizados_impulsolandia.realizou_consulta_ultimos_6_meses,
-            dados_anonimizados_impulsolandia.dt_consulta_mais_recente,
-            dados_anonimizados_impulsolandia.co_seq_fat_cidadao_pec::text AS co_seq_fat_cidadao_pec,
-            dados_anonimizados_impulsolandia.cidadao_cpf,
-            dados_anonimizados_impulsolandia.cidadao_cns,
-            dados_anonimizados_impulsolandia.cidadao_nome,
-            dados_anonimizados_impulsolandia.cidadao_nome_social,
-            dados_anonimizados_impulsolandia.cidadao_sexo,
-            dados_anonimizados_impulsolandia.dt_nascimento,
-            dados_anonimizados_impulsolandia.estabelecimento_cnes_atendimento,
-            dados_anonimizados_impulsolandia.estabelecimento_cnes_cadastro,
-            dados_anonimizados_impulsolandia.estabelecimento_nome_atendimento,
-            dados_anonimizados_impulsolandia.estabelecimento_nome_cadastro,
-            dados_anonimizados_impulsolandia.equipe_ine_atendimento,
-            dados_anonimizados_impulsolandia.equipe_ine_cadastro,
-            dados_anonimizados_impulsolandia.equipe_nome_atendimento,
-            dados_anonimizados_impulsolandia.equipe_nome_cadastro,
-            dados_anonimizados_impulsolandia.acs_nome_cadastro,
-            dados_anonimizados_impulsolandia.acs_nome_visita,
-            dados_anonimizados_impulsolandia.possui_hipertensao_autorreferida,
-            dados_anonimizados_impulsolandia.possui_hipertensao_diagnosticada,
-            dados_anonimizados_impulsolandia.data_ultimo_cadastro,
-            dados_anonimizados_impulsolandia.dt_ultima_consulta,
-            dados_anonimizados_impulsolandia.se_faleceu,
-            dados_anonimizados_impulsolandia.se_mudou,
-            dados_anonimizados_impulsolandia.criacao_data
-           FROM dados_anonimizados_impulsolandia
-        UNION ALL
-         SELECT dados_transmissoes_recentes.municipio_id_sus,
-            dados_transmissoes_recentes.quadrimestre_atual,
-            dados_transmissoes_recentes.realizou_afericao_ultimos_6_meses,
-            dados_transmissoes_recentes.dt_afericao_pressao_mais_recente,
-            dados_transmissoes_recentes.realizou_consulta_ultimos_6_meses,
-            dados_transmissoes_recentes.dt_consulta_mais_recente,
-            dados_transmissoes_recentes.co_seq_fat_cidadao_pec,
-            dados_transmissoes_recentes.cidadao_cpf,
-            dados_transmissoes_recentes.cidadao_cns,
-            dados_transmissoes_recentes.cidadao_nome,
-            dados_transmissoes_recentes.cidadao_nome_social,
-            dados_transmissoes_recentes.cidadao_sexo,
-            dados_transmissoes_recentes.dt_nascimento,
-            dados_transmissoes_recentes.estabelecimento_cnes_atendimento,
-            dados_transmissoes_recentes.estabelecimento_cnes_cadastro,
-            dados_transmissoes_recentes.estabelecimento_nome_atendimento,
-            dados_transmissoes_recentes.estabelecimento_nome_cadastro,
-            dados_transmissoes_recentes.equipe_ine_atendimento,
-            dados_transmissoes_recentes.equipe_ine_cadastro,
-            dados_transmissoes_recentes.equipe_nome_atendimento,
-            dados_transmissoes_recentes.equipe_nome_cadastro,
-            dados_transmissoes_recentes.acs_nome_cadastro,
-            dados_transmissoes_recentes.acs_nome_visita,
-            dados_transmissoes_recentes.possui_hipertensao_autorreferida,
-            dados_transmissoes_recentes.possui_hipertensao_diagnosticada,
-            dados_transmissoes_recentes.data_ultimo_cadastro,
-            dados_transmissoes_recentes.dt_ultima_consulta,
-            dados_transmissoes_recentes.se_faleceu,
-            dados_transmissoes_recentes.se_mudou,
-            dados_transmissoes_recentes.criacao_data
-           FROM dados_transmissoes_recentes
         ), data_registro_producao AS (
-         SELECT une_as_bases.municipio_id_sus,
-            impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_cadastro, une_as_bases.equipe_ine_atendimento)) AS equipe_ine_cadastro,
-            max(GREATEST(une_as_bases.dt_afericao_pressao_mais_recente::date, une_as_bases.dt_consulta_mais_recente, une_as_bases.data_ultimo_cadastro, une_as_bases.dt_ultima_consulta)) AS dt_registro_producao_mais_recente,
-            min(LEAST(une_as_bases.dt_afericao_pressao_mais_recente::date, une_as_bases.dt_consulta_mais_recente, une_as_bases.data_ultimo_cadastro, une_as_bases.dt_ultima_consulta)) AS dt_registro_producao_mais_antigo
-           FROM une_as_bases
-          GROUP BY une_as_bases.municipio_id_sus, (impulso_previne_dados_nominais.equipe_ine(une_as_bases.municipio_id_sus::text, COALESCE(une_as_bases.equipe_ine_cadastro, une_as_bases.equipe_ine_atendimento)))
+            SELECT dtr.municipio_id_sus,
+                impulso_previne_dados_nominais.equipe_ine(dtr.municipio_id_sus::text, COALESCE(dtr.equipe_ine_cadastro, dtr.equipe_ine_atendimento, dtr.equipe_ine_procedimento, '0')) AS equipe_ine_cadastro,
+                max(GREATEST(dtr.dt_afericao_pressao_mais_recente::date, dtr.dt_consulta_mais_recente, dtr.data_ultimo_cadastro, dtr.dt_ultima_consulta)) AS dt_registro_producao_mais_recente,
+                min(LEAST(dtr.dt_afericao_pressao_mais_recente::date, dtr.dt_consulta_mais_recente, dtr.data_ultimo_cadastro, dtr.dt_ultima_consulta)) AS dt_registro_producao_mais_antigo
+            FROM dados_transmissoes_recentes dtr
+            GROUP BY 1, 2
         ), tabela_aux AS (
          SELECT tb1.municipio_id_sus,
             concat(tb2.nome, ' - ', tb2.uf_sigla) AS municipio_uf,
@@ -332,10 +154,13 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             tb1.estabelecimento_nome_atendimento,
             tb1.estabelecimento_nome_cadastro AS estabelecimento_nome,
             tb1.equipe_ine_atendimento,
-            impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento)) AS equipe_ine_cadastro,
+            -- coluna usada na vinculação de equipe
+            impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento, tb1.equipe_ine_procedimento, '0')) AS equipe_ine_cadastro,
             tb1.equipe_nome_atendimento,
-            impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento)) AS equipe_nome_cadastro,
-            tb1.acs_nome_cadastro,
+            -- coluna usada na vinculação de equipe
+            impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento, tb1.equipe_nome_procedimento, 'SEM EQUIPE RESPONSÁVEL')) AS equipe_nome_cadastro,
+            -- coluna usada na vinculação de profissional
+            COALESCE(tb1.acs_nome_cadastro,tb1.acs_nome_visita, tb1.profissional_nome_atendimento, tb1.profissional_nome_procedimento, 'SEM PROFISSIONAL RESPONSÁVEL') AS acs_nome_cadastro,
             tb1.acs_nome_visita,
             tb1.possui_hipertensao_autorreferida,
             tb1.possui_hipertensao_diagnosticada,
@@ -354,53 +179,201 @@ AS WITH dados_anonimizados_demo_vicosa AS (
             tb1.se_mudou,
             tb1.criacao_data,
             CURRENT_TIMESTAMP AS atualizacao_data
-           FROM une_as_bases tb1
-             LEFT JOIN listas_de_codigos.municipios tb2 ON tb1.municipio_id_sus::bpchar = tb2.id_sus
-          WHERE COALESCE(tb1.se_faleceu, 0) <> 1
-        )
- SELECT tabela_aux.municipio_id_sus,
-    tabela_aux.municipio_uf,
-    tabela_aux.quadrimestre_atual,
-    tabela_aux.realizou_afericao_ultimos_6_meses,
-    tabela_aux.dt_afericao_pressao_mais_recente,
-    tabela_aux.realizou_consulta_ultimos_6_meses,
-    tabela_aux.dt_consulta_mais_recente,
-    tabela_aux.prazo_proxima_afericao_pa,
-    tabela_aux.prazo_proxima_consulta,
-    tabela_aux.consulta_e_afericao_em_dia,
-    tabela_aux.status_em_dia,
-    tabela_aux.status_usuario,
-    tabela_aux.identificacao_condicao_hipertensao,
-    tabela_aux.cidadao_cpf,
-    tabela_aux.cidadao_cpf_dt_nascimento,
-    tabela_aux.cidadao_cns,
-    tabela_aux.cidadao_nome,
-    tabela_aux.cidadao_nome_social,
-    tabela_aux.cidadao_sexo,
-    tabela_aux.dt_nascimento,
-    tabela_aux.cidadao_idade,
-    tabela_aux.cidadao_faixa_etaria,
-    tabela_aux.estabelecimento_cnes_atendimento,
-    tabela_aux.estabelecimento_cnes,
-    tabela_aux.estabelecimento_nome_atendimento,
-    tabela_aux.estabelecimento_nome,
-    tabela_aux.equipe_ine_atendimento,
-    tabela_aux.equipe_ine_cadastro,
-    tabela_aux.equipe_nome_atendimento,
-    tabela_aux.equipe_nome_cadastro,
-    tabela_aux.acs_nome_cadastro,
-    tabela_aux.acs_nome_visita,
-    tabela_aux.possui_hipertensao_autorreferida,
-    tabela_aux.possui_hipertensao_diagnosticada,
-    tabela_aux.apenas_autorreferida,
-    tabela_aux.diagnostico_clinico,
-    tabela_aux.data_ultimo_cadastro,
-    tabela_aux.dt_ultima_consulta,
-    tabela_aux.se_faleceu,
-    tabela_aux.se_mudou,
-    tabela_aux.criacao_data,
-    tabela_aux.atualizacao_data,
-    drp.dt_registro_producao_mais_recente
-   FROM tabela_aux
-     LEFT JOIN data_registro_producao drp ON drp.municipio_id_sus::text = tabela_aux.municipio_id_sus::text AND drp.equipe_ine_cadastro = tabela_aux.equipe_ine_cadastro
-WITH DATA;
+        FROM dados_transmissoes_recentes tb1
+        LEFT JOIN listas_de_codigos.municipios tb2 
+            ON tb1.municipio_id_sus::bpchar = tb2.id_sus
+        WHERE COALESCE(tb1.se_faleceu, 0) <> 1
+        ), tabela_final AS (
+        SELECT 
+            tabela_aux.municipio_id_sus,
+            tabela_aux.municipio_uf,
+            tabela_aux.quadrimestre_atual,
+            tabela_aux.realizou_afericao_ultimos_6_meses,
+            tabela_aux.dt_afericao_pressao_mais_recente,
+            tabela_aux.realizou_consulta_ultimos_6_meses,
+            tabela_aux.dt_consulta_mais_recente,
+            tabela_aux.prazo_proxima_afericao_pa,
+            tabela_aux.prazo_proxima_consulta,
+            tabela_aux.consulta_e_afericao_em_dia,
+            tabela_aux.status_em_dia,
+            tabela_aux.status_usuario,
+            tabela_aux.identificacao_condicao_hipertensao,
+            tabela_aux.cidadao_cpf,
+            tabela_aux.cidadao_cpf_dt_nascimento,
+            tabela_aux.cidadao_cns,
+            tabela_aux.cidadao_nome,
+            tabela_aux.cidadao_nome_social,
+            tabela_aux.cidadao_sexo,
+            tabela_aux.dt_nascimento,
+            tabela_aux.cidadao_idade,
+            tabela_aux.cidadao_faixa_etaria,
+            tabela_aux.estabelecimento_cnes_atendimento,
+            tabela_aux.estabelecimento_cnes,
+            tabela_aux.estabelecimento_nome_atendimento,
+            tabela_aux.estabelecimento_nome,
+            tabela_aux.equipe_ine_atendimento,
+            tabela_aux.equipe_ine_cadastro,
+            tabela_aux.equipe_nome_atendimento,
+            tabela_aux.equipe_nome_cadastro,
+            tabela_aux.acs_nome_cadastro,
+            tabela_aux.acs_nome_visita,
+            tabela_aux.possui_hipertensao_autorreferida,
+            tabela_aux.possui_hipertensao_diagnosticada,
+            tabela_aux.apenas_autorreferida,
+            tabela_aux.diagnostico_clinico,
+            tabela_aux.data_ultimo_cadastro,
+            tabela_aux.dt_ultima_consulta,
+            tabela_aux.se_faleceu,
+            tabela_aux.se_mudou,
+            tabela_aux.criacao_data,
+            tabela_aux.atualizacao_data,
+            drp.dt_registro_producao_mais_recente,
+            ROW_NUMBER() OVER (PARTITION BY tabela_aux.municipio_id_sus) AS seq_demo_viscosa
+        FROM tabela_aux
+        LEFT JOIN data_registro_producao drp 
+            ON drp.municipio_id_sus::text = tabela_aux.municipio_id_sus::text 
+            AND drp.equipe_ine_cadastro = tabela_aux.equipe_ine_cadastro
+    ), dados_demo_vicosa AS (
+            SELECT 
+                '111111' AS municipio_id_sus,
+                'Demo - Viçosa - MG' AS municipio_uf,
+                tf.quadrimestre_atual,
+                tf.realizou_afericao_ultimos_6_meses,
+                tf.dt_afericao_pressao_mais_recente,
+                tf.realizou_consulta_ultimos_6_meses,
+                tf.dt_consulta_mais_recente,
+                tf.prazo_proxima_afericao_pa,
+                tf.prazo_proxima_consulta,
+                tf.consulta_e_afericao_em_dia,
+                tf.status_em_dia,
+                tf.status_usuario,
+                tf.identificacao_condicao_hipertensao,
+                concat(impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10, 99)::text) AS cidadao_cpf,
+                concat(impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10, 99)::text) AS cidadao_cpf_dt_nascimento,
+                concat('7', impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10000, 99999)::text)  AS cidadao_cns,
+                upper(nomes.nome_ficticio) AS cidadao_nome,
+                tf.cidadao_nome_social,
+                tf.cidadao_sexo,
+                tf.dt_nascimento,
+                tf.cidadao_idade,
+                tf.cidadao_faixa_etaria,
+                tf.estabelecimento_cnes_atendimento,
+                tf.estabelecimento_cnes,
+                tf.estabelecimento_nome_atendimento,
+                tf.estabelecimento_nome,
+                tf.equipe_ine_atendimento,
+                tf.equipe_ine_cadastro,
+                tf.equipe_nome_atendimento,
+                tf.equipe_nome_cadastro,
+                upper(nomes2.nome_ficticio) AS acs_nome_cadastro,
+                upper(nomes2.nome_ficticio) AS acs_nome_visita,
+                tf.possui_hipertensao_autorreferida,
+                tf.possui_hipertensao_diagnosticada,
+                tf.apenas_autorreferida,
+                tf.diagnostico_clinico,
+                tf.data_ultimo_cadastro,
+                tf.dt_ultima_consulta,
+                tf.se_faleceu,
+                tf.se_mudou,
+                tf.criacao_data,
+                tf.atualizacao_data,
+                tf.dt_registro_producao_mais_recente
+            FROM tabela_final tf
+            LEFT JOIN configuracoes.nomes_ficticios_citopatologico nomes 
+                ON tf.seq_demo_viscosa = nomes.seq
+            LEFT JOIN configuracoes.nomes_ficticios_hipertensos nomes2 
+                ON tf.seq_demo_viscosa = nomes2.seq
+            WHERE municipio_id_sus = '140015' -- BONFIM - RR
+    )
+    SELECT
+        ddv.municipio_id_sus,
+        ddv.municipio_uf,
+        ddv.quadrimestre_atual,
+        ddv.realizou_afericao_ultimos_6_meses,
+        ddv.dt_afericao_pressao_mais_recente,
+        ddv.realizou_consulta_ultimos_6_meses,
+        ddv.dt_consulta_mais_recente,
+        ddv.prazo_proxima_afericao_pa,
+        ddv.prazo_proxima_consulta,
+        ddv.consulta_e_afericao_em_dia,
+        ddv.status_em_dia,
+        ddv.status_usuario,
+        ddv.identificacao_condicao_hipertensao,
+        ddv.cidadao_cpf,
+        ddv.cidadao_cpf_dt_nascimento,
+        ddv.cidadao_cns,
+        ddv.cidadao_nome,
+        ddv.cidadao_nome_social,
+        ddv.cidadao_sexo,
+        ddv.dt_nascimento,
+        ddv.cidadao_idade,
+        ddv.cidadao_faixa_etaria,
+        ddv.estabelecimento_cnes_atendimento,
+        ddv.estabelecimento_cnes,
+        ddv.estabelecimento_nome_atendimento,
+        ddv.estabelecimento_nome,
+        ddv.equipe_ine_atendimento,
+        ddv.equipe_ine_cadastro,
+        ddv.equipe_nome_atendimento,
+        ddv.equipe_nome_cadastro,
+        ddv.acs_nome_cadastro,
+        ddv.acs_nome_visita,
+        ddv.possui_hipertensao_autorreferida,
+        ddv.possui_hipertensao_diagnosticada,
+        ddv.apenas_autorreferida,
+        ddv.diagnostico_clinico,
+        ddv.data_ultimo_cadastro,
+        ddv.dt_ultima_consulta,
+        ddv.se_faleceu,
+        ddv.se_mudou,
+        ddv.criacao_data,
+        ddv.atualizacao_data,
+        ddv.dt_registro_producao_mais_recente
+    FROM dados_demo_vicosa ddv 
+UNION ALL 
+    SELECT
+        tf.municipio_id_sus,
+        tf.municipio_uf,
+        tf.quadrimestre_atual,
+        tf.realizou_afericao_ultimos_6_meses,
+        tf.dt_afericao_pressao_mais_recente,
+        tf.realizou_consulta_ultimos_6_meses,
+        tf.dt_consulta_mais_recente,
+        tf.prazo_proxima_afericao_pa,
+        tf.prazo_proxima_consulta,
+        tf.consulta_e_afericao_em_dia,
+        tf.status_em_dia,
+        tf.status_usuario,
+        tf.identificacao_condicao_hipertensao,
+        tf.cidadao_cpf,
+        tf.cidadao_cpf_dt_nascimento,
+        tf.cidadao_cns,
+        tf.cidadao_nome,
+        tf.cidadao_nome_social,
+        tf.cidadao_sexo,
+        tf.dt_nascimento,
+        tf.cidadao_idade,
+        tf.cidadao_faixa_etaria,
+        tf.estabelecimento_cnes_atendimento,
+        tf.estabelecimento_cnes,
+        tf.estabelecimento_nome_atendimento,
+        tf.estabelecimento_nome,
+        tf.equipe_ine_atendimento,
+        tf.equipe_ine_cadastro,
+        tf.equipe_nome_atendimento,
+        tf.equipe_nome_cadastro,
+        tf.acs_nome_cadastro,
+        tf.acs_nome_visita,
+        tf.possui_hipertensao_autorreferida,
+        tf.possui_hipertensao_diagnosticada,
+        tf.apenas_autorreferida,
+        tf.diagnostico_clinico,
+        tf.data_ultimo_cadastro,
+        tf.dt_ultima_consulta,
+        tf.se_faleceu,
+        tf.se_mudou,
+        tf.criacao_data,
+        tf.atualizacao_data,
+        tf.dt_registro_producao_mais_recente
+    FROM tabela_final tf
+    WITH DATA;
