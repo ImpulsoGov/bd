@@ -3,7 +3,9 @@
 CREATE MATERIALIZED VIEW impulso_previne_dados_nominais.lista_nominal_vacinacao_unificada
 TABLESPACE pg_default
 AS WITH sumarizacao_criancas AS (
-         SELECT h_1.municipio_id_sus,
+         SELECT
+            DISTINCT 
+            h_1.municipio_id_sus,
             h_1.chave_cidadao,
             h_1.cidadao_cpf,
             h_1.cidadao_cns,
@@ -23,6 +25,7 @@ AS WITH sumarizacao_criancas AS (
             h_1.equipe_nome_cadastro,
             h_1.acs_nome_cadastro,
             h_1.acs_nome_visita,
+            h_1.profissional_nome_atendimento,
             h_1.data_ultimo_cadastro_individual,
             h_1.data_ultimo_atendimento_individual,
             h_1.data_ultima_vista_domiciliar,
@@ -40,7 +43,15 @@ AS WITH sumarizacao_criancas AS (
                     ELSE NULL::text
                 END AS status_idade
            FROM impulso_previne_dados_nominais.eventos_vacinacao h_1
-          GROUP BY h_1.municipio_id_sus, h_1.chave_cidadao, h_1.cidadao_cpf, h_1.cidadao_cns, h_1.cidadao_nome, h_1.dt_nascimento, h_1.cidadao_nome_responsavel, h_1.cidadao_cns_responsavel, h_1.cidadao_cpf_responsavel, h_1.cidadao_idade_meses_atual, h_1.estabelecimento_cnes_atendimento, h_1.estabelecimento_cnes_cadastro, h_1.estabelecimento_nome_atendimento, h_1.estabelecimento_nome_cadastro, h_1.equipe_ine_atendimento, h_1.equipe_ine_cadastro, h_1.equipe_nome_atendimento, h_1.equipe_nome_cadastro, h_1.acs_nome_cadastro, h_1.acs_nome_visita, h_1.data_ultimo_cadastro_individual, h_1.data_ultimo_atendimento_individual, h_1.data_ultima_vista_domiciliar, h_1.criacao_data
+        ), registro_ultima_aplicacao_vacina AS (
+            SELECT  
+                v_1.chave_cidadao,
+                v_1.municipio_id_sus,
+                v_1.equipe_nome_aplicacao_vacina,
+                v_1.profissional_nome_aplicacao_vacina,
+                v_1.equipe_ine_aplicacao_vacina,
+                row_number() OVER (PARTITION BY v_1.chave_cidadao, v_1.municipio_id_sus ORDER BY v_1.data_registro_vacina DESC) = 1 AS ultima_aplicacao_vacina
+            FROM impulso_previne_dados_nominais.eventos_vacinacao v_1
         ), quantidade_vacinas_polio_registradas AS (
          SELECT st.chave_cidadao,
             count(DISTINCT st.co_seq_fat_vacinacao_vacina) AS qtde_vacinas_polio_registradas
@@ -319,17 +330,29 @@ AS WITH sumarizacao_criancas AS (
     h.estabelecimento_nome_cadastro,
     h.equipe_ine_atendimento,
     h.equipe_ine_cadastro,
+    uav.equipe_ine_aplicacao_vacina,
     h.equipe_nome_atendimento,
     h.equipe_nome_cadastro,
+    uav.equipe_nome_aplicacao_vacina,
     h.acs_nome_cadastro,
     h.acs_nome_visita,
+    h.profissional_nome_atendimento,
+    uav.profissional_nome_aplicacao_vacina,
     h.data_ultimo_cadastro_individual,
     h.data_ultimo_atendimento_individual,
     h.data_ultima_vista_domiciliar,
     h.criacao_data,
     now() AS atualizacao_data
-   FROM sumarizacao_criancas h
-     LEFT JOIN sumarizacao_polio polio ON polio.chave_cidadao::text = h.chave_cidadao::text
-     LEFT JOIN sumarizacao_penta penta ON penta.chave_cidadao::text = h.chave_cidadao::text
-     LEFT JOIN listas_de_codigos.periodos p ON p.data_inicio = h.inicio_quadri_completa_1_ano AND p.tipo::text = 'Quadrimestral'::text
+FROM sumarizacao_criancas h
+LEFT JOIN sumarizacao_polio polio 
+    ON polio.chave_cidadao::text = h.chave_cidadao::text
+LEFT JOIN sumarizacao_penta penta 
+    ON penta.chave_cidadao::text = h.chave_cidadao::text
+LEFT JOIN listas_de_codigos.periodos p 
+    ON p.data_inicio = h.inicio_quadri_completa_1_ano 
+    AND p.tipo::text = 'Quadrimestral'::text
+LEFT JOIN registro_ultima_aplicacao_vacina uav 
+    ON h.chave_cidadao = uav.chave_cidadao
+    AND h.municipio_id_sus = uav.municipio_id_sus
+    AND ultima_aplicacao_vacina IS TRUE   
 WITH DATA;
