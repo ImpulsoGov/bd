@@ -178,7 +178,7 @@ AS WITH base_atendimentos_pre_natal AS (
                 apn.criacao_data
            FROM base_atendimentos_pre_natal apn
              JOIN analise_gestante cg ON cg.chave_gestante::text = apn.chave_gestante::text AND cg.municipio_id_sus::text = apn.municipio_id_sus::text
-          WHERE apn.data_atendimento < cg.data_fim_primeira_gestacao OR cg.data_fim_primeira_gestacao IS NULL
+          WHERE apn.data_atendimento <= cg.data_fim_primeira_gestacao OR cg.data_fim_primeira_gestacao IS NULL
         UNION ALL
          SELECT apn.municipio_id_sus,
             apn.chave_gestante::text || '_2'::text AS chave_gestacao,
@@ -214,10 +214,10 @@ AS WITH base_atendimentos_pre_natal AS (
                 apn.criacao_data
            FROM base_atendimentos_pre_natal apn
              JOIN analise_gestante cg ON cg.chave_gestante::text = apn.chave_gestante::text AND cg.municipio_id_sus::text = apn.municipio_id_sus::text
-          WHERE apn.data_atendimento >= cg.data_fim_primeira_gestacao
+          WHERE apn.data_atendimento > cg.data_fim_primeira_gestacao
         ), infos_gestante_atendimento_individual_recente AS (
          WITH base AS (
-                 SELECT b.municipio_id_sus,
+                SELECT b.municipio_id_sus,
                     b.chave_gestante,
                     b.gestante_nome,
                     b.gestante_data_de_nascimento,
@@ -228,6 +228,7 @@ AS WITH base_atendimentos_pre_natal AS (
                     b.estabelecimento_nome_atendimento,
                     b.equipe_ine_atendimento,
                     b.equipe_nome_atendimento,
+                    b.profissional_nome_atendimento,
                     b.data_ultimo_cadastro_individual,
                     b.estabelecimento_cnes_cad_indivual,
                     b.estabelecimento_nome_cad_individual,
@@ -238,8 +239,8 @@ AS WITH base_atendimentos_pre_natal AS (
                     b.acs_visita_domiciliar,
                     b.acs_cad_dom_familia,
                     row_number() OVER (PARTITION BY b.chave_gestante ORDER BY b.id_registro DESC) = 1 AS ultimo_atendimento_individual
-                   FROM impulso_previne_dados_nominais.eventos_pre_natal b
-                  WHERE b.tipo_registro::text = 'consulta_pre_natal'::text
+                FROM impulso_previne_dados_nominais.eventos_pre_natal b
+                WHERE b.tipo_registro::text = 'consulta_pre_natal'::text
                 )
          SELECT base.municipio_id_sus,
             base.chave_gestante,
@@ -252,6 +253,7 @@ AS WITH base_atendimentos_pre_natal AS (
             base.estabelecimento_nome_atendimento,
             base.equipe_ine_atendimento,
             base.equipe_nome_atendimento,
+            base.profissional_nome_atendimento,
             base.data_ultimo_cadastro_individual,
             base.estabelecimento_cnes_cad_indivual,
             base.estabelecimento_nome_cad_individual,
@@ -272,11 +274,17 @@ AS WITH base_atendimentos_pre_natal AS (
             ig.gestante_telefone,
             ig.gestante_nome,
             ig.gestante_data_de_nascimento,
-            COALESCE(NULLIF(ig.estabelecimento_cnes_cad_indivual::text, '-'::text), ig.estabelecimento_cnes_atendimento::text) AS estabelecimento_cnes,
-            upper(COALESCE(NULLIF(ig.estabelecimento_nome_cad_individual::text, 'Não informado'::text), ig.estabelecimento_nome_atendimento::text)) AS estabelecimento_nome,
-            COALESCE(NULLIF(ig.equipe_ine_cad_individual::text, '-'::text), ig.equipe_ine_atendimento::text) AS equipe_ine,
-            upper(COALESCE(NULLIF(ig.equipe_nome_cad_individual::text, 'SEM EQUIPE'::text), ig.equipe_nome_atendimento::text)) AS equipe_nome,
-            upper(COALESCE(ig.acs_visita_domiciliar, ig.acs_cad_individual, 'SEM ACS'::character varying)::text) AS acs_nome,
+            ig.estabelecimento_cnes_cad_indivual,
+            ig.estabelecimento_cnes_atendimento,
+            ig.estabelecimento_nome_cad_individual,
+            ig.estabelecimento_nome_atendimento,
+            ig.equipe_ine_cad_individual,
+            ig.equipe_ine_atendimento,
+            ig.equipe_nome_cad_individual,
+            ig.equipe_nome_atendimento,
+            ig.acs_visita_domiciliar,
+            ig.acs_cad_individual,
+            ig.profissional_nome_atendimento,
             ig.data_ultima_visita_acs AS acs_data_ultima_visita,
             bag.data_primeira_dum_valida AS gestacao_data_dum,
             (bag.data_primeira_dum_valida + '294 days'::interval)::date AS gestacao_data_dpp,
@@ -406,35 +414,27 @@ AS WITH base_atendimentos_pre_natal AS (
              LEFT JOIN impulso_previne_dados_nominais.eventos_pre_natal hiv ON bag.chave_gestante::text = hiv.chave_gestante::text AND bag.municipio_id_sus::text = hiv.municipio_id_sus::text AND (hiv.tipo_registro::text = ANY (ARRAY['teste_rapido_exame_hiv'::character varying, 'exame_hiv_avaliado'::character varying]::text[]))
              LEFT JOIN impulso_previne_dados_nominais.eventos_pre_natal parto ON bag.chave_gestante::text = parto.chave_gestante::text AND bag.municipio_id_sus::text = parto.municipio_id_sus::text AND parto.tipo_registro::text = 'registro_de_parto'::text
              LEFT JOIN impulso_previne_dados_nominais.eventos_pre_natal aborto ON bag.chave_gestante::text = aborto.chave_gestante::text AND bag.municipio_id_sus::text = aborto.municipio_id_sus::text AND aborto.tipo_registro::text = 'registro_de_aborto'::text
-          GROUP BY bag.municipio_id_sus, bag.chave_gestacao, bag.ordem_gestacao, bag.chave_gestante, ig.gestante_telefone, ig.gestante_nome, ig.gestante_data_de_nascimento, (COALESCE(NULLIF(ig.estabelecimento_cnes_cad_indivual::text, '-'::text), ig.estabelecimento_cnes_atendimento::text)), (upper(COALESCE(NULLIF(ig.estabelecimento_nome_cad_individual::text, 'Não informado'::text), ig.estabelecimento_nome_atendimento::text))), (COALESCE(NULLIF(ig.equipe_ine_cad_individual::text, '-'::text), ig.equipe_ine_atendimento::text)), (upper(COALESCE(NULLIF(ig.equipe_nome_cad_individual::text, 'SEM EQUIPE'::text), ig.equipe_nome_atendimento::text))), (upper(COALESCE(ig.acs_visita_domiciliar, ig.acs_cad_individual, 'SEM ACS'::character varying)::text)), ig.data_ultima_visita_acs, bag.data_primeira_dum_valida, ((bag.data_primeira_dum_valida + '294 days'::interval)::date), ((bag.data_primeira_dum_valida + '294 days'::interval)::date - CURRENT_DATE), (
-                CASE
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2022-01-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2022-04-30'::date THEN '2022.Q1'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2022-05-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2022-08-31'::date THEN '2022.Q2'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2022-09-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2022-12-31'::date THEN '2022.Q3'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2023-01-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2023-04-30'::date THEN '2023.Q1'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2023-05-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2023-08-31'::date THEN '2023.Q2'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2023-09-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2023-12-31'::date THEN '2023.Q3'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2024-01-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2024-04-30'::date THEN '2024.Q1'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2024-05-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2024-08-31'::date THEN '2024.Q2'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2024-09-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2024-12-31'::date THEN '2024.Q3'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2025-01-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2025-04-30'::date THEN '2025.Q1'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2025-05-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2025-08-31'::date THEN '2025.Q2'::text
-                    WHEN (bag.data_primeira_dum_valida + '294 days'::interval)::date >= '2025-09-01'::date AND (bag.data_primeira_dum_valida + '294 days'::interval)::date <= '2025-08-31'::date THEN '2025.Q3'::text
-                    ELSE 'SEM QUADRI'::text
-                END), bag.idade_gestacional_atendimento_com_primeira_dum_valida, bag.data_primeiro_atendimento, bag.data_ultimo_atendimento, (CURRENT_DATE - bag.data_ultimo_atendimento), bag.data_fim_primeira_gestacao, bag.tipo_encerramento_primeira_gestacao, ig.gestante_documento_cpf, ig.gestante_documento_cns, bag.idade_gestacional_atual_com_primeira_dum_valida, bag.criacao_data
-        ), aux AS (
-         SELECT base_final_gestacoes.municipio_id_sus,
+          GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
+        )
+        SELECT 
+            base_final_gestacoes.municipio_id_sus,
             base_final_gestacoes.chave_gestacao,
             base_final_gestacoes.ordem_gestacao,
             base_final_gestacoes.chave_gestante,
             base_final_gestacoes.gestante_telefone,
             base_final_gestacoes.gestante_nome,
             base_final_gestacoes.gestante_data_de_nascimento,
-            base_final_gestacoes.estabelecimento_cnes,
-            base_final_gestacoes.estabelecimento_nome,
-            base_final_gestacoes.equipe_ine,
-            base_final_gestacoes.equipe_nome,
-            base_final_gestacoes.acs_nome,
+            base_final_gestacoes.estabelecimento_cnes_cad_indivual,
+            base_final_gestacoes.estabelecimento_cnes_atendimento,
+            base_final_gestacoes.estabelecimento_nome_cad_individual,
+            base_final_gestacoes.estabelecimento_nome_atendimento,
+            base_final_gestacoes.equipe_ine_cad_individual,
+            base_final_gestacoes.equipe_ine_atendimento,
+            base_final_gestacoes.equipe_nome_cad_individual,
+            base_final_gestacoes.equipe_nome_atendimento,
+            base_final_gestacoes.acs_visita_domiciliar,
+            base_final_gestacoes.acs_cad_individual,
+            base_final_gestacoes.profissional_nome_atendimento,
             base_final_gestacoes.acs_data_ultima_visita,
             base_final_gestacoes.gestacao_data_dum,
             base_final_gestacoes.gestacao_data_dpp,
@@ -486,49 +486,4 @@ AS WITH base_atendimentos_pre_natal AS (
                     WHEN date_part('month'::text, CURRENT_DATE) >= 9::double precision AND date_part('month'::text, CURRENT_DATE) <= 12::double precision THEN concat(date_part('year'::text, CURRENT_DATE), '-05-01')
                     ELSE NULL::text
                 END::date
-        )
- SELECT aux.municipio_id_sus,
-    aux.chave_gestacao,
-    aux.ordem_gestacao,
-    aux.chave_gestante,
-    aux.gestante_telefone,
-    aux.gestante_nome,
-    aux.gestante_data_de_nascimento,
-    aux.estabelecimento_cnes,
-    aux.estabelecimento_nome,
-    aux.equipe_ine,
-    aux.equipe_nome,
-    aux.acs_nome,
-    aux.acs_data_ultima_visita,
-    aux.gestacao_data_dum,
-    aux.gestacao_data_dpp,
-    aux.gestacao_dpp_dias_para,
-    aux.gestacao_quadrimestre,
-    aux.gestacao_idade_gestacional_primeiro_atendimento,
-    aux.consulta_prenatal_primeira_data,
-    aux.consulta_prenatal_ultima_data,
-    aux.consulta_prenatal_ultima_dias_desde,
-    aux.data_fim_primeira_gestacao,
-    aux.tipo_encerramento_primeira_gestacao,
-    aux.gestante_documento_cpf,
-    aux.gestante_documento_cns,
-    aux.gestacao_idade_gestacional_atual,
-    aux.sinalizacao_erro_registro,
-    aux.gestacao_qtde_dums,
-    aux.ordem_primeira_consulta_com_dum,
-    aux.consultas_prenatal_total,
-    aux.consultas_pre_natal_validas,
-    aux.atendimento_odontologico_realizado,
-    aux.atendimento_odontologico_realizado_valido,
-    aux.exame_hiv_realizado,
-    aux.exame_hiv_realizado_valido,
-    aux.exame_sifilis_realizado,
-    aux.exame_sifilis_realizado_valido,
-    aux.possui_registro_aborto,
-    aux.possui_registro_parto,
-    aux.exame_sifilis_hiv_realizado,
-    aux.exame_sifilis_hiv_realizado_valido,
-    aux.atualizacao_data,
-    aux.criacao_data
-   FROM aux
 WITH DATA;
