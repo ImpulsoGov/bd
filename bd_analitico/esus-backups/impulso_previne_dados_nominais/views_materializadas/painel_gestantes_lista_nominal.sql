@@ -189,7 +189,7 @@ AS WITH dados_transmissoes_recentes AS (
                 AND drp.equipe_ine = tabela_aux.equipe_ine
         LEFT JOIN listas_de_codigos.municipios tb2 
             ON tabela_aux.municipio_id_sus::bpchar = tb2.id_sus
-    ), dados_demo_vicosa AS (
+    ), dados_demo_bonfim AS (
         SELECT 
             tf.chave_id_gestacao,
             '111111' AS municipio_id_sus,
@@ -212,7 +212,7 @@ AS WITH dados_transmissoes_recentes AS (
             tf.atualizacao_data,
             tf.criacao_data,
             tf.dt_registro_producao_mais_recente,
-            'Demo - Viçosa - MG' AS municipio_uf
+            'Demo - Bonfim - RR' AS municipio_uf
         FROM tabela_final tf
         LEFT JOIN configuracoes.nomes_ficticios_citopatologico nomes 
             ON tf.seq_demo_viscosa = nomes.seq
@@ -243,7 +243,7 @@ AS WITH dados_transmissoes_recentes AS (
         ddv.criacao_data,
         ddv.dt_registro_producao_mais_recente,
         ddv.municipio_uf
-    FROM dados_demo_vicosa ddv 
+    FROM dados_demo_bonfim ddv 
 UNION ALL 
     SELECT 
         tf.chave_id_gestacao,
