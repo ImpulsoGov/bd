@@ -236,10 +236,10 @@ AS WITH dados_transmissoes_recentes AS (
         LEFT JOIN data_registro_producao drp 
             ON drp.municipio_id_sus::text = tabela_aux.municipio_id_sus::text 
             AND drp.equipe_ine_cadastro = tabela_aux.equipe_ine_cadastro
-    ), dados_demo_vicosa AS (
+    ), dados_demo_bonfim AS (
             SELECT 
                 '111111' AS municipio_id_sus,
-                'Demo - Viçosa - MG' AS municipio_uf,
+                'Demo - Bonfim - RR' AS municipio_uf,
                 tf.quadrimestre_atual,
                 tf.realizou_solicitacao_hemoglobina_ultimos_6_meses,
                 tf.dt_solicitacao_hemoglobina_glicada_mais_recente,
@@ -332,7 +332,7 @@ AS WITH dados_transmissoes_recentes AS (
         ddv.criacao_data,
         ddv.atualizacao_data,
         ddv.dt_registro_producao_mais_recente
-    FROM dados_demo_vicosa ddv 
+    FROM dados_demo_bonfim ddv 
 UNION ALL 
     SELECT
         tf.municipio_id_sus,
