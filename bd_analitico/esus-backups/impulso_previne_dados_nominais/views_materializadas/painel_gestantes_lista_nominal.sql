@@ -8,10 +8,9 @@ AS WITH dados_transmissoes_recentes AS (
                     THEN NULL
                 ELSE TRIM(tb1_1.equipe_ine_atendimento)
             END AS equipe_ine_atendimento,
-            CASE 
-                WHEN TRIM(tb1_1.equipe_nome_cad_individual) = '-' OR tb1_1.equipe_nome_cad_individual = ' ' OR tb1_1.equipe_nome_cad_individual IS NULL 
-                    THEN NULL
-                ELSE TRIM(tb1_1.equipe_nome_cad_individual)
+            CASE
+                WHEN TRIM(tb1_1.equipe_ine_cad_individual::text) = '-'::text OR tb1_1.equipe_ine_cad_individual::text = ' '::text OR tb1_1.equipe_ine_cad_individual IS NULL THEN NULL::text
+                ELSE TRIM(tb1_1.equipe_ine_cad_individual::text)
             END AS equipe_ine_cadastro,
             CASE 
                 WHEN tb1_1.equipe_nome_atendimento = ' ' OR tb1_1.equipe_nome_atendimento IS NULL OR tb1_1.equipe_nome_atendimento LIKE '%SEM EQUIPE%' 
@@ -241,8 +240,8 @@ AS WITH dados_transmissoes_recentes AS (
         ddv.acs_nome,
         ddv.atualizacao_data,
         ddv.criacao_data,
-        ddv.dt_registro_producao_mais_recente,
-        ddv.municipio_uf
+        ddv.municipio_uf,
+        ddv.dt_registro_producao_mais_recente
     FROM dados_demo_bonfim ddv 
 UNION ALL 
     SELECT 
@@ -266,8 +265,8 @@ UNION ALL
         tf.acs_nome,
         tf.atualizacao_data,
         tf.criacao_data,
-        tf.dt_registro_producao_mais_recente,
-        tf.municipio_uf
+        tf.municipio_uf,
+        tf.dt_registro_producao_mais_recente
     FROM tabela_final tf
 WITH DATA;
 
