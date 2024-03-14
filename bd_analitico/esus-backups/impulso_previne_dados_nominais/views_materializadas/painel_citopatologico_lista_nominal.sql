@@ -160,10 +160,10 @@ AS WITH dados_transmissoes_recentes AS (
         LEFT JOIN data_registro_producao drp 
             ON drp.municipio_id_sus = tabela_aux.municipio_id_sus 
             AND drp.ine_master = tabela_aux.ine_master
-    ) , dados_demo_vicosa AS (
+    ) , dados_demo_bonfim AS (
         SELECT 
             '111111' AS municipio_id_sus,
-            'Demo - Viçosa - MG' AS municipio_uf,
+            'Demo - Bonfim - RR' AS municipio_uf,
             upper(nomes.nome_ficticio) AS paciente_nome,
             concat(impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10, 99)::text) AS cidadao_cpf_dt_nascimento,
             tf.vencimento_da_coleta,
@@ -206,7 +206,7 @@ AS WITH dados_transmissoes_recentes AS (
         ddv.criacao_data,
         ddv.atualizacao_data,
         ddv.dt_registro_producao_mais_recente
-    FROM dados_demo_vicosa ddv
+    FROM dados_demo_bonfim ddv
 UNION ALL 
     SELECT 
        tf.municipio_id_sus,
