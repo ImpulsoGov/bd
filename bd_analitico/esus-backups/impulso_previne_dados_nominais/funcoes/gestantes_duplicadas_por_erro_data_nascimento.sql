@@ -39,11 +39,11 @@ BEGIN
 			gestacao_data_dum ,
 			criacao_data  as periodo_data_transmissao_ultima,
 			gestacao_data_dpp ,
-			equipe_ine,
-			equipe_nome,
-			estabelecimento_cnes,
-			estabelecimento_nome,
-			acs_nome
+			equipe_ine_cad_individual as equipe_ine,
+			equipe_nome_cad_individual as equipe_nome,
+			estabelecimento_cnes_cad_indivual as estabelecimento_cnes,
+			estabelecimento_nome_cad_individual as estabelecimento_nome,
+			acs_cad_individual as acs_nome
 		FROM impulso_previne_dados_nominais.lista_nominal_gestantes_unificada tb1
 		where gestante_nome in (SELECT gestante_nome FROM impulso_previne_dados_nominais.lista_nominal_gestantes_unificada 
 							WHERE 
