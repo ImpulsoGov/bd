@@ -1,5 +1,6 @@
+-- impulso_previne_dados_nominais."painel_cadastros_gestantes_duplicadas" source
 
-CREATE MATERIALIZED VIEW impulso_previne_dados_nominais.painel_cadastros_gestantes_duplicadas
+CREATE MATERIALIZED VIEW impulso_previne_dados_nominais."painel_cadastros_gestantes_duplicadas"
 TABLESPACE pg_default
 AS WITH rel_duplicadas AS (
          SELECT lista_nominal_gestantes_duplicadas_por_erro_grafia.municipio_id_sus,
@@ -18,22 +19,21 @@ AS WITH rel_duplicadas AS (
             'Erro de grafia'::text AS duplicacao_motivo
            FROM impulso_previne_dados_nominais.lista_nominal_gestantes_duplicadas_por_erro_grafia
         UNION ALL
-         SELECT '100111'::character varying AS municipio_id_sus,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.gestante_nome,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.gestante_data_de_nascimento,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.gestante_documento_cpf,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.gestante_documento_cns,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.periodo_data_transmissao,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.gestante_dum,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.gestante_dpp,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.equipe_ine,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.equipe_nome,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.estabelecimento_cnes,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.estabelecimento_nome,
-            lista_nominal_gestantes_duplicadas_por_erro_grafia.acs_nome,
-            'Erro de grafia'::text AS duplicacao_motivo
-           FROM impulso_previne_dados_nominais.lista_nominal_gestantes_duplicadas_por_erro_grafia
-          WHERE lista_nominal_gestantes_duplicadas_por_erro_grafia.municipio_id_sus::text <> '111111'::text
+         SELECT tb.municipio_id_sus,
+            tb.gestante_nome,
+            tb.gestante_data_de_nascimento,
+            tb.gestante_documento_cpf,
+            tb.gestante_documento_cns,
+            tb.periodo_data_transmissao,
+            tb.gestante_dum,
+            tb.gestante_dpp,
+            tb.equipe_ine,
+            tb.equipe_nome,
+            tb.estabelecimento_cnes,
+            tb.estabelecimento_nome,
+            tb.acs_nome,
+            tb.duplicacao_motivo
+           FROM configuracoes.nomes_ficticios_cadastros_duplicados tb
         UNION ALL
          SELECT lista_nominal_gestantes_duplicadas_por_erro_data_nascimento.municipio_id_sus,
             lista_nominal_gestantes_duplicadas_por_erro_data_nascimento.gestante_nome,

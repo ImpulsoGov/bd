@@ -40,11 +40,11 @@ BEGIN
 			tb2.gestante_documento_cns,
 			tb2.gestacao_data_dum ,
 			tb2.gestacao_data_dpp,
-			tb2.equipe_ine,
-			tb2.equipe_nome,
-			tb2.estabelecimento_cnes,
-			tb2.estabelecimento_nome,
-			tb2.acs_nome
+			tb2.equipe_ine_cad_individual as equipe_ine,
+			tb2.equipe_nome_cad_individual as equipe_nome,
+			tb2.estabelecimento_cnes_cad_indivual as estabelecimento_cnes,
+			tb2.estabelecimento_nome_cad_individual as estabelecimento_nome,
+			tb2.acs_cad_individual as acs_nome
 		FROM impulso_previne_dados_nominais.lista_nominal_gestantes_unificada tb2
     ) 
 	loop
@@ -59,11 +59,11 @@ BEGIN
 			gestante_documento_cns,
 			criacao_data as periodo_data_transmissao,
 			gestacao_data_dpp,
-			equipe_ine,
-			equipe_nome,
-			estabelecimento_cnes,
-			estabelecimento_nome,
-			acs_nome
+			equipe_ine_cad_individual as equipe_ine,
+			equipe_nome_cad_individual as equipe_nome,
+			estabelecimento_cnes_cad_indivual as estabelecimento_cnes,
+			estabelecimento_nome_cad_individual as estabelecimento_nome,
+			acs_cad_individual as acs_nome
 		FROM impulso_previne_dados_nominais.lista_nominal_gestantes_unificada tb1
 		WHERE res_municipio_id_sus = municipio_id_sus 
 			AND res_gestante_data_de_nascimento = gestante_data_de_nascimento
