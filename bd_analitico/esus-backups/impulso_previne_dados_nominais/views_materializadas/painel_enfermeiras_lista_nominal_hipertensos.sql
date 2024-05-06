@@ -99,6 +99,7 @@ AS WITH dados_transmissoes_recentes AS (
             tb1.realizou_afericao_ultimos_6_meses,
             tb1.dt_afericao_pressao_mais_recente,
             tb1.realizou_consulta_ultimos_6_meses,
+            -- data da consulta mais recente de diabetes
             tb1.dt_consulta_mais_recente,
                 CASE
                     WHEN tb1.realizou_afericao_ultimos_6_meses THEN 'Em dia'::text
@@ -118,10 +119,10 @@ AS WITH dados_transmissoes_recentes AS (
                     ELSE NULL::text
                 END AS status_em_dia,
                 CASE
-                    WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses THEN 'Em dia com consulta e aferição de PA'::text
-                    WHEN tb1.realizou_afericao_ultimos_6_meses IS FALSE AND tb1.realizou_consulta_ultimos_6_meses IS FALSE THEN 'Nada em dia'::text
-                    WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses IS FALSE THEN 'Apenas aferição de PA em dia'::text
-                    WHEN tb1.realizou_afericao_ultimos_6_meses IS FALSE AND tb1.realizou_consulta_ultimos_6_meses THEN 'Apenas consulta em dia'::text
+                    WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses THEN 'Consulta e aferição de PA em dia'::text
+                    WHEN tb1.realizou_afericao_ultimos_6_meses IS FALSE AND tb1.realizou_consulta_ultimos_6_meses IS FALSE THEN 'Consulta e aferição de PA a fazer'::text
+                    WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses IS FALSE THEN 'Apenas consulta a fazer'::text
+                    WHEN tb1.realizou_afericao_ultimos_6_meses IS FALSE AND tb1.realizou_consulta_ultimos_6_meses THEN 'Apenas aferição de PA a fazer'::text
                     ELSE NULL::text
                 END AS status_usuario,
                 CASE
@@ -142,12 +143,22 @@ AS WITH dados_transmissoes_recentes AS (
             tb1.dt_nascimento,
             date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone))::integer AS cidadao_idade,
                 CASE
-                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 40::double precision THEN '0 a 40 anos'::text
-                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 40::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 49::double precision THEN '41 a 49 anos'::text
-                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 49::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 59::double precision THEN '50 a 59 anos'::text
-                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 59::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 70::double precision THEN '60 a 70 anos'::text
-                    WHEN tb1.dt_nascimento IS NULL THEN NULL::text
-                    ELSE '70 anos ou mais'::text
+                    -- Menos de 17 anos
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) <= 17 THEN 'Menos de 17 anos'
+                    -- Entre 18 e 24 anos 
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 17 AND date_part('year'::text, age(CURRENT_DATE, tb1.dt_nascimento)) <= 24 THEN 'Entre 18 e 24 anos'
+                    -- Entre 25 e 34 anos 
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 24 AND date_part('year'::text, age(CURRENT_DATE, tb1.dt_nascimento)) <= 34 THEN 'Entre 25 e 34 anos'
+                    -- Entre 35 e 44 anos 
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 34 AND date_part('year'::text, age(CURRENT_DATE, tb1.dt_nascimento)) <= 44 THEN 'Entre 35 e 44 anos'
+                    -- Entre 45 e 54 anos 
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 44 AND date_part('year'::text, age(CURRENT_DATE, tb1.dt_nascimento)) <= 54 THEN 'Entre 45 e 54 anos'
+                    -- Entre 55 e 65 anos 
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 54 AND date_part('year'::text, age(CURRENT_DATE, tb1.dt_nascimento)) <= 64 THEN 'Entre 55 e 65 anos'
+                    -- Mais de 65 anos
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 64 THEN 'Mais de 65 anos'
+                    -- Sem idade informada
+                    WHEN tb1.dt_nascimento IS NULL THEN 'Sem idade informada'
                 END AS cidadao_faixa_etaria,
             tb1.estabelecimento_cnes_atendimento,
             tb1.estabelecimento_cnes_cadastro AS estabelecimento_cnes,
@@ -174,6 +185,7 @@ AS WITH dados_transmissoes_recentes AS (
                     ELSE 0
                 END AS diagnostico_clinico,
             tb1.data_ultimo_cadastro,
+            -- data da consulta mais recente (qualquer tipo de atendimento)
             tb1.dt_ultima_consulta,
             tb1.se_faleceu,
             tb1.se_mudou,

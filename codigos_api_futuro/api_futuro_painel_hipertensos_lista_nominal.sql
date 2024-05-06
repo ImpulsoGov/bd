@@ -2,23 +2,17 @@
 CREATE MATERIALIZED VIEW impulso_previne_dados_nominais.api_futuro_painel_hipertensos_lista_nominal
 TABLESPACE pg_default
 AS WITH dados_transmissoes_recentes AS (
-         SELECT tb1_1.municipio_id_sus,
-            tb1_1.quadrimestre_atual,
+         SELECT 
+            tb1_1.municipio_id_sus,
             tb1_1.realizou_afericao_ultimos_6_meses,
             tb1_1.dt_afericao_pressao_mais_recente,
             tb1_1.realizou_consulta_ultimos_6_meses,
             tb1_1.dt_consulta_mais_recente,
             tb1_1.co_seq_fat_cidadao_pec,
             tb1_1.cidadao_cpf,
-            tb1_1.cidadao_cns,
             tb1_1.cidadao_nome,
-            tb1_1.cidadao_nome_social,
             tb1_1.cidadao_sexo,
             tb1_1.dt_nascimento,
-            tb1_1.estabelecimento_cnes_atendimento,
-            tb1_1.estabelecimento_cnes_cadastro,
-            tb1_1.estabelecimento_nome_atendimento,
-            tb1_1.estabelecimento_nome_cadastro,
             CASE 
                 WHEN TRIM(tb1_1.equipe_ine_atendimento) = '-' OR tb1_1.equipe_ine_atendimento = ' ' OR tb1_1.equipe_ine_atendimento IS NULL 
                     THEN NULL
@@ -99,47 +93,68 @@ AS WITH dados_transmissoes_recentes AS (
                 tb1.cidadao_nome,
                 tb1.dt_nascimento,
                 CASE
-                    WHEN tb1.realizou_consulta_ultimos_6_meses IS FALSE OR tb1.realizou_afericao_ultimos_6_meses IS FALSE THEN 'Não está em dia'::text
-                    WHEN tb1.realizou_consulta_ultimos_6_meses AND tb1.realizou_afericao_ultimos_6_meses THEN 'Em dia'::text
-                    ELSE NULL::text
-                END AS status_em_dia,
-                CASE
-                    WHEN tb1.cidadao_cpf IS NULL THEN tb1.dt_nascimento::text::character varying::text
+                    WHEN tb1.cidadao_cpf IS NULL THEN tb1.dt_nascimento::text
                     ELSE tb1.cidadao_cpf
                 END AS cidadao_cpf_dt_nascimento,
+                CASE
+                    WHEN tb1.possui_hipertensao_diagnosticada THEN 2 -- Diagnóstico Clínico tem preferência em relação a Autorreferência
+                    WHEN tb1.possui_hipertensao_autorreferida THEN 1 -- Apenas autorreferido
+                    ELSE 0
+                END AS id_tipo_de_diagnostico,
+                EXTRACT(YEAR FROM age(CURRENT_DATE, tb1.dt_nascimento))  AS cidadao_idade_anos,
                 tb1.dt_consulta_mais_recente,
                 CASE
-                    WHEN tb1.realizou_consulta_ultimos_6_meses THEN 'Em dia'::text
-                    ELSE impulso_previne_dados_nominais.prazo_proximo_dia()
+                    WHEN tb1.realizou_consulta_ultimos_6_meses THEN 'Em dia'
+                    -- Prazo: data fim do quadrimestre
+                    WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN 'Até 30/Abril'
+                    WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN 'Até 31/Agosto'
+                    WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN 'Até 31/Dezembro'
+                            ELSE NULL
                 END AS prazo_proxima_consulta,
-                tb1.dt_afericao_pressao_mais_recente::date AS dt_afericao_pressao_mais_recente,
+                tb1.dt_afericao_pressao_mais_recente AS dt_afericao_pressao_mais_recente,
                 CASE
-                    WHEN tb1.realizou_afericao_ultimos_6_meses THEN 'Em dia'::text
-                    ELSE impulso_previne_dados_nominais.prazo_proximo_dia()
+                    WHEN tb1.realizou_afericao_ultimos_6_meses THEN 'Em dia'
+                    WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN 'Até 30/Abril'
+                    WHEN date_part('month', CURRENT_DATE) >= 5 AND date_part('month', CURRENT_DATE) <= 8 THEN 'Até 31/Agosto'
+                    WHEN date_part('month', CURRENT_DATE) >= 9 AND date_part('month', CURRENT_DATE) <= 12 THEN 'Até 31/Dezembro'
+                            ELSE NULL
                 END AS prazo_proxima_afericao_pa,
                 COALESCE(tb1.acs_nome_cadastro,tb1.acs_nome_visita, tb1.profissional_nome_atendimento, tb1.profissional_nome_procedimento, 'SEM PROFISSIONAL RESPONSÁVEL') AS acs_nome,
-                COALESCE(tb1.estabelecimento_cnes_cadastro, tb1.estabelecimento_cnes_atendimento) AS estabelecimento_cnes,
-                COALESCE(tb1.estabelecimento_nome_cadastro, tb1.estabelecimento_nome_atendimento) AS estabelecimento_nome,
                 impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_ine_cadastro, tb1.equipe_ine_atendimento, tb1.equipe_ine_procedimento, '0')) AS equipe_ine,
                 impulso_previne_dados_nominais.equipe_ine(tb1.municipio_id_sus::text, COALESCE(tb1.equipe_nome_cadastro, tb1.equipe_nome_atendimento, tb1.equipe_nome_procedimento, 'SEM EQUIPE RESPONSÁVEL')) AS equipe_nome,
                 CASE
-                    WHEN tb1.possui_hipertensao_diagnosticada THEN 2
-                    WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS FALSE THEN 1
-                    WHEN tb1.possui_hipertensao_autorreferida AND tb1.possui_hipertensao_diagnosticada IS NULL THEN 1
-                    ELSE 0
-                END AS id_tipo_de_diagnostico,
-                CASE
-                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 40::double precision THEN 1
-                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 40::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 49::double precision THEN 2
-                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 49::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 59::double precision THEN 3
-                    WHEN date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) > 59::double precision AND date_part('year'::text, age(CURRENT_DATE::timestamp with time zone, tb1.dt_nascimento::timestamp with time zone)) <= 70::double precision THEN 4
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) <= 17 THEN 1
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 17 AND date_part('year'::text, age(CURRENT_DATE, tb1.dt_nascimento)) <= 24 THEN 2
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 24 AND date_part('year'::text, age(CURRENT_DATE, tb1.dt_nascimento)) <= 34 THEN 3
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 34 AND date_part('year'::text, age(CURRENT_DATE, tb1.dt_nascimento)) <= 44 THEN 4
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 44 AND date_part('year'::text, age(CURRENT_DATE, tb1.dt_nascimento)) <= 54 THEN 5
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 54 AND date_part('year'::text, age(CURRENT_DATE, tb1.dt_nascimento)) <= 64 THEN 6
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 64 THEN 4
                     WHEN tb1.dt_nascimento IS NULL THEN 0
-                    ELSE 5
+                    ELSE 7
                 END AS id_faixa_etaria,
                 CASE
+                    -- Menos de 40 anos
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) <= 40 THEN 1
+                    -- Entre 41 e 49 anos 
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 40 AND date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) <= 49 THEN 2
+                    -- Entre 50 e 59 anos 
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 49 AND date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) <= 59 THEN 3
+                    -- Entre 60 e 70 anos 
+                    WHEN date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) > 59 AND date_part('year', age(CURRENT_DATE, tb1.dt_nascimento)) <= 70 THEN 4
+                    -- Sem idade
+                    WHEN tb1.dt_nascimento IS NULL THEN 0
+                    -- Mais de 70 anos
+                    ELSE 5
+                END AS id_faixa_etaria2,
+                CASE
+                    -- Consulta e aferição de PA em dia
                     WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses THEN 1
+                    -- Os dois a fazer
                     WHEN tb1.realizou_afericao_ultimos_6_meses IS FALSE AND tb1.realizou_consulta_ultimos_6_meses IS FALSE THEN 2
+                    -- Apenas a consulta a fazer
                     WHEN tb1.realizou_afericao_ultimos_6_meses AND tb1.realizou_consulta_ultimos_6_meses IS FALSE THEN 3
+                    -- Apenas a aferição de PA a fazer
                     WHEN tb1.realizou_afericao_ultimos_6_meses IS FALSE AND tb1.realizou_consulta_ultimos_6_meses THEN 4
                     ELSE 0
                 END AS id_status_usuario,
@@ -162,18 +177,16 @@ AS WITH dados_transmissoes_recentes AS (
 , dados_demo_vicosa AS (
             SELECT 
                 '111111' AS municipio_id_sus,
-                'Demo - Viçosa - MG' AS municipio_uf,
+                'Demo - Bonfim - RR' AS municipio_uf,
                 upper(nomes.nome_ficticio) AS cidadao_nome,
                 tf.dt_nascimento,
-                tf.status_em_dia,
                 concat(impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10, 99)::text) AS cidadao_cpf_dt_nascimento,
+                tf.cidadao_idade_anos,
                 tf.dt_consulta_mais_recente,
                 tf.prazo_proxima_consulta,
                 tf.dt_afericao_pressao_mais_recente,
                 tf.prazo_proxima_afericao_pa,
                 upper(nomes2.nome_ficticio) AS acs_nome,
-                tf.estabelecimento_cnes,
-                tf.estabelecimento_nome,
                 tf.equipe_ine,
                 tf.equipe_nome,
                 tf.id_tipo_de_diagnostico,
@@ -194,15 +207,13 @@ AS WITH dados_transmissoes_recentes AS (
         ddv.municipio_uf,
         ddv.cidadao_nome,
         ddv.dt_nascimento,
-        ddv.status_em_dia,
         ddv.cidadao_cpf_dt_nascimento,
+        ddv.cidadao_idade_anos,
         ddv.dt_consulta_mais_recente,
         ddv.prazo_proxima_consulta,
         ddv.dt_afericao_pressao_mais_recente,
         ddv.prazo_proxima_afericao_pa,
         ddv.acs_nome,
-        ddv.estabelecimento_cnes,
-        ddv.estabelecimento_nome,
         ddv.equipe_ine,
         ddv.equipe_nome,
         ddv.id_tipo_de_diagnostico,
@@ -218,15 +229,13 @@ UNION ALL
         tf.municipio_uf,
         tf.cidadao_nome,
         tf.dt_nascimento,
-        tf.status_em_dia,
         tf.cidadao_cpf_dt_nascimento,
+        tf.cidadao_idade_anos,
         tf.dt_consulta_mais_recente,
         tf.prazo_proxima_consulta,
         tf.dt_afericao_pressao_mais_recente,
         tf.prazo_proxima_afericao_pa,
         tf.acs_nome,
-        tf.estabelecimento_cnes,
-        tf.estabelecimento_nome,
         tf.equipe_ine,
         tf.equipe_nome,
         tf.id_tipo_de_diagnostico,
