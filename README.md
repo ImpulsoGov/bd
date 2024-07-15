@@ -25,8 +25,8 @@ SPDX-License-Identifier: MIT
         │           └─ ...
         └─ ...
         ```
-        Na pasta dados_publicos_area_aberta encontram-se as seguintes views utilizadas para compor os painéis de dados públicos utilizados na área aberta do Impulso Previne.
-
+        
+  Na pasta <code>dados_publicos_area_aberta</code> encontram-se as seguintes views utilizadas para compor os painéis de dados públicos utilizados na área aberta do Impulso Previne.
 
 <code>codigos_antigos</code>: Códigos não utilizados atualmente
 
