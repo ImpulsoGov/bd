@@ -1,8 +1,4 @@
--- impulso_previne.capitacao_ponderada_contagem_equipes source
-
-CREATE MATERIALIZED VIEW impulso_previne.capitacao_ponderada_contagem_equipes
-TABLESPACE pg_default
-AS SELECT res.periodo_codigo,
+SELECT res.periodo_codigo,
     concat(m.nome, ' - ', m.uf_sigla) AS municipio_uf,
     res.municipio_id_sus,
     res.equipe_status_tipo,
@@ -58,12 +54,7 @@ AS SELECT res.periodo_codigo,
      LEFT JOIN listas_de_codigos.municipios m ON res.municipio_id_sus::bpchar = m.id_sus
   WHERE (res.periodo_codigo::text IN ( SELECT pe.periodo_codigo
            FROM dados_publicos.sisab_cadastros_municipios_equipe_todas pe
-           left join listas_de_codigos.periodos p on p.id = pe.periodo_id
+             LEFT JOIN listas_de_codigos.periodos p ON p.id = pe.periodo_id
           WHERE pe.periodo_codigo::text >= '2022.M5'::text
-          ORDER BY p.data_inicio  DESC
+          ORDER BY p.data_inicio DESC
          LIMIT 1))
-WITH DATA;
-
--- View indexes:
-CREATE INDEX capitacao_ponderada_contagem_equipes_municipio_uf_idx ON impulso_previne.capitacao_ponderada_contagem_equipes USING btree (municipio_uf, equipe_status_tipo, equipe_status);
-CREATE INDEX capitacao_ponderada_contagem_equipes_periodo_codigo_idx ON impulso_previne.capitacao_ponderada_contagem_equipes USING btree (periodo_codigo, municipio_id_sus, equipe_status);

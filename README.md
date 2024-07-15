@@ -16,6 +16,17 @@ SPDX-License-Identifier: MIT
     - <code>cron</code> : Códigos presentes no schema cron do banco principal. Schema que armazena os agendamentos das rotinas de atualização do nosso banco e sincronização com nosso banco de produção.
     - <code>dados_publicos</code> : Códigos presentes no schema dados_publicos do banco principal. Códigos das funções, tabelas e views utilizadas para armazenar os dados públicos que extraimos através dos nossos ETLs. Para mais informações consulte nosso [repositório de ETLs](https://github.com/ImpulsoGov/etl)
     - <code>impulso_previne</code> : Códigos presentes no schema impulso_previne do banco principal. Códigos utilizados para disponibilização dos dados utilizados na área aberta do ImpulsoPrevine;
+    ```plain
+        bd_analitico
+        ├─ principal
+        │  ├─ impulso_previne
+        │     ├─ views_materializadas
+                  ├─ dados_publicos_area_aberta
+        │           └─ ...
+        └─ ...
+        ```
+        Na pasta dados_publicos_area_aberta encontram-se as seguintes views utilizadas para compor os painéis de dados públicos utilizados na área aberta do Impulso Previne.
+
 
 <code>codigos_antigos</code>: Códigos não utilizados atualmente
 

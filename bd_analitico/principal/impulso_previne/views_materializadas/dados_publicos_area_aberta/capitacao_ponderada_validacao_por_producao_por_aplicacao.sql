@@ -1,17 +1,14 @@
--- impulso_previne.capitacao_ponderada_validacao_por_producao source
-
-CREATE MATERIALIZED VIEW impulso_previne.capitacao_ponderada_validacao_por_producao
-TABLESPACE pg_default
-AS WITH rel_validacoes AS (
+WITH rel_validacoes AS (
          SELECT tb1.periodo_codigo,
             tb1.municipio_id_sus,
             tb1.cnes_id,
             lpad(tb1.ine_id::text, 10, '0'::text) AS equipe_id_ine,
             tb1.validacao_nome,
+            tb1.aplicacao,
             sum(tb1.validacao_quantidade) AS validacao_quantidade
            FROM dados_publicos.sisab_validacao_municipios_por_producao_ficha_por_aplicacao tb1
           WHERE tb1.no_prazo = false
-          GROUP BY tb1.periodo_codigo, tb1.municipio_id_sus, tb1.cnes_id, tb1.ine_id, tb1.validacao_nome
+          GROUP BY tb1.periodo_codigo, tb1.municipio_id_sus, tb1.cnes_id, tb1.ine_id, tb1.validacao_nome, tb1.aplicacao
         ), rel_cadastros AS (
          SELECT tb2.municipio_id_sus,
             tb2.cnes_id,
@@ -33,6 +30,7 @@ AS WITH rel_validacoes AS (
     cn.nome AS cnes_nome,
     res.equipe_id_ine,
     cnes.nomeequipe AS equipe_nome,
+    res.aplicacao AS validacao_aplicacao,
     res.validacao_nome,
     res.validacao_quantidade,
     r.recomendacao,
@@ -44,8 +42,3 @@ AS WITH rel_validacoes AS (
      LEFT JOIN dados_publicos.obsoleta_scnes_estabelecimentos cn ON res.cnes_id::bpchar = cn.id_cnes
      LEFT JOIN dados_publicos.obsoleta_scnes_equipe_ine_nome cnes ON res.municipio_id_sus = cnes.comunicipio::bpchar AND res.equipe_id_ine = cnes.coequipe::text
      JOIN rel_cadastros cad ON res.municipio_id_sus = cad.municipio_id_sus::bpchar AND res.cnes_id::text = cad.cnes_id::text AND res.equipe_id_ine = cad.equipe_id_ine::text
-WITH DATA;
-
--- View indexes:
-CREATE INDEX capitacao_ponderada_validacao_por_producao_municipio_uf_idx ON impulso_previne.capitacao_ponderada_validacao_por_producao USING btree (municipio_uf, equipe_nome, periodo_data_inicio);
-CREATE INDEX capitacao_ponderada_validacao_por_producao_periodo_codigo_i ON impulso_previne.capitacao_ponderada_validacao_por_producao USING btree (periodo_codigo, cnes_id, municipio_id_sus, equipe_id_ine, validacao_nome);

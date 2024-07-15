@@ -1,8 +1,4 @@
--- impulso_previne.acoes_estrategicas_repasses source
-
-CREATE MATERIALIZED VIEW impulso_previne.acoes_estrategicas_repasses
-TABLESPACE pg_default
-AS SELECT concat(m.nome, ' - ', m.uf_sigla) AS municipio_uf,
+SELECT concat(m.nome, ' - ', m.uf_sigla) AS municipio_uf,
     p.codigo,
     p.data_inicio,
     dados.acao_nome,
@@ -105,7 +101,3 @@ AS SELECT concat(m.nome, ' - ', m.uf_sigla) AS municipio_uf,
            FROM dados_publicos.egestor_financiamento_acoes_estrategicas_residencia_profissiona erp) dados
      JOIN listas_de_codigos.periodos p ON p.id = dados.periodo_id
      JOIN listas_de_codigos.municipios m ON m.id_sus = dados.municipio_id_sus
-WITH DATA;
-
--- View indexes:
-CREATE INDEX acoes_estrategicas_repasses_municipio_uf_idx ON impulso_previne.acoes_estrategicas_repasses USING btree (municipio_uf, acao_nome);

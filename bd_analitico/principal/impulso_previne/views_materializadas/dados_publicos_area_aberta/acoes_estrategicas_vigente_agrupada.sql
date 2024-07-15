@@ -1,8 +1,4 @@
--- impulso_previne.acoes_estrategicas_vigente_agrupada source
-
-CREATE MATERIALIZED VIEW impulso_previne.acoes_estrategicas_vigente_agrupada
-TABLESPACE pg_default
-AS WITH visao AS (
+WITH visao AS (
          SELECT p.data_inicio,
             dados.acao_nome,
             concat(m.nome, ' - ', m.uf_sigla) AS municipio_uf,
@@ -245,7 +241,3 @@ AS WITH visao AS (
     CURRENT_TIMESTAMP AS atualizacao_data
    FROM visao v
   GROUP BY v.acao_nome, v.municipio_uf, v.nivel_repasse, v.periodicidade, v.requisitos
-WITH DATA;
-
--- View indexes:
-CREATE INDEX acoes_estrategicas_vigente_agrupada_municipio_uf_idx ON impulso_previne.acoes_estrategicas_vigente_agrupada USING btree (municipio_uf);
