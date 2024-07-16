@@ -1,8 +1,4 @@
--- impulso_previne.acoes_estrategicas_vigente source
-
-CREATE MATERIALIZED VIEW impulso_previne.acoes_estrategicas_vigente
-TABLESPACE pg_default
-AS SELECT p.data_inicio,
+SELECT p.data_inicio,
     dados.acao_nome,
     concat(m.nome, ' - ', m.uf_sigla) AS municipio_uf,
     dados.pagamento_total,
@@ -111,4 +107,3 @@ AS SELECT p.data_inicio,
      JOIN listas_de_codigos.municipios m ON m.id_sus = dados.municipio_id_sus
   WHERE p.data_inicio > (CURRENT_DATE - '1 year'::interval) AND dados.pagamento_total > 0::numeric
   ORDER BY (concat(m.uf_sigla, ' - ', m.nome)), dados.acao_nome, p.data_inicio DESC
-WITH DATA;

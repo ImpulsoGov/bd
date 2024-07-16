@@ -1,8 +1,4 @@
--- impulso_previne.capitacao_ponderada_cadastros_por_equipes source
-
-CREATE MATERIALIZED VIEW impulso_previne.capitacao_ponderada_cadastros_por_equipes
-TABLESPACE pg_default
-AS SELECT res.periodo_codigo,
+SELECT res.periodo_codigo,
     pe.data_inicio,
     res.municipio_id_sus,
     concat(p.municipio_nome, ' - ', p.estado_id) AS municipio_uf,
@@ -70,8 +66,3 @@ AS SELECT res.periodo_codigo,
      JOIN impulso_previne.egestor_financiamento_capitacao_parametro efcp ON efcp.municipio_id_sus::text = res.municipio_id_sus::text
      LEFT JOIN dados_publicos.obsoleta_scnes_equipe_ine_nome nei ON res.municipio_id_sus::text = nei.comunicipio::text AND res.equipe_id_ine::text = nei.coequipe::text
   GROUP BY res.periodo_codigo, pe.data_inicio, res.municipio_id_sus, res.cnes_id, res.cnes_nome, res.equipe_id_ine, nei.nomeequipe, res.status, p.municipio_nome, p.estado_id, mt.tipologia, res."parâmetro", mt.uf_nome, efcp.cadastro_potencial
-WITH DATA;
-
--- View indexes:
-CREATE INDEX capitacao_ponderada_cadastros_por_equipes_municipio_uf_idx ON impulso_previne.capitacao_ponderada_cadastros_por_equipes USING btree (municipio_uf, equipe_status, cadastro_total, cadastros_com_pontuacao, municipio_ultimo_parametro);
-CREATE INDEX capitacao_ponderada_cadastros_por_equipes_periodo_codigo_idx ON impulso_previne.capitacao_ponderada_cadastros_por_equipes USING btree (periodo_codigo, municipio_id_sus, cnes_id, equipe_id_ine);
