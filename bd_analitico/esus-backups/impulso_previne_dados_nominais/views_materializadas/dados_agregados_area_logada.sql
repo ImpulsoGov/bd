@@ -7,7 +7,7 @@ WITH diabeticos AS (
         COUNT(*) AS total,
         SUM(CASE WHEN tbd.status_usuario = 'Consulta e solicitação de hemoglobina a fazer' THEN 1 ELSE 0 END) AS parametro_valor,
         CURRENT_TIMESTAMP AS atualizacao_data 
-    FROM impulso_previne_dados_nominais_replica.painel_enfermeiras_lista_nominal_diabeticos tbd
+    FROM impulso_previne_dados_nominais.painel_enfermeiras_lista_nominal_diabeticos tbd
     GROUP BY tbd.municipio_id_sus, tbd.equipe_ine_cadastro
 ),
 hipertensos AS (
@@ -19,7 +19,7 @@ hipertensos AS (
         COUNT(*) AS total,
         SUM(CASE WHEN tbh.status_usuario = 'Consulta e aferição de PA a fazer' THEN 1 ELSE 0 END) AS parametro_valor,
         CURRENT_TIMESTAMP AS atualizacao_data 
-    FROM impulso_previne_dados_nominais_replica.painel_enfermeiras_lista_nominal_hipertensos tbh
+    FROM impulso_previne_dados_nominais.painel_enfermeiras_lista_nominal_hipertensos tbh
     GROUP BY tbh.municipio_id_sus, tbh.equipe_ine_cadastro
 ),
 citopatologico AS (
@@ -31,7 +31,7 @@ citopatologico AS (
         COUNT(*) AS total,
         SUM(CASE WHEN tbc.id_status_usuario <> 12 THEN 1 ELSE 0 END) AS parametro_valor, -- Quando status diferente de 12 (Em Dia)
         CURRENT_TIMESTAMP AS atualizacao_data 
-    FROM impulso_previne_dados_nominais_replica.painel_citopatologico_lista_nominal tbc
+    FROM impulso_previne_dados_nominais.painel_citopatologico_lista_nominal tbc
     GROUP BY tbc.municipio_id_sus, tbc.equipe_ine
 ),
 vacinacao AS (
@@ -43,7 +43,7 @@ vacinacao AS (
         COUNT(*) AS total,
         SUM(CASE WHEN tbv.id_status_polio = 3 OR tbv.id_status_penta = 3 THEN 1 ELSE 0 END) AS parametro_valor, -- Quando status polio ou penta em atraso
         CURRENT_TIMESTAMP AS atualizacao_data 
-    FROM impulso_previne_dados_nominais_replica.painel_vacinacao_lista_nominal tbv
+    FROM impulso_previne_dados_nominais.painel_vacinacao_lista_nominal tbv
     WHERE tbv.id_status_quadrimestre = 1 -- Quadrimestre atual
     GROUP BY tbv.municipio_id_sus, tbv.equipe_ine
 ),
@@ -62,7 +62,7 @@ gestantes_6_consultas AS (
                 ELSE 0 
             END) AS parametro_valor,
         CURRENT_TIMESTAMP AS atualizacao_data 
-    FROM impulso_previne_dados_nominais_replica.painel_gestantes_lista_nominal tb6
+    FROM impulso_previne_dados_nominais.painel_gestantes_lista_nominal tb6
     WHERE tb6.gestacao_quadrimestre = ( -- gestação quadrimestre = quadri atual OBS! não inclui gestantes sem dum
         CASE 
             WHEN DATE_PART('month', CURRENT_DATE) >= 1 AND DATE_PART('month', CURRENT_DATE) <= 4 THEN CONCAT(DATE_PART('year', CURRENT_DATE), '.Q1')
@@ -85,7 +85,7 @@ gestantes_odonto_indetificado AS (
                 ELSE 0 
             END) AS parametro_valor,
         CURRENT_TIMESTAMP AS atualizacao_data 
-    FROM impulso_previne_dados_nominais_replica.painel_gestantes_lista_nominal tbo
+    FROM impulso_previne_dados_nominais.painel_gestantes_lista_nominal tbo
     WHERE tbo.gestacao_quadrimestre = (
         CASE 
             WHEN DATE_PART('month', CURRENT_DATE) >= 1 AND DATE_PART('month', CURRENT_DATE) <= 4 THEN CONCAT(DATE_PART('year', CURRENT_DATE), '.Q1')
@@ -108,7 +108,7 @@ gestantes_sifilis_hiv AS (
                 ELSE 0 
             END) AS parametro_valor,
         CURRENT_TIMESTAMP AS atualizacao_data 
-    FROM impulso_previne_dados_nominais_replica.painel_gestantes_lista_nominal tbe
+    FROM impulso_previne_dados_nominais.painel_gestantes_lista_nominal tbe
     WHERE tbe.gestacao_quadrimestre = (
         CASE 
             WHEN DATE_PART('month', CURRENT_DATE) >= 1 AND DATE_PART('month', CURRENT_DATE) <= 4 THEN CONCAT(DATE_PART('year', CURRENT_DATE), '.Q1')
