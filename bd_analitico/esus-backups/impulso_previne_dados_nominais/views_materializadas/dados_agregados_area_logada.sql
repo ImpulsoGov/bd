@@ -15,7 +15,7 @@ hipertensos AS (
     SELECT 
         tbh.municipio_id_sus,
         tbh.equipe_ine_cadastro AS equipe_ine,
-        'HIPERTENSOS' AS indicador,
+        'HIPERTENSAO' AS indicador,
         'AFERIR_PA' AS parametro_descricao,
         COUNT(*) AS total,
         SUM(CASE WHEN tbh.status_usuario = 'Consulta e aferição de PA a fazer' THEN 1 ELSE 0 END) AS parametro_valor,
