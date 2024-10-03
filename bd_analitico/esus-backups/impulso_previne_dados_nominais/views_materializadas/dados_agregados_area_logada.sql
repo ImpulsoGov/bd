@@ -1,4 +1,3 @@
-with diabeticos as (
 WITH diabeticos AS (
     SELECT 
         tbd.municipio_id_sus,
