@@ -6,7 +6,7 @@ as WITH diabeticos AS (
         tbd.equipe_ine_cadastro AS equipe_ine,
         'DIABETES' AS indicador,
         'SOLICITAR_HEMOGLOBINA' AS parametro_descricao,
-        COUNT(*) AS total,
+        COUNT(*) AS parametro_total,
         SUM(CASE WHEN tbd.status_usuario = 'Consulta e solicitação de hemoglobina a fazer' THEN 1 ELSE 0 END) AS parametro_valor,
         CURRENT_TIMESTAMP AS atualizacao_data 
     FROM impulso_previne_dados_nominais_replica.painel_enfermeiras_lista_nominal_diabeticos tbd
@@ -18,7 +18,7 @@ hipertensos AS (
         tbh.equipe_ine_cadastro AS equipe_ine,
         'HIPERTENSOS' AS indicador,
         'AFERIR_PA' AS parametro_descricao,
-        COUNT(*) AS total,
+        COUNT(*) AS parametro_total,
         SUM(CASE WHEN tbh.status_usuario = 'Consulta e aferição de PA a fazer' THEN 1 ELSE 0 END) AS parametro_valor,
         CURRENT_TIMESTAMP AS atualizacao_data 
     FROM impulso_previne_dados_nominais_replica.painel_enfermeiras_lista_nominal_hipertensos tbh
@@ -30,7 +30,7 @@ citopatologico AS (
         tbc.equipe_ine,
         'CITOPATOLOGICO' AS indicador,
         'COLETAR_EXAME_CITO' AS parametro_descricao,
-        COUNT(*) AS total,
+        COUNT(*) AS parametro_total,
         SUM(CASE WHEN tbc.id_status_usuario <> 12 THEN 1 ELSE 0 END) AS parametro_valor, -- Quando status diferente de 12 (Em Dia)
         CURRENT_TIMESTAMP AS atualizacao_data 
     FROM impulso_previne_dados_nominais_replica.painel_citopatologico_lista_nominal tbc
@@ -42,7 +42,7 @@ vacinacao AS (
         tbv.equipe_ine,
         'VACINACAO' AS indicador,
         'DOSE_ATRASADA' AS parametro_descricao,
-        COUNT(*) AS total,
+        COUNT(*) AS parametro_total,
         SUM(CASE WHEN tbv.id_status_polio = 3 OR tbv.id_status_penta = 3 THEN 1 ELSE 0 END) AS parametro_valor, -- Quando status polio ou penta em atraso
         CURRENT_TIMESTAMP AS atualizacao_data 
     FROM impulso_previne_dados_nominais_replica.painel_vacinacao_lista_nominal tbv
@@ -55,7 +55,7 @@ gestantes_6_consultas AS (
         tb6.equipe_ine,
         'PRE_NATAL' AS indicador,
         'MENOS_6_CONSULTAS' AS parametro_descricao,
-        COUNT(*) AS total,
+        COUNT(*) AS parametro_total,
         SUM(CASE 
                 WHEN tb6.gestacao_idade_gestacional_primeiro_atendimento >= 0 
                 AND tb6.gestacao_idade_gestacional_primeiro_atendimento <= 12 
@@ -80,7 +80,7 @@ gestantes_odonto_indetificado AS (
         tbo.equipe_ine,
         'PRE_NATAL' AS indicador,
         'ODONTO' AS parametro_descricao,
-        COUNT(*) AS total,
+        COUNT(*) AS parametro_total,
         SUM(CASE 
                 WHEN tbo.id_atendimento_odontologico <> 1 -- Atend. odontológico NÃO identificado
                 THEN 1 
@@ -103,7 +103,7 @@ gestantes_sifilis_hiv AS (
         tbe.equipe_ine,
         'PRE_NATAL' AS indicador,
         'SIFILIS_HIV' AS parametro_descricao,
-        COUNT(*) AS total,
+        COUNT(*) AS parametro_total,
         SUM(CASE 
                 WHEN tbe.id_exame_hiv_sifilis <> 4 -- Todos os demais status que não sejam os dois exames realizados
                 THEN 1 
