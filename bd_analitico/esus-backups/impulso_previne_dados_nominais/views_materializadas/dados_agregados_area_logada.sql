@@ -12,7 +12,7 @@ WITH diabeticos AS (
 		                ELSE NULL
 		            END
 		        ) AS fora_do_indicador_valor,
-		        current_time AS atualizacao_data
+		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_enfermeiras_lista_nominal_diabeticos tbd
 		    GROUP BY tbd.municipio_id_sus, tbd.equipe_ine_cadastro
 	)
@@ -48,7 +48,7 @@ WITH diabeticos AS (
 		                ELSE NULL
 		            END
 		        ) AS fora_do_indicador_valor,
-		        current_time AS atualizacao_data
+		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_enfermeiras_lista_nominal_hipertensos tbh
 		    GROUP BY tbh.municipio_id_sus, tbh.equipe_ine_cadastro
 	)
@@ -84,7 +84,7 @@ citopatologico AS (
 		                ELSE NULL
 		            END
 		        ) AS fora_do_indicador_valor,
-		        current_time AS atualizacao_data
+		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_citopatologico_lista_nominal tbc
 		    GROUP BY tbc.municipio_id_sus, tbc.equipe_ine
 	)
@@ -121,7 +121,7 @@ vacinacao AS (
 		                ELSE NULL
 		            END
 		        ) AS fora_do_indicador_valor,
-		        current_time AS atualizacao_data
+		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_vacinacao_lista_nominal tbv
 		    WHERE tbv.id_status_quadrimestre = 1
 		    GROUP BY tbv.municipio_id_sus, tbv.equipe_ine
@@ -161,7 +161,7 @@ gestantes_6_consultas AS (
 		                ELSE NULL
 		            END
 		        ) AS fora_do_indicador_valor,
-		        current_time AS atualizacao_data
+		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_gestantes_lista_nominal tb6
 		    WHERE tb6.gestacao_data_dpp::DATE > CURRENT_DATE -- gestantes ativas
 		    GROUP BY tb6.municipio_id_sus, tb6.equipe_ine
@@ -199,7 +199,7 @@ gestantes_odonto_indetificado AS (
 		                ELSE NULL
 		            END
 		        ) AS fora_do_indicador_valor,
-		        current_time AS atualizacao_data
+		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_gestantes_lista_nominal tbo
 		    WHERE tbo.gestacao_data_dpp::DATE > CURRENT_DATE -- gestantes ativas
 		    GROUP BY tbo.municipio_id_sus, tbo.equipe_ine
@@ -237,7 +237,7 @@ gestantes_sifilis_hiv AS (
 		                ELSE NULL
 		            END
 		        ) AS fora_do_indicador_valor,
-		        current_time AS atualizacao_data
+		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_gestantes_lista_nominal tbe
 		    WHERE tbe.gestacao_data_dpp::DATE > CURRENT_DATE -- gestantes ativas
 		    GROUP BY tbe.municipio_id_sus, tbe.equipe_ine
