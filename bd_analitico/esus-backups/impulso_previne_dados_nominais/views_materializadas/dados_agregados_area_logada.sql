@@ -4,11 +4,11 @@ WITH diabeticos AS (
 		        tbd.municipio_id_sus,
 		        tbd.equipe_ine_cadastro AS equipe_ine,
 		        'DIABETES'::text AS indicador,
-		        COUNT(DISTINCT cidadao_nome || dt_nascimento) AS total_valor,
+		        COUNT(DISTINCT tbd.cidadao_nome || tbd.dt_nascimento) AS total_valor,
 		        COUNT(
 		            DISTINCT CASE
 		                WHEN tbd.status_usuario = 'Consulta e solicitação de hemoglobina a fazer'::text 
-		                THEN cidadao_nome || dt_nascimento
+		                THEN tbd.cidadao_nome || tbd.dt_nascimento
 		                ELSE NULL
 		            END
 		        ) AS fora_do_indicador_valor,
@@ -37,20 +37,20 @@ WITH diabeticos AS (
 , hipertensos AS (
 		WITH base AS (
 		    SELECT 
-		        tbd.municipio_id_sus,
-		        tbd.equipe_ine_cadastro AS equipe_ine,
+		        tbh.municipio_id_sus,
+		        tbh.equipe_ine_cadastro AS equipe_ine,
 		        'HIPERTENSOS'::text AS indicador,
-		        COUNT(DISTINCT cidadao_nome || dt_nascimento) AS total_valor,
+		        COUNT(DISTINCT tbh.cidadao_nome || tbh.dt_nascimento) AS total_valor,
 		        COUNT(
 		            DISTINCT CASE
-		                WHEN tbd.status_usuario = 'Consulta e aferição de PA a fazer'::text 
-		                THEN cidadao_nome || dt_nascimento
+		                WHEN tbh.status_usuario = 'Consulta e aferição de PA a fazer'::text 
+		                THEN tbh.cidadao_nome || tbh.dt_nascimento
 		                ELSE NULL
 		            END
 		        ) AS fora_do_indicador_valor,
 		        current_time AS atualizacao_data
-		    FROM impulso_previne_dados_nominais_replica.painel_enfermeiras_lista_nominal_hipertensos tbd
-		    GROUP BY tbd.municipio_id_sus, tbd.equipe_ine_cadastro
+		    FROM impulso_previne_dados_nominais_replica.painel_enfermeiras_lista_nominal_hipertensos tbh
+		    GROUP BY tbh.municipio_id_sus, tbh.equipe_ine_cadastro
 	)
 	SELECT 
 	    municipio_id_sus,
