@@ -4,14 +4,14 @@ WITH diabeticos AS (
 		        tbd.municipio_id_sus,
 		        tbd.equipe_ine_cadastro AS equipe_ine,
 		        'DIABETES'::text AS indicador,
-		        COUNT(DISTINCT tbd.cidadao_nome || tbd.dt_nascimento) AS total_valor,
-		        COUNT(
-		            DISTINCT CASE
-		                WHEN tbd.status_usuario = 'Consulta e solicitação de hemoglobina a fazer'::text 
-		                THEN tbd.cidadao_nome || tbd.dt_nascimento
-		                ELSE NULL
-		            END
-		        ) AS fora_do_indicador_valor,
+		        COUNT(*) AS total_valor,
+			    SUM(
+			        CASE
+			            WHEN tbd.status_usuario <> 'Consulta e solicitação de hemoglobina em dia' 
+			            THEN 1
+			            ELSE 0
+			        END
+			    ) AS fora_do_indicador_valor,
 		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_enfermeiras_lista_nominal_diabeticos tbd
 		    GROUP BY tbd.municipio_id_sus, tbd.equipe_ine_cadastro
@@ -40,14 +40,14 @@ WITH diabeticos AS (
 		        tbh.municipio_id_sus,
 		        tbh.equipe_ine_cadastro AS equipe_ine,
 		        'HIPERTENSOS'::text AS indicador,
-		        COUNT(DISTINCT tbh.cidadao_nome || tbh.dt_nascimento) AS total_valor,
-		        COUNT(
-		            DISTINCT CASE
-		                WHEN tbh.status_usuario = 'Consulta e aferição de PA a fazer'::text 
-		                THEN tbh.cidadao_nome || tbh.dt_nascimento
-		                ELSE NULL
-		            END
-		        ) AS fora_do_indicador_valor,
+		        COUNT(*) AS total_valor,
+			    SUM(
+			        CASE
+			            WHEN tbh.status_usuario <> 'Consulta e aferição de PA em dia' 
+			            THEN 1
+			            ELSE 0
+			        END
+			    ) AS fora_do_indicador_valor,
 		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_enfermeiras_lista_nominal_hipertensos tbh
 		    GROUP BY tbh.municipio_id_sus, tbh.equipe_ine_cadastro
@@ -76,12 +76,12 @@ citopatologico AS (
 		        tbc.municipio_id_sus,
 		        tbc.equipe_ine AS equipe_ine,
 		        'CITOPATOLOGICO'::text AS indicador,
-		        COUNT(DISTINCT tbc.paciente_nome||tbc.cidadao_cpf_dt_nascimento) AS total_valor,
-		        COUNT(
-		            DISTINCT CASE
+		        COUNT(*) AS total_valor,
+		        SUM(
+		           CASE
 		                WHEN  tbc.id_status_usuario <> 12 -- Quando status diferente de 12 (Em Dia)
-		                THEN tbc.paciente_nome||tbc.cidadao_cpf_dt_nascimento
-		                ELSE NULL
+		                THEN 1
+		                ELSE 0
 		            END
 		        ) AS fora_do_indicador_valor,
 		        current_timestamp AS atualizacao_data
@@ -163,7 +163,7 @@ gestantes_6_consultas AS (
 		        ) AS fora_do_indicador_valor,
 		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_gestantes_lista_nominal tb6
-		    WHERE tb6.gestacao_data_dpp::DATE > CURRENT_DATE -- gestantes ativas
+		    WHERE tb6.id_status_usuario = 8 -- gestação ativa
 		    GROUP BY tb6.municipio_id_sus, tb6.equipe_ine
 	)
 	SELECT 
@@ -201,7 +201,7 @@ gestantes_odonto_indetificado AS (
 		        ) AS fora_do_indicador_valor,
 		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_gestantes_lista_nominal tbo
-		    WHERE tbo.gestacao_data_dpp::DATE > CURRENT_DATE -- gestantes ativas
+		    WHERE tbo.id_status_usuario = 8 -- gestação ativa
 		    GROUP BY tbo.municipio_id_sus, tbo.equipe_ine
 	)
 	SELECT 
@@ -239,7 +239,7 @@ gestantes_sifilis_hiv AS (
 		        ) AS fora_do_indicador_valor,
 		        current_timestamp AS atualizacao_data
 		    FROM impulso_previne_dados_nominais_replica.painel_gestantes_lista_nominal tbe
-		    WHERE tbe.gestacao_data_dpp::DATE > CURRENT_DATE -- gestantes ativas
+		    WHERE tbe.id_status_usuario = 8 -- gestação ativa
 		    GROUP BY tbe.municipio_id_sus, tbe.equipe_ine
 	)
 	SELECT 
