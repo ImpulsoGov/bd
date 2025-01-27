@@ -9,6 +9,7 @@ WITH dados_cidadao_pec AS (
 	    (array_agg(tfcp.nu_cns) FILTER (WHERE tfcp.nu_cns IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_documento_cns,
        	(array_agg(tfcp.st_faleceu) FILTER (WHERE tfcp.st_faleceu IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS se_faleceu,
 	    (array_agg(tds.ds_sexo) FILTER (WHERE tds.ds_sexo IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_sexo,
+	   	(array_agg(tfcp.nu_telefone_celular) FILTER (WHERE tfcp.nu_telefone_celular IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_telefone,
         date_part('year', age(CURRENT_DATE::timestamp with time zone, tempocidadaopec.dt_registro::timestamp with time zone))::integer AS paciente_idade_atual,
         CASE
             WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat(date_part('year', CURRENT_DATE ::date), '-04-30')
@@ -28,6 +29,7 @@ selecao_mulheres_denominador as (
 	     dcp.data_de_nascimento,
 	     dcp.paciente_documento_cpf,
 	     dcp.paciente_documento_cns,
+	     dcp.paciente_telefone,
 	     dcp.paciente_idade_atual,
 	     date_part('year', age(dcp.data_fim_quadrimestre::timestamp with time zone, dcp.data_de_nascimento::timestamp with time zone))::integer AS idade_fim_quadrimestre 
 	 FROM dados_cidadao_pec dcp
@@ -39,6 +41,7 @@ selecao_mulheres_denominador as (
 	     dcp.data_de_nascimento,
 	     dcp.paciente_documento_cpf,
 	     dcp.paciente_documento_cns,
+	     dcp.paciente_telefone,
 	     dcp.paciente_idade_atual,
 	     dcp.data_fim_quadrimestre
 ),
@@ -224,7 +227,8 @@ infos_mulheres_atendimento_individual_recente AS (
 		cdr.ine_equipe_cad_dom_familia,
 		cdr.equipe_cad_dom_familia,
 		cdr.acs_cad_dom_familia,
-		cdr.paciente_endereco
+		cdr.paciente_endereco,
+		b.paciente_telefone
 	FROM selecao_mulheres_denominador b
 	LEFT JOIN cadastro_individual_recente cir
 		ON cir.chave_mulher = b.chave_mulher
@@ -259,7 +263,8 @@ infos_mulheres_atendimento_individual_recente AS (
 		cdr.ine_equipe_cad_dom_familia,
 		cdr.equipe_cad_dom_familia,
 		cdr.acs_cad_dom_familia,
-		cdr.paciente_endereco
+		cdr.paciente_endereco,
+		b.paciente_telefone
 ), 
 indicador_regras_de_negocio as (
 	SELECT
@@ -353,7 +358,7 @@ indicador_regras_de_negocio as (
 			     tb2.ine_equipe_exame,
 			     tb2.nome_equipe_exame,
 			     tb2.cns_profissional_exame,
-			     tb2.nome_profissional_exame
+			     tb2.nome_profissional_exame	
 		),
 lista_citopatologico as (	
 		 select 
@@ -386,9 +391,11 @@ lista_citopatologico as (
 		 atr.ine_equipe_atendimento_recente as equipe_ine_ultimo_atendimento,
 		 atr.equipe_atendimento_recente as equipe_nome_ultimo_atendimento,
 		 atr.profissional_atendimento_recente as acs_nome_ultimo_atendimento,
-		 atr.acs_visita_domiciliar as acs_nome_visita,
+		 atr.acs_visita_domiciliar as acs_nome_visita, 
+		 atr.paciente_telefone,
 		 now() as criacao_data,
 		 now() as atualizacao_data
 		 from indicador_regras_de_negocio irn
 		 left join infos_mulheres_atendimento_individual_recente atr on irn.chave_mulher = atr.chave_mulher
-)select * from lista_citopatologico
+)
+select * from lista_citopatologico

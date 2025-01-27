@@ -53,6 +53,7 @@ WITH possui_hipertensao_autorreferida AS (
                 (array_agg(tfcp.nu_cpf_cidadao) FILTER (WHERE tfcp.nu_cpf_cidadao IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_cpf,
                 (array_agg(tfcp.nu_cns) FILTER (WHERE tfcp.nu_cns IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_cns,
                 (array_agg(tds.ds_sexo) FILTER (WHERE tds.ds_sexo IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_sexo,
+                (array_agg(tfcp.nu_telefone_celular) FILTER (WHERE tfcp.nu_telefone_celular IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_telefone,
                 FIRST_VALUE(tfcp.co_seq_fat_cidadao_pec) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS co_seq_fat_cidadao_pec, -- valor arbitrario
                 COALESCE(haref.possui_hipertensao_autorreferida,FALSE) AS possui_hipertensao_autorreferida,
                 COALESCE(hdia.possui_hipertensao_diagnosticada,FALSE) AS possui_hipertensao_diagnosticada,
@@ -298,6 +299,7 @@ WITH possui_hipertensao_autorreferida AS (
     ar.dt_ultima_consulta,
     dh.se_faleceu,
     cir.se_mudou, 
+    dh.cidadao_telefone,
     now() as criacao_data
 FROM denominador_hipertensos dh
 LEFT JOIN afericao_pressao ap 
@@ -315,4 +317,4 @@ LEFT JOIN cadastro_domiciliar_recente cdr
         AND cdr.ultimo_cadastro_domiciliar_familia IS TRUE
 LEFT JOIN atendimento_recente ar 
         ON ar.chave_paciente = dh.chave_paciente
-        AND ar.ultimo_atendimento IS TRUE 
+        AND ar.ultimo_atendimento IS TRUE		 
