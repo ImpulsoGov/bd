@@ -172,6 +172,22 @@ SELECT
 		) 	
 		SELECT * FROM base WHERE ultimo_atendimento_individual IS true
 ),
+visitas_ubs_12_meses as (
+	SELECT 
+			mu.chave_mulher,
+			COUNT(*) as numero_visitas_ubs_ultimos_12_meses
+	FROM tb_fat_atendimento_individual tfai
+    JOIN tb_fat_cidadao_pec tfcp 
+	    	ON tfcp.co_seq_fat_cidadao_pec = tfai.co_fat_cidadao_pec
+	JOIN selecao_mulheres_denominador mu 
+			ON mu.chave_mulher = replace(tfcp.no_cidadao::text||tfcp.co_dim_tempo_nascimento,' ','')
+	JOIN tb_dim_local_atendimento tdla
+            ON tfai.co_dim_local_atendimento = tdla.co_seq_dim_local_atendimento
+	WHERE 
+		tdla.ds_local_atendimento = 'UBS'
+        AND tfai.dt_inicial_atendimento >= (CURRENT_DATE - INTERVAL '12 months')
+    GROUP by mu.chave_mulher
+),
 visita_domiciliar_recente AS (
 	WITH base AS (
 		SELECT 
@@ -439,9 +455,11 @@ lista_citopatologico as (
 		 atr.paciente_sexo,
 		 atr.paciente_raca_cor,
 		 atr.paciente_plano_saude_privado,
+		 vu.numero_visitas_ubs_ultimos_12_meses,
 		 now() as criacao_data,
 		 now() as atualizacao_data
 		 from indicador_regras_de_negocio irn
 		 left join infos_mulheres_atendimento_individual_recente atr on irn.chave_mulher = atr.chave_mulher
+		 left join visitas_ubs_12_meses vu on irn.chave_mulher = vu.chave_mulher
 )
 select * from lista_citopatologico

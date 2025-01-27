@@ -196,7 +196,23 @@ WITH ultima_ficha_procedimento AS (
 			ON acs.co_seq_dim_profissional = visitadomiciliar.co_dim_profissional
 		LEFT JOIN tb_dim_tempo tdt 
 			ON tdt.co_seq_dim_tempo = visitadomiciliar.co_dim_tempo
-		)
+		),
+visitas_ubs_12_meses as (
+	SELECT 
+			dd.chave_paciente,
+			COUNT(*) as numero_visitas_ubs_ultimos_12_meses
+	FROM tb_fat_atendimento_individual tfai
+    JOIN tb_fat_cidadao_pec tfcp 
+	    	ON tfcp.co_seq_fat_cidadao_pec = tfai.co_fat_cidadao_pec
+	JOIN denominador_diabeticos dd 
+			ON dd.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+	JOIN tb_dim_local_atendimento tdla
+            ON tfai.co_dim_local_atendimento = tdla.co_seq_dim_local_atendimento
+	WHERE 
+		tdla.ds_local_atendimento = 'UBS'
+        AND tfai.dt_inicial_atendimento >= (CURRENT_DATE - INTERVAL '12 months')
+    GROUP by dd.chave_paciente
+)
 , cadastro_domiciliar_recente AS (
 -- Dados do cadastro da família e do domicílio da mulher (dados para vinculação de ACS da mulher)
 		SELECT 
@@ -327,6 +343,7 @@ WITH ultima_ficha_procedimento AS (
 	cir.paciente_sexo,
 	cir.paciente_raca_cor,
 	cir.paciente_plano_saude_privado,
+	vu.numero_visitas_ubs_ultimos_12_meses,
 	now() as criacao_data
 FROM denominador_diabeticos dd
 LEFT JOIN hemoglobina_glicada hg 
@@ -344,4 +361,5 @@ LEFT JOIN cadastro_domiciliar_recente cdr
 	AND cdr.ultimo_cadastro_domiciliar_familia IS TRUE
 LEFT JOIN atendimento_recente ar 
 	ON ar.chave_paciente = dd.chave_paciente
-	AND ar.ultimo_atendimento IS TRUE
+	AND ar.ultimo_atendimento IS true
+LEFT JOIN visitas_ubs_12_meses vu on dd.chave_paciente = vu.chave_paciente
