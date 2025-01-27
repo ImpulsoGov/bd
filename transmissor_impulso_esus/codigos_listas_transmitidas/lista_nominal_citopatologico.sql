@@ -100,12 +100,22 @@ cadastro_individual_recente AS (
 			eq.nu_ine AS ine_equipe_cad_individual,
 			eq.no_equipe AS equipe_cad_individual,
 			acs.no_profissional AS acs_cad_individual,
+			tfct.co_fat_familia_territorio as id_familia,
+			cci.nu_celular_cidadao as paciente_celular,
+			st.ds_dim_situacao_trabalho as paciente_situacao_trabalho,
+			pct.ds_povo_comunidade_tradicional as paciente_povo_comunidade_tradicional,
+			idg.ds_identidade_genero as paciente_identidade_genero,
+			tds.ds_sexo as paciente_sexo,
+			tdrc.ds_raca_cor as paciente_raca_cor,
+			tfci.st_plano_saude_privado as paciente_plano_saude_privado,
 			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_individual
 		FROM tb_fat_cad_individual tfci
 		JOIN tb_fat_cidadao_pec tfcpec
 			ON tfcpec.co_seq_fat_cidadao_pec = tfci.co_fat_cidadao_pec
 		JOIN selecao_mulheres_denominador mu 
 			ON mu.chave_mulher = replace(tfcpec.no_cidadao::text||tfcpec.co_dim_tempo_nascimento,' ','')
+		left JOIN tb_fat_cidadao_territorio tfct
+			ON tfct.co_fat_cad_individual = tfci.co_seq_fat_cad_individual 
 		LEFT JOIN tb_dim_tempo tdt 
 			ON tdt.co_seq_dim_tempo = tfci.co_dim_tempo
 		LEFT JOIN tb_dim_equipe eq
@@ -114,6 +124,18 @@ cadastro_individual_recente AS (
 			ON acs.co_seq_dim_profissional = tfci.co_dim_profissional
 		LEFT JOIN tb_dim_unidade_saude uns
 			ON uns.co_seq_dim_unidade_saude = tfci.co_dim_unidade_saude  
+		LEFT JOIN tb_dim_situacao_trabalho st 
+			ON st.co_seq_dim_situacao_trabalho  = tfci.co_dim_situacao_trabalho  
+		LEFT JOIN tb_dim_povo_comunidad_trad pct 
+			ON pct.co_seq_dim_povo_comunidad_trad = tfci.co_dim_povo_comunidad_trad  
+		LEFT JOIN tb_dim_identidade_genero idg 
+			ON idg.co_seq_dim_identidade_genero = tfci.co_dim_identidade_genero  
+		LEFT JOIN tb_dim_sexo tds 
+			ON tds.co_seq_dim_sexo  = tfci.co_dim_sexo  
+		LEFT JOIN tb_dim_raca_cor tdrc
+			ON tdrc.co_seq_dim_raca_cor = tfci.co_dim_raca_cor  
+		LEFT JOIN tb_cds_cad_individual cci 
+			ON tfci.nu_uuid_ficha = cci.co_unico_ficha
 		)
 	SELECT * FROM base WHERE ultimo_cadastro_individual IS true
 ), 
@@ -228,7 +250,15 @@ infos_mulheres_atendimento_individual_recente AS (
 		cdr.equipe_cad_dom_familia,
 		cdr.acs_cad_dom_familia,
 		cdr.paciente_endereco,
-		b.paciente_telefone
+		cir.id_familia,
+		b.paciente_telefone,
+		cir.paciente_celular,
+		cir.paciente_situacao_trabalho,
+		cir.paciente_povo_comunidade_tradicional,
+		cir.paciente_identidade_genero,
+		cir.paciente_sexo,
+		cir.paciente_raca_cor,
+		cir.paciente_plano_saude_privado
 	FROM selecao_mulheres_denominador b
 	LEFT JOIN cadastro_individual_recente cir
 		ON cir.chave_mulher = b.chave_mulher
@@ -264,7 +294,15 @@ infos_mulheres_atendimento_individual_recente AS (
 		cdr.equipe_cad_dom_familia,
 		cdr.acs_cad_dom_familia,
 		cdr.paciente_endereco,
-		b.paciente_telefone
+		cir.id_familia,
+		b.paciente_telefone,
+		cir.paciente_celular,
+		cir.paciente_situacao_trabalho,
+		cir.paciente_povo_comunidade_tradicional,
+		cir.paciente_identidade_genero,
+		cir.paciente_sexo,
+		cir.paciente_raca_cor,
+		cir.paciente_plano_saude_privado
 ), 
 indicador_regras_de_negocio as (
 	SELECT
@@ -392,7 +430,15 @@ lista_citopatologico as (
 		 atr.equipe_atendimento_recente as equipe_nome_ultimo_atendimento,
 		 atr.profissional_atendimento_recente as acs_nome_ultimo_atendimento,
 		 atr.acs_visita_domiciliar as acs_nome_visita, 
+		 atr.id_familia,
 		 atr.paciente_telefone,
+		 atr.paciente_celular,
+		 atr.paciente_situacao_trabalho,
+		 atr.paciente_povo_comunidade_tradicional,
+	   	 atr.paciente_identidade_genero,
+		 atr.paciente_sexo,
+		 atr.paciente_raca_cor,
+		 atr.paciente_plano_saude_privado,
 		 now() as criacao_data,
 		 now() as atualizacao_data
 		 from indicador_regras_de_negocio irn

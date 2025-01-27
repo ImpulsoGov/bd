@@ -142,6 +142,14 @@ WITH ultima_ficha_procedimento AS (
 						eq.no_equipe AS equipe_nome_cadastro,
 						acs.no_profissional AS acs_nome_cadastro,
 						COALESCE(cidadaoterritoriorecente.st_mudou_se,0) AS se_mudou,
+                        cidadaoterritoriorecente.co_fat_familia_territorio as id_familia,
+                        cci.nu_celular_cidadao as cidadao_celular,
+						st.ds_dim_situacao_trabalho as paciente_situacao_trabalho,
+						pct.ds_povo_comunidade_tradicional as paciente_povo_comunidade_tradicional,
+						idg.ds_identidade_genero as paciente_identidade_genero,
+						tds.ds_sexo as paciente_sexo,
+						tdrc.ds_raca_cor as paciente_raca_cor,
+						tfci.st_plano_saude_privado as paciente_plano_saude_privado,
 						ROW_NUMBER() OVER (PARTITION BY dd.chave_paciente ORDER BY tfci.co_seq_fat_cad_individual DESC) = 1 AS ultimo_cadastro_individual
 				FROM tb_fat_cad_individual tfci
 				JOIN tb_fat_cidadao_pec tfcp
@@ -158,6 +166,18 @@ WITH ultima_ficha_procedimento AS (
 						ON uns.co_seq_dim_unidade_saude = tfci.co_dim_unidade_saude 
 				LEFT JOIN tb_fat_cidadao_territorio cidadaoterritoriorecente 
 						ON cidadaoterritoriorecente.co_fat_cad_individual = tfci.co_seq_fat_cad_individual
+                LEFT JOIN tb_dim_situacao_trabalho st 
+					ON st.co_seq_dim_situacao_trabalho  = tfci.co_dim_situacao_trabalho  
+				LEFT JOIN tb_dim_povo_comunidad_trad pct 
+					ON pct.co_seq_dim_povo_comunidad_trad = tfci.co_dim_povo_comunidad_trad  
+				LEFT JOIN tb_dim_identidade_genero idg 
+					ON idg.co_seq_dim_identidade_genero = tfci.co_dim_identidade_genero  
+				LEFT JOIN tb_dim_sexo tds 
+					ON tds.co_seq_dim_sexo  = tfci.co_dim_sexo  
+				LEFT JOIN tb_dim_raca_cor tdrc
+					ON tdrc.co_seq_dim_raca_cor = tfci.co_dim_raca_cor  
+				LEFT JOIN tb_cds_cad_individual cci 
+					ON tfci.nu_uuid_ficha = cci.co_unico_ficha
 ) 
 , visita_domiciliar_recente AS (
 -- Dados das visitas domiciliares realizadas pelos ACS (dados para vinculação de ACS da mulher)
@@ -298,7 +318,15 @@ WITH ultima_ficha_procedimento AS (
 	ar.dt_ultima_consulta,
 	dd.se_faleceu,
 	cir.se_mudou, 
+    cir.id_familia,
 	dd.cidadao_telefone,
+	cir.cidadao_celular,
+    cir.paciente_situacao_trabalho,
+	cir.paciente_povo_comunidade_tradicional,
+	cir.paciente_identidade_genero,
+	cir.paciente_sexo,
+	cir.paciente_raca_cor,
+	cir.paciente_plano_saude_privado,
 	now() as criacao_data
 FROM denominador_diabeticos dd
 LEFT JOIN hemoglobina_glicada hg 
