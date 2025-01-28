@@ -147,7 +147,6 @@ WITH ultima_ficha_procedimento AS (
 						st.ds_dim_situacao_trabalho as paciente_situacao_trabalho,
 						pct.ds_povo_comunidade_tradicional as paciente_povo_comunidade_tradicional,
 						idg.ds_identidade_genero as paciente_identidade_genero,
-						tds.ds_sexo as paciente_sexo,
 						tdrc.ds_raca_cor as paciente_raca_cor,
 						tfci.st_plano_saude_privado as paciente_plano_saude_privado,
 						ROW_NUMBER() OVER (PARTITION BY dd.chave_paciente ORDER BY tfci.co_seq_fat_cad_individual DESC) = 1 AS ultimo_cadastro_individual
@@ -172,8 +171,6 @@ WITH ultima_ficha_procedimento AS (
 					ON pct.co_seq_dim_povo_comunidad_trad = tfci.co_dim_povo_comunidad_trad  
 				LEFT JOIN tb_dim_identidade_genero idg 
 					ON idg.co_seq_dim_identidade_genero = tfci.co_dim_identidade_genero  
-				LEFT JOIN tb_dim_sexo tds 
-					ON tds.co_seq_dim_sexo  = tfci.co_dim_sexo  
 				LEFT JOIN tb_dim_raca_cor tdrc
 					ON tdrc.co_seq_dim_raca_cor = tfci.co_dim_raca_cor  
 				LEFT JOIN tb_cds_cad_individual cci 
@@ -340,7 +337,6 @@ visitas_ubs_12_meses as (
     cir.paciente_situacao_trabalho,
 	cir.paciente_povo_comunidade_tradicional,
 	cir.paciente_identidade_genero,
-	cir.paciente_sexo,
 	cir.paciente_raca_cor,
 	cir.paciente_plano_saude_privado,
 	vu.numero_visitas_ubs_ultimos_12_meses,
