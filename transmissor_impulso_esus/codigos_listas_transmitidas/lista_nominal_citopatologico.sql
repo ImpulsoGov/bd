@@ -9,7 +9,7 @@ WITH dados_cidadao_pec AS (
 	    (array_agg(tfcp.nu_cns) FILTER (WHERE tfcp.nu_cns IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_documento_cns,
        	(array_agg(tfcp.st_faleceu) FILTER (WHERE tfcp.st_faleceu IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS se_faleceu,
 	    (array_agg(tds.ds_sexo) FILTER (WHERE tds.ds_sexo IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_sexo,
-	   	(array_agg(tfcp.nu_telefone_celular) FILTER (WHERE tfcp.nu_telefone_celular IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS paciente_telefone,
+	   	(array_agg(tfcp.nu_telefone_celular) FILTER (WHERE tfcp.nu_telefone_celular IS NOT NULL) OVER (PARTITION BY replace(tfcp.no_cidadao || tfcp.co_dim_tempo_nascimento, ' ', '') ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_telefone,
         date_part('year', age(CURRENT_DATE::timestamp with time zone, tempocidadaopec.dt_registro::timestamp with time zone))::integer AS paciente_idade_atual,
         CASE
             WHEN date_part('month', CURRENT_DATE) >= 1 AND date_part('month', CURRENT_DATE) <= 4 THEN concat(date_part('year', CURRENT_DATE ::date), '-04-30')
@@ -29,7 +29,7 @@ selecao_mulheres_denominador as (
 	     dcp.data_de_nascimento,
 	     dcp.paciente_documento_cpf,
 	     dcp.paciente_documento_cns,
-	     dcp.paciente_telefone,
+	     dcp.cidadao_telefone,
 	     dcp.paciente_idade_atual,
 	     date_part('year', age(dcp.data_fim_quadrimestre::timestamp with time zone, dcp.data_de_nascimento::timestamp with time zone))::integer AS idade_fim_quadrimestre 
 	 FROM dados_cidadao_pec dcp
@@ -41,7 +41,7 @@ selecao_mulheres_denominador as (
 	     dcp.data_de_nascimento,
 	     dcp.paciente_documento_cpf,
 	     dcp.paciente_documento_cns,
-	     dcp.paciente_telefone,
+	     dcp.cidadao_telefone,
 	     dcp.paciente_idade_atual,
 	     dcp.data_fim_quadrimestre
 ),
@@ -101,12 +101,12 @@ cadastro_individual_recente AS (
 			eq.no_equipe AS equipe_cad_individual,
 			acs.no_profissional AS acs_cad_individual,
 			tfct.co_fat_familia_territorio as id_familia,
-			cci.nu_celular_cidadao as paciente_celular,
-			st.ds_dim_situacao_trabalho as paciente_situacao_trabalho,
-			pct.ds_povo_comunidade_tradicional as paciente_povo_comunidade_tradicional,
-			idg.ds_identidade_genero as paciente_identidade_genero,
-			tdrc.ds_raca_cor as paciente_raca_cor,
-			tfci.st_plano_saude_privado as paciente_plano_saude_privado,
+			cci.nu_celular_cidadao as cidadao_celular,
+			st.ds_dim_situacao_trabalho as cidadao_situacao_trabalho,
+			pct.ds_povo_comunidade_tradicional as cidadao_povo_comunidade_tradicional,
+			idg.ds_identidade_genero as cidadao_identidade_genero,
+			tdrc.ds_raca_cor as cidadao_raca_cor,
+			tfci.st_plano_saude_privado as cidadao_plano_saude_privado,
 			row_number() OVER (PARTITION BY mu.chave_mulher ORDER BY tdt.dt_registro DESC) = 1 AS ultimo_cadastro_individual
 		FROM tb_fat_cad_individual tfci
 		JOIN tb_fat_cidadao_pec tfcpec
@@ -143,7 +143,7 @@ SELECT
 			tfai.co_seq_fat_atd_ind::TEXT AS id_registro,
 			tdt.dt_registro AS data_registro,
 			mu.chave_mulher,
-			tfcp.nu_telefone_celular AS paciente_telefone,
+			tfcp.nu_telefone_celular AS cidadao_telefone,
 			tdprof.nu_cns AS profissional_cns_atendimento_recente,
 			tdprof.no_profissional AS profissional_atendimento_recente,
 			uns.nu_cnes AS estabelecimento_cnes_atendimento_recente,
@@ -264,13 +264,13 @@ infos_mulheres_atendimento_individual_recente AS (
 		cdr.acs_cad_dom_familia,
 		cdr.paciente_endereco,
 		cir.id_familia,
-		b.paciente_telefone,
-		cir.paciente_celular,
-		cir.paciente_situacao_trabalho,
-		cir.paciente_povo_comunidade_tradicional,
-		cir.paciente_identidade_genero,
-		cir.paciente_raca_cor,
-		cir.paciente_plano_saude_privado
+		b.cidadao_telefone,
+		cir.cidadao_celular,
+		cir.cidadao_situacao_trabalho,
+		cir.cidadao_povo_comunidade_tradicional,
+		cir.cidadao_identidade_genero,
+		cir.cidadao_raca_cor,
+		cir.cidadao_plano_saude_privado
 	FROM selecao_mulheres_denominador b
 	LEFT JOIN cadastro_individual_recente cir
 		ON cir.chave_mulher = b.chave_mulher
@@ -307,13 +307,13 @@ infos_mulheres_atendimento_individual_recente AS (
 		cdr.acs_cad_dom_familia,
 		cdr.paciente_endereco,
 		cir.id_familia,
-		b.paciente_telefone,
-		cir.paciente_celular,
-		cir.paciente_situacao_trabalho,
-		cir.paciente_povo_comunidade_tradicional,
-		cir.paciente_identidade_genero,
-		cir.paciente_raca_cor,
-		cir.paciente_plano_saude_privado
+		b.cidadao_telefone,
+		cir.cidadao_celular,
+		cir.cidadao_situacao_trabalho,
+		cir.cidadao_povo_comunidade_tradicional,
+		cir.cidadao_identidade_genero,
+		cir.cidadao_raca_cor,
+		cir.cidadao_plano_saude_privado
 ), 
 indicador_regras_de_negocio as (
 	SELECT
@@ -442,13 +442,13 @@ lista_citopatologico as (
 		 atr.profissional_atendimento_recente as acs_nome_ultimo_atendimento,
 		 atr.acs_visita_domiciliar as acs_nome_visita, 
 		 atr.id_familia,
-		 atr.paciente_telefone,
-		 atr.paciente_celular,
-		 atr.paciente_situacao_trabalho,
-		 atr.paciente_povo_comunidade_tradicional,
-	   	 atr.paciente_identidade_genero,
-		 atr.paciente_raca_cor,
-		 atr.paciente_plano_saude_privado,
+		 atr.cidadao_telefone,
+		 atr.cidadao_celular,
+		 atr.cidadao_situacao_trabalho,
+		 atr.cidadao_povo_comunidade_tradicional,
+	   	 atr.cidadao_identidade_genero,
+		 atr.cidadao_raca_cor,
+		 atr.cidadao_plano_saude_privado,
 		 vu.numero_visitas_ubs_ultimos_12_meses,
 		 now() as criacao_data,
 		 now() as atualizacao_data

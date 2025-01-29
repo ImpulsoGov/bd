@@ -144,11 +144,11 @@ WITH ultima_ficha_procedimento AS (
 						COALESCE(cidadaoterritoriorecente.st_mudou_se,0) AS se_mudou,
                         cidadaoterritoriorecente.co_fat_familia_territorio as id_familia,
                         cci.nu_celular_cidadao as cidadao_celular,
-						st.ds_dim_situacao_trabalho as paciente_situacao_trabalho,
-						pct.ds_povo_comunidade_tradicional as paciente_povo_comunidade_tradicional,
-						idg.ds_identidade_genero as paciente_identidade_genero,
-						tdrc.ds_raca_cor as paciente_raca_cor,
-						tfci.st_plano_saude_privado as paciente_plano_saude_privado,
+						st.ds_dim_situacao_trabalho as cidadao_plano_saude_privado,
+						pct.ds_povo_comunidade_tradicional as cidadao_povo_comunidade_tradicional,
+						idg.ds_identidade_genero as cidadao_identidade_genero,
+						tdrc.ds_raca_cor as cidadao_raca_cor,
+						tfci.st_plano_saude_privado as cidadao_plano_saude_privado,
 						ROW_NUMBER() OVER (PARTITION BY dd.chave_paciente ORDER BY tfci.co_seq_fat_cad_individual DESC) = 1 AS ultimo_cadastro_individual
 				FROM tb_fat_cad_individual tfci
 				JOIN tb_fat_cidadao_pec tfcp
@@ -334,11 +334,11 @@ visitas_ubs_12_meses as (
     cir.id_familia,
 	dd.cidadao_telefone,
 	cir.cidadao_celular,
-    cir.paciente_situacao_trabalho,
-	cir.paciente_povo_comunidade_tradicional,
-	cir.paciente_identidade_genero,
-	cir.paciente_raca_cor,
-	cir.paciente_plano_saude_privado,
+    cir.cidadao_plano_saude_privado,
+	cir.cidadao_povo_comunidade_tradicional,
+	cir.cidadao_identidade_genero,
+	cir.cidadao_raca_cor,
+	cir.cidadao_plano_saude_privado,
 	vu.numero_visitas_ubs_ultimos_12_meses,
 	now() as criacao_data
 FROM denominador_diabeticos dd
