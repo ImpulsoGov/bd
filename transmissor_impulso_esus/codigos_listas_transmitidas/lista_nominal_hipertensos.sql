@@ -53,6 +53,7 @@ WITH possui_hipertensao_autorreferida AS (
                 (array_agg(tfcp.nu_cpf_cidadao) FILTER (WHERE tfcp.nu_cpf_cidadao IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_cpf,
                 (array_agg(tfcp.nu_cns) FILTER (WHERE tfcp.nu_cns IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_cns,
                 (array_agg(tds.ds_sexo) FILTER (WHERE tds.ds_sexo IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_sexo,
+                (array_agg(tfcp.nu_telefone_celular) FILTER (WHERE tfcp.nu_telefone_celular IS NOT NULL) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))[1] AS cidadao_telefone,
                 FIRST_VALUE(tfcp.co_seq_fat_cidadao_pec) OVER (PARTITION BY tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento ORDER BY tfcp.co_seq_fat_cidadao_pec DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS co_seq_fat_cidadao_pec, -- valor arbitrario
                 COALESCE(haref.possui_hipertensao_autorreferida,FALSE) AS possui_hipertensao_autorreferida,
                 COALESCE(hdia.possui_hipertensao_diagnosticada,FALSE) AS possui_hipertensao_diagnosticada,
@@ -142,6 +143,13 @@ WITH possui_hipertensao_autorreferida AS (
                         eq.no_equipe AS equipe_nome_cadastro,
                         acs.no_profissional AS acs_nome_cadastro,
                         COALESCE(cidadaoterritoriorecente.st_mudou_se,0) AS se_mudou,
+                        cidadaoterritoriorecente.co_fat_familia_territorio as co_fat_familia_territorio,
+                        cci.nu_celular_cidadao as cidadao_celular,
+                        st.ds_dim_situacao_trabalho as cidadao_situacao_trabalho,
+                        pct.ds_povo_comunidade_tradicional as cidadao_povo_comunidade_tradicional,
+                        idg.ds_identidade_genero as cidadao_identidade_genero,
+                        tdrc.ds_raca_cor as cidadao_raca_cor,
+                        tfci.st_plano_saude_privado as cidadao_plano_saude_privado,
                         ROW_NUMBER() OVER (PARTITION BY dh.chave_paciente ORDER BY tfci.co_seq_fat_cad_individual DESC) = 1 AS ultimo_cadastro_individual
                 FROM tb_fat_cad_individual tfci
                 JOIN tb_fat_cidadao_pec tfcp
@@ -158,6 +166,16 @@ WITH possui_hipertensao_autorreferida AS (
                         ON uns.co_seq_dim_unidade_saude = tfci.co_dim_unidade_saude 
                 LEFT JOIN tb_fat_cidadao_territorio cidadaoterritoriorecente 
                         ON cidadaoterritoriorecente.co_fat_cad_individual = tfci.co_seq_fat_cad_individual
+                LEFT JOIN tb_dim_situacao_trabalho st 
+                        ON st.co_seq_dim_situacao_trabalho  = tfci.co_dim_situacao_trabalho  
+                LEFT JOIN tb_dim_povo_comunidad_trad pct 
+                        ON pct.co_seq_dim_povo_comunidad_trad = tfci.co_dim_povo_comunidad_trad  
+                LEFT JOIN tb_dim_identidade_genero idg 
+                        ON idg.co_seq_dim_identidade_genero = tfci.co_dim_identidade_genero  
+                LEFT JOIN tb_dim_raca_cor tdrc
+                        ON tdrc.co_seq_dim_raca_cor = tfci.co_dim_raca_cor  
+                LEFT JOIN tb_cds_cad_individual cci 
+                        ON tfci.nu_uuid_ficha = cci.co_unico_ficha
 ) 
 , visita_domiciliar_recente AS (
 -- Dados das visitas domiciliares realizadas pelos ACS (dados para vinculação de ACS da mulher)
@@ -177,7 +195,24 @@ WITH possui_hipertensao_autorreferida AS (
                 LEFT JOIN tb_dim_tempo tdt 
                         ON tdt.co_seq_dim_tempo = visitadomiciliar.co_dim_tempo
                 )
-, cadastro_domiciliar_recente AS (
+, 
+visitas_ubs_12_meses as (
+	SELECT 
+			dh.chave_paciente,
+			COUNT(*) as numero_visitas_ubs_ultimos_12_meses
+	FROM tb_fat_atendimento_individual tfai
+    JOIN tb_fat_cidadao_pec tfcp 
+	    	ON tfcp.co_seq_fat_cidadao_pec = tfai.co_fat_cidadao_pec
+	JOIN denominador_hipertensos dh 
+			ON dh.chave_paciente = tfcp.no_cidadao||tfcp.co_dim_tempo_nascimento
+	JOIN tb_dim_local_atendimento tdla
+            ON tfai.co_dim_local_atendimento = tdla.co_seq_dim_local_atendimento
+	WHERE 
+		tdla.ds_local_atendimento = 'UBS'
+        AND tfai.dt_inicial_atendimento >= (CURRENT_DATE - INTERVAL '12 months')
+    GROUP by dh.chave_paciente
+),
+cadastro_domiciliar_recente AS (
 -- Dados do cadastro da família e do domicílio da mulher (dados para vinculação de ACS da mulher)
                 SELECT 
                         dh.chave_paciente,
@@ -298,6 +333,15 @@ WITH possui_hipertensao_autorreferida AS (
     ar.dt_ultima_consulta,
     dh.se_faleceu,
     cir.se_mudou, 
+    cir.co_fat_familia_territorio,
+    dh.cidadao_telefone,
+    cir.cidadao_celular,
+    cir.cidadao_situacao_trabalho,
+    cir.cidadao_povo_comunidade_tradicional,
+    cir.cidadao_identidade_genero,
+    cir.cidadao_raca_cor,
+    cir.cidadao_plano_saude_privado,
+    vu.numero_visitas_ubs_ultimos_12_meses,
     now() as criacao_data
 FROM denominador_hipertensos dh
 LEFT JOIN afericao_pressao ap 
@@ -315,4 +359,5 @@ LEFT JOIN cadastro_domiciliar_recente cdr
         AND cdr.ultimo_cadastro_domiciliar_familia IS TRUE
 LEFT JOIN atendimento_recente ar 
         ON ar.chave_paciente = dh.chave_paciente
-        AND ar.ultimo_atendimento IS TRUE 
+        AND ar.ultimo_atendimento IS TRUE
+LEFT JOIN visitas_ubs_12_meses vu on dh.chave_paciente = vu.chave_paciente
