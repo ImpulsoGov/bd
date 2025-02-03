@@ -334,7 +334,7 @@ visitas_ubs_12_meses as (
     cir.co_fat_familia_territorio,
 	dd.cidadao_telefone,
 	cir.cidadao_celular,
-    cir.cidadao_plano_saude_privado,
+    cir.cidadao_situacao_trabalho,
 	cir.cidadao_povo_comunidade_tradicional,
 	cir.cidadao_identidade_genero,
 	cir.cidadao_raca_cor,
