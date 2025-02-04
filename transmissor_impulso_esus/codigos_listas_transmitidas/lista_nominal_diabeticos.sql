@@ -144,7 +144,7 @@ WITH ultima_ficha_procedimento AS (
 						COALESCE(cidadaoterritoriorecente.st_mudou_se,0) AS se_mudou,
                         cidadaoterritoriorecente.co_fat_familia_territorio as co_fat_familia_territorio,
                         cci.nu_celular_cidadao as cidadao_celular,
-						st.ds_dim_situacao_trabalho as cidadao_plano_saude_privado,
+						st.ds_dim_situacao_trabalho as cidadao_situacao_trabalho,
 						pct.ds_povo_comunidade_tradicional as cidadao_povo_comunidade_tradicional,
 						idg.ds_identidade_genero as cidadao_identidade_genero,
 						tdrc.ds_raca_cor as cidadao_raca_cor,
