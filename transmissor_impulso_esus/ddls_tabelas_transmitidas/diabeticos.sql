@@ -2,7 +2,7 @@
 
 --DROP TABLE IF EXISTS dados_ip_impulsolandia.lista_nominal_diabeticos;
 CREATE TABLE dados_ip_impulsolandia.lista_nominal_diabeticos (
-	municipio_id_sus varchar(6) NULL DEFAULT 111111,
+	municipio_id_sus varchar(6) NULL DEFAULT '111111'::character varying,
 	quadrimestre_atual text NULL,
 	realizou_solicitacao_hemoglobina_ultimos_6_meses bool NULL,
 	dt_solicitacao_hemoglobina_glicada_mais_recente varchar(11) NULL,
@@ -28,13 +28,22 @@ CREATE TABLE dados_ip_impulsolandia.lista_nominal_diabeticos (
 	acs_nome_cadastro text NULL,
 	acs_nome_visita text NULL,
 	profissional_nome_atendimento text NULL,
-    	profissional_nome_procedimento text NULL,
+    profissional_nome_procedimento text NULL,
 	possui_diabetes_autoreferida bool NULL,
 	possui_diabetes_diagnosticada bool NULL,
 	data_ultimo_cadastro date NULL,
 	dt_ultima_consulta date NULL,
 	se_faleceu int4 NULL,
 	se_mudou int4 NULL,
+	co_fat_familia_territorio int4 NULL,
+	cidadao_telefone varchar(30) NULL,
+	cidadao_celular varchar(30) NULL,
+	cidadao_situacao_trabalho varchar(500) NULL,
+	cidadao_povo_comunidade_tradicional varchar(500) NULL,
+	cidadao_identidade_genero varchar(500) NULL,
+	cidadao_raca_cor varchar(500) NULL,
+	cidadao_plano_saude_privado int4 NULL,
+	numero_visitas_ubs_ultimos_12_meses int4 NULL,
 	criacao_data timestamptz NULL,
 	atualizacao_data timestamptz NULL DEFAULT CURRENT_TIMESTAMP
 );
