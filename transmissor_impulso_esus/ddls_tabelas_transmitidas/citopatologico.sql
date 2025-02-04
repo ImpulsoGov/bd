@@ -2,8 +2,8 @@
 
 --DROP TABLE IF EXISTS dados_ip_impulsolandia.lista_nominal_citopatologico;
 CREATE TABLE dados_ip_impulsolandia.lista_nominal_citopatologico (
-		 municipio_id_sus varchar(6) NULL DEFAULT 111111,
-		 quadrimestre_atual text NULL,
+		 	municipio_id_sus varchar(6) NULL DEFAULT '111111'::character varying,
+		 	quadrimestre_atual text NULL,
 			chave_mulher varchar(500) NULL,
 			paciente_nome varchar(500) NULL,
 			cidadao_cns varchar(30) NULL,
@@ -33,7 +33,7 @@ CREATE TABLE dados_ip_impulsolandia.lista_nominal_citopatologico (
 			equipe_nome_ultimo_atendimento varchar(500) NULL,
 			acs_nome_ultimo_atendimento varchar(500) NULL,
 			acs_nome_visita varchar(500) NULL,
-			co_fat_familia_territorio int64 NULL,
+			co_fat_familia_territorio int4 NULL,
 			cidadao_telefone varchar(30) NULL,
 			cidadao_celular varchar(30) NULL,
 			cidadao_situacao_trabalho varchar(500) NULL,
@@ -41,7 +41,7 @@ CREATE TABLE dados_ip_impulsolandia.lista_nominal_citopatologico (
 			cidadao_identidade_genero varchar(500) NULL,
 			cidadao_raca_cor varchar(500) NULL,
 			cidadao_plano_saude_privado int4 NULL,
-			vu.numero_visitas_ubs_ultimos_12_meses int4 NULL,
+			numero_visitas_ubs_ultimos_12_meses int4 NULL,
 			criacao_data timestamptz NULL,
 			atualizacao_data timestamptz NULL DEFAULT CURRENT_TIMESTAMP
 		 );

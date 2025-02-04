@@ -2,7 +2,7 @@
 
 --DROP TABLE IF EXISTS dados_ip_impulsolandia.lista_nominal_hipertensos;
 CREATE TABLE dados_ip_impulsolandia.lista_nominal_hipertensos (
-	municipio_id_sus varchar(6) NULL DEFAULT 111111,
+	municipio_id_sus varchar(6) NULL DEFAULT '111111'::character varying,
 	quadrimestre_atual text NULL,
 	realizou_afericao_ultimos_6_meses bool NULL,
 	dt_afericao_pressao_mais_recente varchar(11) NULL,
@@ -35,7 +35,7 @@ CREATE TABLE dados_ip_impulsolandia.lista_nominal_hipertensos (
 	dt_ultima_consulta date NULL,
 	se_faleceu int4 NULL,
 	se_mudou int4 NULL,
-	co_fat_familia_territorio int64 NULL,
+	co_fat_familia_territorio int4 NULL,
 	cidadao_telefone varchar(30) NULL,
 	cidadao_celular varchar(30) NULL,
 	cidadao_situacao_trabalho varchar(500) NULL,
@@ -43,7 +43,7 @@ CREATE TABLE dados_ip_impulsolandia.lista_nominal_hipertensos (
 	cidadao_identidade_genero varchar(500) NULL,
 	cidadao_raca_cor varchar(500) NULL,
 	cidadao_plano_saude_privado int4 NULL,
-	vu.numero_visitas_ubs_ultimos_12_meses int4 NULL,
+	numero_visitas_ubs_ultimos_12_meses int4 NULL,
 	criacao_data timestamptz NULL,
 	atualizacao_data timestamptz NULL DEFAULT CURRENT_TIMESTAMP
 );
