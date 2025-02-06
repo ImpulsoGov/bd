@@ -35,7 +35,7 @@ CREATE TABLE dados_ip_impulsolandia.lista_nominal_hipertensos (
 	dt_ultima_consulta date NULL,
 	se_faleceu int4 NULL,
 	se_mudou int4 NULL,
-	co_fat_familia_territorio int4 NULL,
+	co_fat_familia_territorio int8 NULL,
 	cidadao_telefone varchar(30) NULL,
 	cidadao_celular varchar(30) NULL,
 	cidadao_situacao_trabalho varchar(500) NULL,
