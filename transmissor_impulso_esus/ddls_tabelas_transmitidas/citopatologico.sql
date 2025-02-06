@@ -33,7 +33,7 @@ CREATE TABLE dados_ip_impulsolandia.lista_nominal_citopatologico (
 			equipe_nome_ultimo_atendimento varchar(500) NULL,
 			acs_nome_ultimo_atendimento varchar(500) NULL,
 			acs_nome_visita varchar(500) NULL,
-			co_fat_familia_territorio int4 NULL,
+			co_fat_familia_territorio int8 NULL,
 			cidadao_telefone varchar(30) NULL,
 			cidadao_celular varchar(30) NULL,
 			cidadao_situacao_trabalho varchar(500) NULL,
