@@ -163,7 +163,7 @@ AS WITH dados_transmissoes_recentes AS (
     ) , dados_demo_bonfim AS (
         SELECT 
             '111111' AS municipio_id_sus,
-            'Demo - Bonfim - RR' AS municipio_uf,
+            'Demo - Monsenhor Tabosa - CE' AS municipio_uf,
             upper(nomes.nome_ficticio) AS paciente_nome,
             concat(impulso_previne_dados_nominais.random_between(100000000, 999999999)::text, impulso_previne_dados_nominais.random_between(10, 99)::text) AS cidadao_cpf_dt_nascimento,
             tf.vencimento_da_coleta,
