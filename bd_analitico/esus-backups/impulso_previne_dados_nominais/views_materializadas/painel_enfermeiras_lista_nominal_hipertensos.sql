@@ -248,7 +248,7 @@ AS WITH dados_transmissoes_recentes AS (
     ), dados_demo_bonfim AS (
             SELECT 
                 '111111' AS municipio_id_sus,
-                'Demo - Bonfim - RR' AS municipio_uf,
+                'Demo - Monsenhor Tabosa - CE' AS municipio_uf,
                 tf.quadrimestre_atual,
                 tf.realizou_afericao_ultimos_6_meses,
                 tf.dt_afericao_pressao_mais_recente,

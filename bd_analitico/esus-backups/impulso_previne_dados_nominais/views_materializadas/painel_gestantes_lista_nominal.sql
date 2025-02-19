@@ -211,7 +211,7 @@ AS WITH dados_transmissoes_recentes AS (
             tf.atualizacao_data,
             tf.criacao_data,
             tf.dt_registro_producao_mais_recente,
-            'Demo - Bonfim - RR' AS municipio_uf
+            'Demo - Monsenhor Tabosa - CE' AS municipio_uf
         FROM tabela_final tf
         LEFT JOIN configuracoes.nomes_ficticios_citopatologico nomes 
             ON tf.seq_demo_viscosa = nomes.seq
