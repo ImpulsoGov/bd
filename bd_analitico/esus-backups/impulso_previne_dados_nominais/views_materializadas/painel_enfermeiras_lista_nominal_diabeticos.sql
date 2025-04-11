@@ -299,7 +299,7 @@ AS WITH dados_transmissoes_recentes AS (
             LEFT JOIN configuracoes.nomes_ficticios_hipertensos nomes2 
                 ON tf.seq_demo_viscosa = nomes2.seq
             WHERE municipio_id_sus = '140015' -- BONFIM - RR
-    )
+    ), aux as (
     SELECT
         ddv.municipio_id_sus,
         ddv.municipio_uf,
@@ -391,4 +391,7 @@ UNION ALL
         tf.atualizacao_data,
         tf.dt_registro_producao_mais_recente
     FROM tabela_final tf
+    ) SELECT md5(((((COALESCE(aux.municipio_id_sus, ''::text) || COALESCE(aux.cidadao_cpf, ''::text)) || COALESCE(aux.cidadao_nome, ''::text)) || COALESCE(aux.cidadao_cpf_dt_nascimento, ''::text)) || COALESCE(aux.cidadao_cns, ''::text)) || COALESCE(aux.dt_ultima_consulta::text, ''::text)) AS id,
+	*
+	from aux
 WITH DATA;

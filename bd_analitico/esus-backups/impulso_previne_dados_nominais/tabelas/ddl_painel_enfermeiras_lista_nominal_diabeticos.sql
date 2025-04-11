@@ -1,0 +1,53 @@
+-- impulso_previne_dados_nominais_replica."__painel_enfermeiras_lista_nominal_diabeticos" definition
+
+-- Drop table
+
+-- DROP TABLE impulso_previne_dados_nominais_replica."__painel_enfermeiras_lista_nominal_diabeticos";
+
+CREATE TABLE impulso_previne_dados_nominais_replica."__painel_enfermeiras_lista_nominal_diabeticos" (
+	id text NOT NULL,
+	municipio_id_sus varchar NULL,
+	municipio_uf text NULL,
+	quadrimestre_atual text NULL,
+	realizou_solicitacao_hemoglobina_ultimos_6_meses bool NULL,
+	dt_solicitacao_hemoglobina_glicada_mais_recente varchar(11) NULL,
+	realizou_consulta_ultimos_6_meses bool NULL,
+	dt_consulta_mais_recente date NULL,
+	prazo_proxima_solicitacao_hemoglobina text NULL,
+	prazo_proxima_consulta text NULL,
+	consulta_e_solicitacao_hemoglobina_em_dia int4 NULL,
+	status_em_dia text NULL,
+	status_usuario text NULL,
+	identificacao_condicao_diabetes text NULL,
+	cidadao_cpf text NULL,
+	cidadao_cpf_dt_nascimento text NULL,
+	cidadao_cns text NULL,
+	cidadao_nome text NULL,
+	cidadao_nome_social varchar(500) NULL,
+	cidadao_sexo varchar NULL,
+	dt_nascimento date NULL,
+	cidadao_idade int4 NULL,
+	cidadao_faixa_etaria text NULL,
+	estabelecimento_cnes_atendimento text NULL,
+	estabelecimento_cnes_cadastro text NULL,
+	estabelecimento_nome_atendimento text NULL,
+	estabelecimento_nome_cadastro text NULL,
+	equipe_ine_atendimento text NULL,
+	equipe_ine_cadastro text NULL,
+	equipe_nome_atendimento text NULL,
+	equipe_nome_cadastro text NULL,
+	acs_nome_cadastro text NULL,
+	acs_nome_visita text NULL,
+	possui_diabetes_autorreferida bool NULL,
+	possui_diabetes_diagnosticada bool NULL,
+	apenas_autorreferida int4 NULL,
+	diagnostico_clinico int4 NULL,
+	data_ultimo_cadastro date NULL,
+	dt_ultima_consulta date NULL,
+	se_faleceu int4 NULL,
+	se_mudou int4 NULL,
+	criacao_data timestamptz NULL,
+	atualizacao_data timestamptz NULL,
+	dt_registro_producao_mais_recente date NULL,
+	CONSTRAINT painel_diabeticos_pk PRIMARY KEY (id)
+);
